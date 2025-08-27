@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String           @id @default(cuid())
+  name          String?
+  email         String?          @unique
+  password      String?
+  role          Role             @default(CLIENT)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  // ✅ Back relation to ProviderProfile (1:1)
+  providerProfile ProviderProfile?
+
+  // ✅ Relations
+  requests      Request[]        @relation("ClientRequests")
+  proposals     Proposal[]       @relation("UserProposals")
+  reviews       Review[]         @relation("UserReviews")
+}
+
+model ProviderProfile {
+  id          String      @id @default(cuid())
+  userId      String      @unique
+  user        User        @relation(fields: [userId], references: [id])  // ✅ one-to-one link to User
+
+  skills      String[]
+  bio         String?
+  services    Service[]
+  proposals   Proposal[]
+  reviews     Review[]    @relation("ProviderReviews")
+}
+
+model Service {
+  id          String           @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile  @relation(fields: [providerId], references: [id])
+  title       String
+  description String
+  price       Float
+  createdAt   DateTime         @default(now())
+}
+
+model Request {
+  id          String      @id @default(cuid())
+  clientId    String
+  client      User        @relation("ClientRequests", fields: [clientId], references: [id])
+  title       String
+  description String
+  status      RequestStatus @default(PENDING)
+  proposals   Proposal[]
+  createdAt   DateTime     @default(now())
+
+  payments    Payment[]   // ✅ renamed field to lowercase for convention
+}
+
+model Proposal {
+  id          String      @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id])
+  clientId    String
+  client      User        @relation("UserProposals", fields: [clientId], references: [id])
+  requestId   String
+  request     Request     @relation(fields: [requestId], references: [id])
+  price       Float
+  message     String?
+  status      ProposalStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+}
+
+model Payment {
+  id          String      @id @default(cuid())
+  requestId   String
+  request     Request     @relation(fields: [requestId], references: [id])
+  amount      Float
+  status      PaymentStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+}
+
+model Review {
+  id          String      @id @default(cuid())
+  clientId    String
+  client      User        @relation("UserReviews", fields: [clientId], references: [id])
+  providerId  String
+  provider    ProviderProfile @relation("ProviderReviews", fields: [providerId], references: [id])
+  rating      Int
+  comment     String?
+  createdAt   DateTime     @default(now())
+}
+
+enum Role {
+  CLIENT
+  PROVIDER
+  ADMIN
+}
+
+enum RequestStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ProposalStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
