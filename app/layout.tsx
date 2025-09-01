@@ -27,11 +27,17 @@ export default function RootLayout({
     return (
         <html lang="en">
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+                className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50`}
             >
+                {/* Session + React Query Providers */}
                 <ClientProviders>
+                    {/* Navigation bar stays fixed across all pages */}
                     <NavBar />
-                    <main>{children}</main>
+
+                    {/* Main content area */}
+                    <main className="min-h-screen px-4 md:px-8">
+                        {children}
+                    </main>
                 </ClientProviders>
             </body>
         </html>
