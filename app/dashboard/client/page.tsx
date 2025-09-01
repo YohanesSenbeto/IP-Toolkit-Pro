@@ -11,6 +11,7 @@ import {
     useReactTable,
 } from "@tanstack/react-table";
 
+<<<<<<< HEAD
 type ProposalStatusType = "PENDING" | "ACCEPTED" | "DECLINED" | null;
 
 interface RequestWithProposal {
@@ -27,11 +28,14 @@ interface RequestWithProposal {
     proposalPrice: number | null;
 }
 
+=======
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
 export default function ClientDashboard() {
     const { data: session } = useSession();
     const queryClient = useQueryClient();
 
     // Fetch client requests
+<<<<<<< HEAD
     const { data, isLoading } = useQuery<RequestWithProposal[]>({
         queryKey: ["clientRequests", session?.user?.id],
         queryFn: async () => {
@@ -43,6 +47,30 @@ export default function ClientDashboard() {
             const json = await res.json();
             const requests: RequestWithProposal[] = json.requests ?? [];
             return requests;
+=======
+    const { data, isLoading } = useQuery({
+        queryKey: ["clientRequests", session?.user?.id],
+        queryFn: async () => {
+            if (!session?.user?.id) return [];
+            const res = await fetch("/api/requests");
+            const json = await res.json();
+            let requests = json.requests || [];
+
+            // Only requests belonging to this client
+            requests = requests.filter(
+                (r: any) => r.clientId === session.user.id
+            );
+
+            // Map providerName and first proposal id & status
+            return requests.map((r: any) => ({
+                ...r,
+                providerName:
+                    r.proposals?.[0]?.provider?.user?.name ?? "Pending",
+                proposalId: r.proposals?.[0]?.id ?? null,
+                proposalStatus: r.proposals?.[0]?.status ?? null,
+                proposalPrice: r.proposals?.[0]?.price ?? null,
+            }));
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
         },
         enabled: !!session?.user?.id,
     });
@@ -67,17 +95,28 @@ export default function ClientDashboard() {
             return res.json();
         },
         onSuccess: () => {
+<<<<<<< HEAD
             queryClient.invalidateQueries({ queryKey: ["clientRequests"] });
         },
     });
 
     // Table columns
     const columns: ColumnDef<RequestWithProposal>[] = [
+=======
+            queryClient.invalidateQueries(["clientRequests"]);
+        },
+    });
+
+    const columns: ColumnDef<any>[] = [
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
         { accessorKey: "title", header: "Request Title" },
         { accessorKey: "description", header: "Description" },
         { accessorKey: "providerName", header: "Provider" },
         { accessorKey: "proposalPrice", header: "Proposed Price" },
+<<<<<<< HEAD
         { accessorKey: "durationDays", header: "Age (days)" },
+=======
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
         { accessorKey: "createdAt", header: "Created Date" },
         {
             accessorKey: "status",
@@ -121,6 +160,7 @@ export default function ClientDashboard() {
                 const { proposalId, proposalStatus } = row.original;
                 if (!proposalId || proposalStatus !== "PENDING") return null;
 
+<<<<<<< HEAD
                 const isProcessing = updateProposalStatus.status === "pending";
 
                 return (
@@ -132,6 +172,12 @@ export default function ClientDashboard() {
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-green-500 hover:bg-green-600"
                             }`}
+=======
+                return (
+                    <div className="flex gap-2">
+                        <button
+                            className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
                             onClick={() =>
                                 updateProposalStatus.mutate({
                                     proposalId,
@@ -139,6 +185,7 @@ export default function ClientDashboard() {
                                 })
                             }
                         >
+<<<<<<< HEAD
                             {isProcessing ? "Processing..." : "Accept"}
                         </button>
                         <button
@@ -148,6 +195,12 @@ export default function ClientDashboard() {
                                     ? "bg-gray-400 cursor-not-allowed"
                                     : "bg-red-500 hover:bg-red-600"
                             }`}
+=======
+                            Accept
+                        </button>
+                        <button
+                            className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
                             onClick={() =>
                                 updateProposalStatus.mutate({
                                     proposalId,
@@ -155,7 +208,11 @@ export default function ClientDashboard() {
                                 })
                             }
                         >
+<<<<<<< HEAD
                             {isProcessing ? "Processing..." : "Decline"}
+=======
+                            Decline
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
                         </button>
                     </div>
                 );

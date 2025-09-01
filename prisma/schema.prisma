@@ -16,10 +16,17 @@ model User {
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
 
+<<<<<<< HEAD
   // Back relation to ProviderProfile (1:1)
   providerProfile ProviderProfile?
 
   // Relations
+=======
+  // ✅ Back relation to ProviderProfile (1:1)
+  providerProfile ProviderProfile?
+
+  // ✅ Relations
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
   requests      Request[]        @relation("ClientRequests")
   proposals     Proposal[]       @relation("UserProposals")
   reviews       Review[]         @relation("UserReviews")
@@ -28,7 +35,11 @@ model User {
 model ProviderProfile {
   id          String      @id @default(cuid())
   userId      String      @unique
+<<<<<<< HEAD
   user        User        @relation(fields: [userId], references: [id])  // one-to-one link to User
+=======
+  user        User        @relation(fields: [userId], references: [id])  // ✅ one-to-one link to User
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
 
   skills      String[]
   bio         String?
@@ -45,6 +56,7 @@ model Service {
   description String
   price       Float
   createdAt   DateTime         @default(now())
+<<<<<<< HEAD
   updatedAt   DateTime         @updatedAt
 }
 
@@ -52,10 +64,19 @@ model Request {
   id          String        @id @default(cuid())
   clientId    String
   client      User          @relation("ClientRequests", fields: [clientId], references: [id])
+=======
+}
+
+model Request {
+  id          String      @id @default(cuid())
+  clientId    String
+  client      User        @relation("ClientRequests", fields: [clientId], references: [id])
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
   title       String
   description String
   status      RequestStatus @default(PENDING)
   proposals   Proposal[]
+<<<<<<< HEAD
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @default(now()) // ✅ default to current time
   payments    Payment[]
@@ -74,6 +95,25 @@ model Proposal {
   status      ProposalStatus @default(PENDING)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @default(now()) // ✅ default to current time
+=======
+  createdAt   DateTime     @default(now())
+
+  payments    Payment[]   // ✅ renamed field to lowercase for convention
+}
+
+model Proposal {
+  id          String      @id @default(cuid())
+  providerId  String
+  provider    ProviderProfile @relation(fields: [providerId], references: [id])
+  clientId    String
+  client      User        @relation("UserProposals", fields: [clientId], references: [id])
+  requestId   String
+  request     Request     @relation(fields: [requestId], references: [id])
+  price       Float
+  message     String?
+  status      ProposalStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
 }
 
 model Payment {
@@ -83,7 +123,10 @@ model Payment {
   amount      Float
   status      PaymentStatus @default(PENDING)
   createdAt   DateTime     @default(now())
+<<<<<<< HEAD
   updatedAt   DateTime     @updatedAt
+=======
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
 }
 
 model Review {
@@ -95,7 +138,10 @@ model Review {
   rating      Int
   comment     String?
   createdAt   DateTime     @default(now())
+<<<<<<< HEAD
   updatedAt   DateTime     @updatedAt
+=======
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
 }
 
 enum Role {

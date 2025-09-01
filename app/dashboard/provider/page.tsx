@@ -28,7 +28,19 @@ export default function ProviderDashboard() {
             const json = await res.json();
             let requests = json.requests || [];
 
+<<<<<<< HEAD
             // Map durationDays and proposalsCount
+=======
+            // Show requests where provider hasn't submitted proposal
+            requests = requests.filter(
+                (r: any) =>
+                    !r.proposals?.some(
+                        (p: any) => p.providerId === session.user.id
+                    )
+            );
+
+            // Compute durationDays
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
             requests = requests.map((r: any) => {
                 const completedDate =
                     r.status === "COMPLETED"
@@ -39,11 +51,19 @@ export default function ProviderDashboard() {
                         new Date(r.createdAt).getTime()) /
                         (1000 * 60 * 60 * 24)
                 );
+<<<<<<< HEAD
                 const proposalsCount = r.proposals?.length ?? 0;
                 const hasProposed = r.proposals?.some(
                     (p: any) => p.providerId === session.user.id
                 );
                 return { ...r, durationDays, proposalsCount, hasProposed };
+=======
+                return {
+                    ...r,
+                    durationDays,
+                    proposalsCount: r.proposals?.length ?? 0,
+                };
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
             });
 
             return requests;
@@ -69,7 +89,11 @@ export default function ProviderDashboard() {
             return res.json();
         },
         onSuccess: () => {
+<<<<<<< HEAD
             queryClient.invalidateQueries({ queryKey: ["providerRequests"] });
+=======
+            queryClient.invalidateQueries(["providerRequests"]);
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
             setSelectedRequest(null);
             setPrice("");
             setMessage("");
@@ -105,6 +129,7 @@ export default function ProviderDashboard() {
         {
             id: "action",
             header: "Action",
+<<<<<<< HEAD
             cell: ({ row }) => {
                 const { hasProposed } = row.original;
                 return !hasProposed ? (
@@ -118,6 +143,16 @@ export default function ProviderDashboard() {
                     <Badge variant="secondary">Proposal Submitted</Badge>
                 );
             },
+=======
+            cell: ({ row }) => (
+                <button
+                    className="px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                    onClick={() => setSelectedRequest(row.original)}
+                >
+                    Respond
+                </button>
+            ),
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
         },
     ];
 
