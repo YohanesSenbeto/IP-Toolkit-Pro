@@ -13,11 +13,9 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: "Credentials",
       credentials: {
-<<<<<<< HEAD
-        email: { label: "Email", type: "text" },
-=======
+
         email: { label: "Email", type: "text", placeholder: "you@example.com" },
->>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
+
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
@@ -57,8 +55,7 @@ export const authOptions: NextAuthOptions = {
       // Attach user info to JWT after sign in
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
->>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
+        token.role = user.role;
       }
       return token;
     },
@@ -71,8 +68,7 @@ export const authOptions: NextAuthOptions = {
       // Attach user info to session object
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
->>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
+        session.user.role = token.role as "CLIENT" | "PROVIDER" | "ADMIN";
       }
       return session;
     },
