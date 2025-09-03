@@ -3,6 +3,7 @@
 import { signIn, useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+<<<<<<< HEAD
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -10,6 +11,21 @@ import { z } from "zod";
 import { userLoginSchema } from "@/lib/validations";
 
 type FormData = z.infer<typeof userLoginSchema>;
+=======
+<<<<<<< HEAD
+=======
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
+>>>>>>> b17a882604302812a3e97b57236ee5e2b57df7fd
 
 export default function SignInPage() {
     const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +48,7 @@ export default function SignInPage() {
         }
     }, [status, session, router]);
 
+<<<<<<< HEAD
     const onSubmit = async (data: FormData) => {
         setIsLoading(true);
         setError("");
@@ -53,6 +70,20 @@ export default function SignInPage() {
         } finally {
             setIsLoading(false);
         }
+=======
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await signIn("credentials", {
+            email,
+            password,
+<<<<<<< HEAD
+            redirect: true, // enable redirect
+            // Remove callbackUrl, next-auth redirect will handle it
+=======
+            redirect: true,
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
+        });
+>>>>>>> b17a882604302812a3e97b57236ee5e2b57df7fd
     };
 
     const handleGoogleSignIn = async () => {
@@ -70,6 +101,7 @@ export default function SignInPage() {
     }
 
     return (
+<<<<<<< HEAD
         <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-200">
             <div className="max-w-md w-full space-y-8">
                 <div>
@@ -232,5 +264,73 @@ export default function SignInPage() {
                 </div>
             </div>
         </div>
+=======
+<<<<<<< HEAD
+        <form
+            onSubmit={handleSubmit}
+            className="flex flex-col gap-4 max-w-sm mx-auto mt-20"
+        >
+            <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="border p-2 rounded"
+            />
+            <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="border p-2 rounded"
+            />
+            <button
+                type="submit"
+                className="bg-blue-500 text-white p-2 rounded"
+            >
+                Sign In
+            </button>
+        </form>
+=======
+        <div className="flex justify-center items-center min-h-screen bg-gray-50 p-4">
+            <Card className="w-full max-w-md shadow-lg">
+                <CardHeader>
+                    <CardTitle className="text-center">Sign In</CardTitle>
+                    <CardDescription className="text-center">
+                        Enter your credentials to access your account
+                    </CardDescription>
+                </CardHeader>
+
+                <Separator />
+
+                <CardContent className="pt-6">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="flex flex-col gap-4"
+                    >
+                        <Input
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                        <Input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+
+                        <Button type="submit" className="w-full">
+                            Sign In
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+>>>>>>> f3177dfe03f1aa84833f761eef73058dd29aa04b
+>>>>>>> b17a882604302812a3e97b57236ee5e2b57df7fd
     );
 }
