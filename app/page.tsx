@@ -62,33 +62,25 @@ export default function Home() {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="min-h-screen bg-background">
             {/* Hero Section */}
             <div className="container mx-auto px-4 py-16 text-center">
                 <div className="max-w-4xl mx-auto">
-                    <h1 className="text-5xl md:text-6xl font-bold text-gray-800 mb-6">
-                        IP Toolkit <span className="text-blue-600">Pro</span>
+                    <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+                        IP Toolkit <span className="text-primary">Pro</span>
                     </h1>
-                    <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                    <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
                         The ultimate network configuration platform for Ethio
                         Telecom professionals and customers
                     </p>
 
                     {!session ? (
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-                            <Button
-                                onClick={() => signIn()}
-                                className="bg-blue-600 text-white hover:bg-blue-700 px-8 py-3 text-lg"
-                                size="lg"
-                            >
+                            <Button onClick={() => signIn()} size="lg">
                                 Get Started Free
                             </Button>
                             <Link href="/tools/wan-ip-analyzer">
-                                <Button
-                                    variant="outline"
-                                    className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg"
-                                    size="lg"
-                                >
+                                <Button variant="outline" size="lg">
                                     Try WAN IP Analyzer
                                 </Button>
                             </Link>
@@ -96,19 +88,12 @@ export default function Home() {
                     ) : (
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                             <Link href="/tools/wan-ip-analyzer">
-                                <Button
-                                    className="bg-blue-600 text-white hover:bg-blue-700 px-8 py-3 text-lg"
-                                    size="lg"
-                                >
+                                <Button size="lg">
                                     Start Analyzing
                                 </Button>
                             </Link>
                             <Link href="/dashboard">
-                                <Button
-                                    variant="outline"
-                                    className="border-blue-600 text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg"
-                                    size="lg"
-                                >
+                                <Button variant="outline" size="lg">
                                     View Dashboard
                                 </Button>
                             </Link>
@@ -120,10 +105,10 @@ export default function Home() {
             {/* Features Grid */}
             <div className="container mx-auto px-4 py-16">
                 <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+                    <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
                         Everything You Need for Network Configuration
                     </h2>
-                    <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                         Powerful tools and comprehensive resources designed
                         specifically for Ethio Telecom's network environment
                     </p>
@@ -140,12 +125,12 @@ export default function Home() {
                                     <CardTitle className="text-xl">
                                         {feature.title}
                                     </CardTitle>
-                                    <CardDescription className="text-gray-600 mt-2">
+                                    <CardDescription className="text-muted-foreground mt-2">
                                         {feature.description}
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-blue-600 font-medium flex items-center gap-2">
+                                    <div className="text-primary font-medium flex items-center gap-2">
                                         Explore Feature
                                         <span className="text-lg">→</span>
                                     </div>
@@ -158,20 +143,16 @@ export default function Home() {
 
             {/* Call to Action */}
             {!session && (
-                <div className="bg-blue-600 py-16">
+                <div className="bg-primary py-16">
                     <div className="container mx-auto px-4 text-center">
-                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                        <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">
                             Ready to Simplify Your Network Work?
                         </h2>
-                        <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+                        <p className="text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
                             Join thousands of Ethio Telecom professionals using
                             IP Toolkit Pro daily
                         </p>
-                        <Button
-                            onClick={() => signIn()}
-                            className="bg-white text-blue-600 hover:bg-blue-50 px-8 py-3 text-lg"
-                            size="lg"
-                        >
+                        <Button onClick={() => signIn()} size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
                             Create Free Account
                         </Button>
                     </div>

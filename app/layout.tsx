@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
     title: "IP Toolkit Pro",
     description:
-        "Comprehensive network configuration platform for Ethio Telecom",
+        "The ultimate network configuration platform for Ethio Telecom professionals and customers",
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en">
+        <html lang="en" suppressHydrationWarning>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
             >
