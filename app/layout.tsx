@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "./NavBar";
-import ClientProviders from "./ClientProviders";
+import SessionWrapper from "./SessionWrapper";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Addis Solution Hub",
-    description: "Connect solution providers with clients in Addis Ababa",
+    title: "IP Toolkit Pro",
+    description: "Comprehensive network configuration platform for Ethio Telecom",
 };
 
 export default function RootLayout({
@@ -29,10 +29,10 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}
             >
-                <ClientProviders>
+                <SessionWrapper>
                     <NavBar />
                     <main>{children}</main>
-                </ClientProviders>
+                </SessionWrapper>
             </body>
         </html>
     );

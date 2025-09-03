@@ -1,0 +1,312 @@
+import { NextRequest, NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { calculateIpInfo, findRegionForIp, getRouterRecommendation, getTutorialUrls, isValidIp } from '@/lib/cidr-utils';
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const wanIp = searchParams.get('ip');
+    
+    if (!wanIp) {
+      return NextResponse.json(
+        { error: 'IP address parameter is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate IP address format
+    if (!isValidIp(wanIp)) {
+      return NextResponse.json(
+        { error: 'Invalid IP address format' },
+        { status: 400 }
+      );
+    }
+
+    // Get all regions and interfaces from database
+    const regions = await prisma.ethioTelecomRegion.findMany({
+      include: {
+        interfaces: {
+          where: { isActive: true },
+          select: {
+            name: true,
+            ipPoolStart: true,
+            ipPoolEnd: true,
+            subnetMask: true,
+            defaultGateway: true,
+          }
+        }
+      }
+    });
+
+    console.log('Found regions:', regions.length);
+    console.log('Sample region data:', regions[0]);
+
+    // Format regions data for CIDR utils
+    const regionData = regions.map(region => ({
+      name: region.name,
+      code: region.code || '',
+      interfaces: region.interfaces.map(iface => ({
+        name: iface.name,
+        ipPoolStart: iface.ipPoolStart,
+        ipPoolEnd: iface.ipPoolEnd,
+        subnetMask: iface.subnetMask,
+        defaultGateway: iface.defaultGateway,
+      }))
+    }));
+
+    // Find region and interface for this IP
+    const regionInfo = findRegionForIp(wanIp, regionData);
+    
+    if (!regionInfo) {
+      return NextResponse.json({
+        ipAddress: wanIp,
+        error: 'IP address not found in any configured region',
+        availableRegions: regions.map(r => ({
+          name: r.name,
+          code: r.code
+        }))
+      });
+    }
+
+    // Calculate IP information
+    const ipInfo = calculateIpInfo(wanIp, regionInfo.cidr);
+    
+    // Get router recommendation
+    const recommendedRouter = getRouterRecommendation(regionInfo.region, regionInfo.interfaceName);
+    
+    // Get tutorial URLs
+    const tutorialUrls = getTutorialUrls(regionInfo.region, regionInfo.interfaceName);
+
+    // Check if this IP is already assigned to a customer
+    const existingCustomer = await prisma.customerWanIp.findFirst({
+      where: { 
+        wanIp: wanIp,
+        isActive: true 
+      },
+      include: {
+        interface: {
+          include: {
+            region: true
+          }
+        }
+      }
+    });
+
+    // Get related knowledge base articles for this region
+    const knowledgeArticles = await prisma.knowledgeBaseArticle.findMany({
+      where: {
+        published: true,
+        OR: [
+          { title: { contains: regionInfo.region, mode: 'insensitive' } },
+          { content: { contains: regionInfo.interfaceName, mode: 'insensitive' } },
+          { category: { contains: 'WAN', mode: 'insensitive' } }
+        ]
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        category: true,
+        videoUrl: true
+      },
+      take: 5
+    });
+
+    const response = {
+      ipAddress: ipInfo.ipAddress,
+      networkInfo: {
+        cidr: ipInfo.cidr,
+        subnetMask: ipInfo.subnetMask,
+        networkAddress: ipInfo.networkAddress,
+        broadcastAddress: ipInfo.broadcastAddress,
+        firstUsableIp: ipInfo.firstUsableIp,
+        lastUsableIp: ipInfo.lastUsableIp,
+        totalHosts: ipInfo.totalHosts,
+        usableHosts: ipInfo.usableHosts
+      },
+      region: {
+        name: regionInfo.region,
+        interface: regionInfo.interfaceName,
+        defaultGateway: regionInfo.defaultGateway
+      },
+      recommendations: {
+        routerModel: recommendedRouter,
+        tutorials: tutorialUrls,
+        knowledgeBase: knowledgeArticles
+      },
+      status: existingCustomer ? {
+        assigned: true,
+        accountNumber: existingCustomer.accountNumber,
+        accessNumber: existingCustomer.accessNumber,
+        customerName: existingCustomer.customerName,
+        location: existingCustomer.location
+      } : {
+        assigned: false,
+        available: true
+      }
+    };
+
+    return NextResponse.json(response);
+
+  } catch (error) {
+    console.error('WAN IP analysis error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST endpoint to register a new WAN IP assignment
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { 
+      accountNumber, 
+      accessNumber, 
+      wanIp, 
+      customerName, 
+      location 
+    } = body;
+
+    // Validate required fields
+    if (!accountNumber || !wanIp) {
+      return NextResponse.json(
+        { error: 'Account number and WAN IP are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate account number format (9 digits)
+    if (!/^\d{9}$/.test(accountNumber)) {
+      return NextResponse.json(
+        { error: 'Account number must be exactly 9 digits' },
+        { status: 400 }
+      );
+    }
+
+    // Validate access number format (11 digits)
+    if (accessNumber && !/^\d{11}$/.test(accessNumber)) {
+      return NextResponse.json(
+        { error: 'Access number must be exactly 11 digits' },
+        { status: 400 }
+      );
+    }
+
+    // Validate IP address format
+    if (!isValidIp(wanIp)) {
+      return NextResponse.json(
+        { error: 'Invalid IP address format' },
+        { status: 400 }
+      );
+    }
+
+    // Check if IP is already assigned
+    const existingAssignment = await prisma.customerWanIp.findFirst({
+      where: { 
+        wanIp: wanIp,
+        isActive: true 
+      }
+    });
+
+    if (existingAssignment) {
+      return NextResponse.json(
+        { 
+          error: 'IP address is already assigned',
+          assignedTo: {
+            accountNumber: existingAssignment.accountNumber,
+            customerName: existingAssignment.customerName
+          }
+        },
+        { status: 409 }
+      );
+    }
+
+    // Find the appropriate interface for this IP
+    const regions = await prisma.ethioTelecomRegion.findMany({
+      include: {
+        interfaces: {
+          where: { isActive: true }
+        }
+      }
+    });
+
+    const regionData = regions.map(region => ({
+      name: region.name,
+      interfaces: region.interfaces.map(iface => ({
+        name: iface.name,
+        ipPoolStart: iface.ipPoolStart,
+        ipPoolEnd: iface.ipPoolEnd,
+        subnetMask: iface.subnetMask,
+        defaultGateway: iface.defaultGateway,
+      }))
+    }));
+
+    const regionInfo = findRegionForIp(wanIp, regionData);
+    
+    if (!regionInfo) {
+      return NextResponse.json(
+        { error: 'IP address not found in any configured region' },
+        { status: 404 }
+      );
+    }
+
+    // Find the specific interface record
+    const interfaceRecord = await prisma.ethioTelecomInterface.findFirst({
+      where: {
+        name: regionInfo.interfaceName,
+        region: {
+          name: regionInfo.region
+        }
+      }
+    });
+
+    if (!interfaceRecord) {
+      return NextResponse.json(
+        { error: 'Interface configuration not found' },
+        { status: 404 }
+      );
+    }
+
+    // Create new WAN IP assignment
+    const newAssignment = await prisma.customerWanIp.create({
+      data: {
+        accountNumber,
+        accessNumber,
+        wanIp,
+        interfaceId: interfaceRecord.id,
+        customerName,
+        location,
+        isActive: true
+      },
+      include: {
+        interface: {
+          include: {
+            region: true
+          }
+        }
+      }
+    });
+
+    return NextResponse.json({
+      success: true,
+      assignment: {
+        id: newAssignment.id,
+        accountNumber: newAssignment.accountNumber,
+        accessNumber: newAssignment.accessNumber,
+        wanIp: newAssignment.wanIp,
+        customerName: newAssignment.customerName,
+        location: newAssignment.location,
+        region: newAssignment.interface.region.name,
+        interface: newAssignment.interface.name
+      }
+    });
+
+  } catch (error) {
+    console.error('WAN IP assignment error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

@@ -2,52 +2,30 @@
 
 import { useSession, signIn, signOut } from "next-auth/react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 
 export default function NavBar() {
-    const { data: session } = useSession();
-
-    // Fetch requests for client or provider
-    const requestsQuery = useQuery({
-        queryKey: ["requestsCount", session?.user?.id],
-        queryFn: async () => {
-            if (!session) return 0;
-            const res = await fetch(`/api/requests`);
-            const data = await res.json();
-            let requests = data.requests || [];
-
-            if (session.user.role === "PROVIDER") {
-                // Only show requests without provider's proposal
-                requests = requests.filter(
-                    (req: any) =>
-                        !req.proposals?.some(
-                            (p: any) => p.providerId === session.user.id
-                        )
-                );
-            } else if (session.user.role === "CLIENT") {
-                // Only show requests created by the client
-                requests = requests.filter(
-                    (req: any) => req.clientId === session.user.id
-                );
-            }
-
-            return requests.length;
-        },
-        enabled: !!session,
-        refetchInterval: 5000, // optional: refresh count periodically
-    });
-
-    const requestsCount = requestsQuery.data ?? 0;
+    const { data: session, status } = useSession(); // Destructure 'status'
+    const isLoading = status === "loading"; // Check if session is still loading
 
     return (
         <nav className="flex justify-between items-center p-4 bg-gray-100">
             <Link href="/" className="font-bold text-lg">
-                Addis Solution Hub
+                IP Toolkit Pro
             </Link>
 
             <div className="flex gap-4 items-center">
-                {!session ? (
+                {/* Show nothing while session is being fetched */}
+                {isLoading ? (
+                    <div className="w-20 h-4 bg-gray-300 rounded animate-pulse"></div> // Skeleton loader
+                ) : !session ? (
                     <>
+                        {/* User is not authenticated */}
+                        <Link
+                            href="/tools"
+                            className="px-3 py-1 text-gray-700 hover:text-gray-900"
+                        >
+                            Tools
+                        </Link>
                         <button
                             onClick={() => signIn()}
                             className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -63,20 +41,21 @@ export default function NavBar() {
                     </>
                 ) : (
                     <>
+                        {/* User is authenticated */}
+                        <Link
+                            href="/tools"
+                            className="px-3 py-1 text-gray-700 hover:text-gray-900"
+                        >
+                            Tools
+                        </Link>
+                        
                         {(session.user.role === "CLIENT" ||
                             session.user.role === "PROVIDER") && (
                             <Link
-                                href={
-                                    session.user.role === "CLIENT"
-                                        ? "/dashboard/client"
-                                        : "/dashboard/provider"
-                                }
-                                className="relative px-3 py-1 bg-yellow-200 rounded hover:bg-yellow-300"
+                                href="/dashboard"
+                                className="px-3 py-1 bg-yellow-200 rounded hover:bg-yellow-300"
                             >
                                 My Dashboard
-                                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs px-2 py-0.5 rounded-full">
-                                    {requestsCount}
-                                </span>
                             </Link>
                         )}
 
