@@ -29,7 +29,6 @@ export async function POST(req: Request) {
     // ✅ Find user by email
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { provider: true }, // include provider profile if exists
     })
 
     if (!user) {
@@ -62,7 +61,6 @@ export async function POST(req: Request) {
         name: user.name,
         email: user.email,
         role: user.role,
-        provider: user.provider,
       },
     })
   } catch (error) {

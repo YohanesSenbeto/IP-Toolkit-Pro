@@ -491,7 +491,7 @@ export default function WanIpAnalyzerPage() {
             <CardContent>
               <div className="space-y-4">
                 {analysis.recommendations?.tutorials && analysis.recommendations.tutorials.length > 0 ? (
-                  analysis.recommendations.tutorials.map((tutorial, index) => (
+                  analysis.recommendations.tutorials.map((tutorial: { title: string; url: string; description: string }, index: number) => (
                     <div key={index} className="border rounded-lg p-4">
                       <h4 className="font-semibold">{tutorial.title}</h4>
                       <p className="text-sm text-muted-foreground mb-2">{tutorial.description}</p>
@@ -523,7 +523,7 @@ export default function WanIpAnalyzerPage() {
             <CardContent>
               <div className="space-y-4">
                 {analysis.knowledgeBase && analysis.knowledgeBase.length > 0 ? (
-                  analysis.knowledgeBase.map((article, index) => (
+                  analysis.knowledgeBase.map((article: { title: string; description: string; slug: string }, index: number) => (
                     <div key={index} className="border rounded-lg p-4">
                       <h4 className="font-semibold">{article.title}</h4>
                       <p className="text-sm text-muted-foreground mb-2">{article.description}</p>

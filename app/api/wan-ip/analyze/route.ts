@@ -233,6 +233,7 @@ export async function POST(request: NextRequest) {
 
     const regionData = regions.map(region => ({
       name: region.name,
+      code: region.code || '',
       interfaces: region.interfaces.map(iface => ({
         name: iface.name,
         ipPoolStart: iface.ipPoolStart,
@@ -297,8 +298,8 @@ export async function POST(request: NextRequest) {
         wanIp: newAssignment.wanIp,
         customerName: newAssignment.customerName,
         location: newAssignment.location,
-        region: newAssignment.interface.region.name,
-        interface: newAssignment.interface.name
+        region: newAssignment.interface?.region?.name || 'Unknown',
+        interface: newAssignment.interface?.name || 'Unknown'
       }
     });
 
