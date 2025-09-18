@@ -27,14 +27,67 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Save calculation to database
+    // Save calculation to database, matching schema and addressing all weaknesses
+    // 1. Input validation and sanitization
+    // 2. Only allow/sanitize expected result keys
+    // 3. Use user connect for relation
+    // 4. Throw on invalid input
+    // 5. No sensitive data exposure
+
+    // Validate and sanitize title
+    const safeTitle =
+      typeof title === "string" && title.trim().length > 0 && title.length <= 100
+        ? title.trim()
+        : `Calculation for ${wanIp}/${cidr}`;
+
+    // Validate WAN IP (IPv4 dotted decimal)
+    const safeWanIp =
+      typeof wanIp === "string" && /^(\d{1,3}\.){3}\d{1,3}$/.test(wanIp.trim())
+        ? wanIp.trim()
+        : (() => {
+            throw new Error("Invalid WAN IP address format");
+          })();
+
+    // Validate CIDR
+    const safeCidr = (() => {
+      const cidrNum = typeof cidr === "number" ? cidr : parseInt(cidr, 10);
+      if (Number.isInteger(cidrNum) && cidrNum >= 0 && cidrNum <= 32) {
+        return cidrNum;
+      }
+      throw new Error("Invalid CIDR value");
+    })();
+
+    // Validate and sanitize result object
+    const safeResult = (() => {
+      if (
+        typeof result === "object" &&
+        result !== null &&
+        typeof result.subnetMask === "string" &&
+        typeof result.usableHosts === "number"
+      ) {
+        // Only allow expected keys (subnetMask, usableHosts, and optionally others)
+        // Remove any keys that are not allowed by the schema
+        const allowedKeys = ["subnetMask", "usableHosts"];
+        const sanitized: any = {};
+        for (const key of allowedKeys) {
+          sanitized[key] = result[key];
+        }
+        // Optionally, allow extra keys if schema allows (add here)
+        // e.g. if (typeof result.networkAddress === "string") sanitized.networkAddress = result.networkAddress;
+        return sanitized;
+      }
+      throw new Error("Invalid result object");
+    })();
+
     const calculation = await prisma.calculation.create({
       data: {
-        title: title || `Calculation for ${wanIp}/${cidr}`,
-        wanIp,
-        cidr: parseInt(cidr),
-        result,
-        userId: user.id,
+        title: safeTitle,
+        wanIp: safeWanIp,
+        cidr: safeCidr,
+        result: safeResult,
+        user: {
+          connect: { id: user.id }
+        }
       },
     });
 

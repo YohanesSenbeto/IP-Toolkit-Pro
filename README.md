@@ -2,6 +2,62 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+---
+
+# IP Toolkit Pro / NetConfig Hub – Security & UX Enhancement Plan
+
+**Audience:** Ethio Telecom employees & customers  
+**Core Features:** WAN IP Analyzer, IP Calculator, Knowledge Base
+
+---
+
+## ✅ Project Scope & Audience Understood
+
+This project is an enterprise-grade toolkit for Ethio Telecom, focused on secure WAN IP management, calculation, and knowledge sharing. Security, data privacy, and a professional, modern UI are paramount.
+
+---
+
+## PHASE 1: SECURITY AUDIT & HARDENING
+
+### 1. Top Security Vulnerabilities & Fixes
+
+#### **1.1. Insecure Password Handling**
+- **Risk:** If passwords are not hashed (e.g., using bcrypt) before storage or comparison, user credentials are at risk of compromise.
+- **Fix:** Always hash passwords before saving and during authentication.
+
+**Code Fix Example (`lib/auth.ts`):**
+
+// Secure password hashing and verification using bcrypt in Next.js (TypeScript)
+
+// lib/auth.ts
+
+import bcrypt from 'bcrypt';
+
+// Hash a password before storing in the database
+export async function hashPassword(plainPassword: string): Promise<string> {
+  const saltRounds = 12; // Stronger than default, but still performant
+  return await bcrypt.hash(plainPassword, saltRounds);
+}
+
+// Compare a plain password with a hashed password during login
+export async function verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+  return await bcrypt.compare(plainPassword, hashedPassword);
+}
+
+/*
+Usage Example:
+
+// Registration
+const hashed = await hashPassword(userInputPassword);
+// Save 'hashed' to DB
+
+// Login
+const isValid = await verifyPassword(loginInputPassword, userRecord.hashedPassword);
+if (!isValid) {
+  throw new Error('Invalid credentials');
+}
+*/
+
 First, run the development server:
 
 ```bash

@@ -1,9 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { calculateIpInfo, findRegionForIp, getRouterRecommendation, getTutorialUrls, isValidIp } from '@/lib/cidr-utils';
 
 export async function GET(request: NextRequest) {
   try {
+    // Server-side gating: guests 1 try; logged-in 2 tries unless social verified
+    const session = await getServerSession(authOptions as any);
+    const userKey = (session?.user?.email || session?.user?.name || 'user').toLowerCase();
+    const cookies = request.headers.get('cookie') || '';
+    const readCookie = (name: string) => {
+      const m = cookies.match(new RegExp(`${name}=([^;]+)`));
+      return m ? decodeURIComponent(m[1]) : '';
+    };
+    const verified = readCookie(`social_verified_${userKey}`) === '1';
+    const usesKey = session ? `uses_analyzer_${userKey}` : 'trial_used';
+    const usedVal = readCookie(usesKey);
+    const used = parseInt(usedVal || '0', 10) || (usedVal === '1' ? 1 : 0);
+    if (!session && used >= 1) {
+      return NextResponse.json({ error: 'Trial limit reached' }, { status: 429 });
+    }
+    if (session && !verified) {
+      if (used >= 2) {
+        return NextResponse.json({ error: 'Usage limit reached, verification required' }, { status: 429 });
+      }
+    }
     const { searchParams } = new URL(request.url);
     const wanIp = searchParams.get('ip');
     
@@ -146,7 +168,15 @@ export async function GET(request: NextRequest) {
       }
     };
 
-    return NextResponse.json(response);
+    const res = NextResponse.json(response);
+    // Increment counters
+    if (!session) {
+      res.headers.append('Set-Cookie', `trial_used=1; Max-Age=31536000; Path=/; HttpOnly; SameSite=Lax`);
+    } else if (!verified) {
+      const next = String(used + 1);
+      res.headers.append('Set-Cookie', `uses_analyzer_${userKey}=${next}; Max-Age=31536000; Path=/; HttpOnly; SameSite=Lax`);
+    }
+    return res;
 
   } catch (error) {
     console.error('WAN IP analysis error:', error);

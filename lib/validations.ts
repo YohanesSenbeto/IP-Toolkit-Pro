@@ -38,7 +38,7 @@ export const userRegistrationSchema = z.object({
     "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
   ),
   confirmPassword: z.string(),
-  role: z.enum(["USER", "ADMIN"]),
+  role: z.enum(["USER", "ADMIN"]).default("USER").optional(),
   terms: z.boolean().refine(val => val === true, {
     message: "You must accept the terms and conditions"
   })

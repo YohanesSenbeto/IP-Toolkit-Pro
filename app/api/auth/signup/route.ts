@@ -6,12 +6,30 @@ import { z } from "zod";
 
 const prisma = new PrismaClient();
 
-// ✅ Zod validation schema
+// ✅ Zod validation schema (align with Prisma Role)
 const signupSchema = z.object({
-  name: z.string().min(2, "Name is required"),
+  name: z
+    .string()
+    .min(2, { message: "Name must be at least 2 characters" })
+    .max(50, { message: "Name must be at most 50 characters" })
+    .trim()
+    .nonempty({ message: "Name is required" }),
   email: z.string().email("Invalid email"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  role: z.enum(["CLIENT", "PROVIDER", "ADMIN"]),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .refine(
+      (val) =>
+        /[A-Z]/.test(val) &&
+        /[a-z]/.test(val) &&
+        /\d/.test(val) &&
+        /[^A-Za-z0-9]/.test(val),
+      {
+        message:
+          "Password must contain uppercase, lowercase, number, and special character",
+      }
+    ),
+  role: z.enum(["USER", "ADMIN"]).default("USER").optional(),
 });
 
 // ✅ Type for parsed input
@@ -20,7 +38,7 @@ type SignupInput = z.infer<typeof signupSchema>;
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, email, password, role } = signupSchema.parse(body);
+    const { name, email, password } = signupSchema.parse(body);
 
     // ✅ Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -43,7 +61,7 @@ export async function POST(req: Request) {
         name,
         email,
         password: hashedPassword,
-        role: role as Role,
+        role: "USER",
       },
       select: {
         id: true,
