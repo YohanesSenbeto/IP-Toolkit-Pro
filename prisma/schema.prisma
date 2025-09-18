@@ -8,169 +8,132 @@ datasource db {
 }
 
 model User {
-  id              String           @id @default(cuid())
-  name            String?
-  email           String?          @unique
-  password        String?
-  role            Role             @default(USER)
-  emailVerified   DateTime?
-  image           String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-
-  // Relations for IP Toolkit
-  calculations    Calculation[]
-  knowledgeBase  KnowledgeBaseArticle[] @relation("ArticleAuthor")
+  id            String                 @id @default(cuid())
+  name          String?
+  email         String?                @unique
+  password      String?
+  role          Role                   @default(USER)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  emailVerified DateTime?
+  image         String?
+  calculations  Calculation[]
+  knowledgeBase KnowledgeBaseArticle[] @relation("ArticleAuthor")
 }
 
 model Calculation {
-  id          String      @id @default(cuid())
-  userId      String
-  user        User        @relation(fields: [userId], references: [id])
-  title       String?
-  wanIp       String      // WAN IP Address
-  cidr        Int         // CIDR notation
-  result      Json        // Stores the full calculation output as JSON
-  createdAt   DateTime    @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  title     String?
+  wanIp     String
+  cidr      Int
+  result    Json
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
 }
 
 model KnowledgeBaseArticle {
-  id            String      @id @default(cuid())
-  title         String      
-  slug          String      @unique
-  content       String?
-  videoUrl      String?
-  routerModels  String[]    // Array of relevant router models
-  category      String      // e.g., 'Fiber', 'DSL', 'LTE', 'General'
-  authorId      String
-  author        User        @relation("ArticleAuthor", fields: [authorId], references: [id])
-  published     Boolean     @default(false)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id           String   @id @default(cuid())
+  title        String
+  slug         String   @unique
+  content      String?
+  videoUrl     String?
+  routerModels String[]
+  category     String
+  authorId     String
+  published    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  author       User     @relation("ArticleAuthor", fields: [authorId], references: [id])
 }
 
 model WanIp {
-  id          String    @id @default(cuid())
-  ipAddress   String    @unique
+  id          String   @id @default(cuid())
+  ipAddress   String   @unique
   cidr        Int
   description String?
   location    String?
   routerModel String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
   @@map("wan_ips")
 }
 
 model RouterModel {
-  id          String    @id @default(cuid())
-  modelName   String    @unique
+  id           String   @id @default(cuid())
+  modelName    String   @unique
   manufacturer String
-  type        String    // e.g., 'PE Router', 'Edge Router', 'CPE', 'Home Router'
+  type         String
   capabilities String[]
-  tutorialUrl String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  tutorialUrl  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
   @@map("router_models")
 }
 
 model EthioTelecomRegion {
-  id          String    @id @default(cuid())
-  name        String    @unique
-  code        String?   // Region code like SWAAZ, EAAZ, WAAZ, etc.
+  id          String                   @id @default(cuid())
+  name        String                   @unique
+  code        String?
   description String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  isActive    Boolean                  @default(true)
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
   interfaces  EthioTelecomInterface[]
   technicians EthioTelecomTechnician[]
-  wanIpPools  WanIpPool[]
-  
+
   @@map("ethio_telecom_regions")
 }
 
 model EthioTelecomInterface {
-  id          String    @id @default(cuid())
-  name        String    // Interface name like VBUI100, VBUI101, etc.
-  regionId    String
-  region      EthioTelecomRegion @relation(fields: [regionId], references: [id])
-  ipPoolStart String    // Starting IP address
-  ipPoolEnd   String    // Ending IP address
-  subnetMask  String    // Subnet mask
-  defaultGateway String // Default gateway
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
+  id             String             @id @default(cuid())
+  name           String
+  regionId       String
+  ipPoolStart    String
+  ipPoolEnd      String
+  subnetMask     String
+  defaultGateway String
+  isActive       Boolean            @default(true)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
   customerWanIps CustomerWanIp[]
-  wanIpPools  WanIpPool[]
-  
+  region         EthioTelecomRegion @relation(fields: [regionId], references: [id])
+
   @@map("ethio_telecom_interfaces")
 }
 
 model EthioTelecomTechnician {
-  id          String    @id @default(cuid())
-  employeeId  String    @unique // e.g., 14777
-  username    String    @unique // e.g., Yohanes.Senbeto
-  name        String
-  email       String?   @unique
-  password    String?    // Hashed password for authentication
-  regionId    String?
-  region      EthioTelecomRegion? @relation(fields: [regionId], references: [id])
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  // Relations for IP pool management
-  managedWanIps CustomerWanIp[] @relation("TechnicianManaged")
-  createdIpPools WanIpPool[] @relation("TechnicianCreated")
-  
+  id         String              @id @default(cuid())
+  employeeId String              @unique
+  username   String              @unique
+  name       String
+  email      String?             @unique
+  regionId   String?
+  isActive   Boolean             @default(true)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  region     EthioTelecomRegion? @relation(fields: [regionId], references: [id])
+
   @@map("ethio_telecom_technicians")
 }
 
 model CustomerWanIp {
-  id          String    @id @default(cuid())
-  accountNumber String  @unique
-  accessNumber String?  @unique
-  wanIp       String
-  interfaceId String?
-  interface   EthioTelecomInterface? @relation(fields: [interfaceId], references: [id])
-  customerName String?
-  location    String?
-  technicianId  String?
-  technician  EthioTelecomTechnician? @relation("TechnicianManaged", fields: [technicianId], references: [id])
-  assignedAt  DateTime?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  @@map("customer_wan_ips")
-}
+  id            String                 @id @default(cuid())
+  accountNumber String                 @unique
+  accessNumber  String?                @unique
+  wanIp         String
+  interfaceId   String?
+  customerName  String?
+  location      String?
+  isActive      Boolean                @default(true)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  interface     EthioTelecomInterface? @relation(fields: [interfaceId], references: [id])
 
-model WanIpPool {
-  id          String    @id @default(cuid())
-  poolName    String    @unique
-  startIp     String    // Starting IP address of the pool
-  endIp       String    // Ending IP address of the pool
-  cidr        Int       // CIDR notation for the pool
-  regionId    String
-  region      EthioTelecomRegion @relation(fields: [regionId], references: [id])
-  interfaceId String
-  interface   EthioTelecomInterface @relation(fields: [interfaceId], references: [id])
-  totalIps    Int       // Total IPs in pool
-  availableIps Int      // Available IPs
-  usedIps     Int      // Used IPs
-  technicianId String
-  technician  EthioTelecomTechnician @relation("TechnicianCreated", fields: [technicianId], references: [id])
-  description String?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  @@map("wan_ip_pools")
+  @@map("customer_wan_ips")
 }
 
 enum Role {
