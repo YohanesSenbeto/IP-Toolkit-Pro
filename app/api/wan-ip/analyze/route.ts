@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
+import { DefaultSession } from 'next-auth';
 import prisma from '@/lib/prisma';
 import { calculateIpInfo, findRegionForIp, getRouterRecommendation, getTutorialUrls, isValidIp } from '@/lib/cidr-utils';
 
 export async function GET(request: NextRequest) {
   try {
     // Server-side gating: guests 1 try; logged-in 2 tries unless social verified
-    const session = await getServerSession(authOptions as any);
+    const session: DefaultSession | null = await getServerSession(authOptions);
     const userKey = (session?.user?.email || session?.user?.name || 'user').toLowerCase();
     const cookies = request.headers.get('cookie') || '';
     const readCookie = (name: string) => {
