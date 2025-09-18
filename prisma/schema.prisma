@@ -114,24 +114,30 @@ model EthioTelecomTechnician {
   regionId   String?
   isActive   Boolean             @default(true)
   createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @updatedAt
+  updatedAt  DateTime            @default(now())
   region     EthioTelecomRegion? @relation(fields: [regionId], references: [id])
+
+  customerWanIps CustomerWanIp[] // ← back-relation added
 
   @@map("ethio_telecom_technicians")
 }
 
 model CustomerWanIp {
-  id            String                 @id @default(cuid())
-  accountNumber String                 @unique
-  accessNumber  String?                @unique
+  id            String    @id @default(cuid())
+  accountNumber String    @unique
+  accessNumber  String?   @unique
   wanIp         String
   interfaceId   String?
+  technicianId  String? // Add this field for relation
   customerName  String?
   location      String?
-  isActive      Boolean                @default(true)
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-  interface     EthioTelecomInterface? @relation(fields: [interfaceId], references: [id])
+  isActive      Boolean   @default(true)
+  assignedAt    DateTime? // Optional: when IP assigned
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  interface  EthioTelecomInterface?  @relation(fields: [interfaceId], references: [id])
+  technician EthioTelecomTechnician? @relation(fields: [technicianId], references: [id])
 
   @@map("customer_wan_ips")
 }
