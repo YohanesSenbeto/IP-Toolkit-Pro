@@ -11,24 +11,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all pools created by this technician
-    const pools = await prisma.wanIpPool.findMany({
+    // Get all CustomerWanIp assigned to this technician
+    const customerIPs = await prisma.customerWanIp.findMany({
       where: { technicianId: session.user.id },
       select: {
-        totalIps: true,
-        usedIps: true,
-        availableIps: true,
+        wanIp: true,
+        isActive: true,
       },
     });
 
-    // Calculate totals
-    const totalPools = pools.length;
-    const totalIPs = pools.reduce((sum, pool) => sum + pool.totalIps, 0);
-    const assignedIPs = pools.reduce((sum, pool) => sum + pool.usedIps, 0);
-    const availableIPs = pools.reduce((sum, pool) => sum + pool.availableIps, 0);
+    const totalIPs = customerIPs.length;
+    const assignedIPs = customerIPs.filter(ip => ip.isActive).length;
+    const availableIPs = customerIPs.filter(ip => !ip.isActive).length;
 
     return NextResponse.json({
-      totalPools,
       totalIPs,
       assignedIPs,
       availableIPs,

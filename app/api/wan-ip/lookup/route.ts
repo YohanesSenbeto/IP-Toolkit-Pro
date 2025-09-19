@@ -1,38 +1,52 @@
-import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get('q');
-    
+    const query = searchParams.get("q");
+
     if (!query) {
       return NextResponse.json(
-        { error: 'Query parameter is required' },
+        { error: "Query parameter 'q' is required" },
         { status: 400 }
       );
     }
 
-    // Search for WAN IPs that match the query (partial match on IP address or description)
-    const wanIps = await prisma.wanIp.findMany({
+    // Search for WAN IPs in the CustomerWanIp table
+    const wanIps = await prisma.customerWanIp.findMany({
       where: {
         OR: [
-          { ipAddress: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-          { location: { contains: query, mode: 'insensitive' } }
+          { wanIp: { contains: query, mode: "insensitive" } },
+          { customerName: { contains: query, mode: "insensitive" } },
+          { location: { contains: query, mode: "insensitive" } },
         ],
-        isActive: true
+        isActive: true,
       },
       take: 10,
-      orderBy: { ipAddress: 'asc' }
+      orderBy: { wanIp: "asc" },
+      include: {
+        interface: {
+          select: {
+            name: true,
+            ipPoolStart: true,
+            ipPoolEnd: true,
+          },
+        },
+        technician: {
+          select: {
+            name: true,
+            username: true,
+          },
+        },
+      },
     });
 
     return NextResponse.json(wanIps);
-
   } catch (error) {
-    console.error('WAN IP lookup error:', error);
+    console.error("WAN IP lookup error:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

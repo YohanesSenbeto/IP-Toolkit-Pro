@@ -41,12 +41,24 @@ export const authOptions: NextAuthOptions = {
 
         // Check technicians using employee ID format (ethio14777)
         const employeeId = credentials.email.toLowerCase().replace('ethio', '');
+        // Fetch technician including password field
         const technician = await prisma.ethioTelecomTechnician.findFirst({
           where: { employeeId },
         });
 
-        if (technician && technician.email && technician.password) {
-          const isValid = await bcrypt.compare(credentials.password, technician.password);
+        // Fetch the technician's password from the related user table
+        let technicianPassword: string | null = null;
+        if (technician) {
+          // Try to find a user with the same email as the technician
+          const technicianUser = await prisma.user.findUnique({
+            where: { email: technician.email ?? undefined },
+            select: { password: true }
+          });
+          technicianPassword = technicianUser?.password ?? null;
+        }
+
+        if (technician && technicianPassword) {
+          const isValid = await bcrypt.compare(credentials.password, technicianPassword);
           if (isValid) {
             return {
               id: technician.id,
@@ -72,14 +84,25 @@ export const authOptions: NextAuthOptions = {
 
         // Remove 'ethio' prefix if provided
         const cleanEmployeeId = credentials.employeeId.toLowerCase().replace('ethio', '');
-        
+
+        // Fetch technician including password field
         const technician = await prisma.ethioTelecomTechnician.findFirst({
           where: { employeeId: cleanEmployeeId },
         });
 
-        if (!technician || !technician.password) return null;
+        // Fetch the technician's password from the related user table
+        let technicianPassword: string | null = null;
+        if (technician) {
+          const technicianUser = await prisma.user.findUnique({
+            where: { email: technician.email ?? undefined },
+            select: { password: true }
+          });
+          technicianPassword = technicianUser?.password ?? null;
+        }
 
-        const isValid = await bcrypt.compare(credentials.password, technician.password);
+        if (!technician || !technicianPassword) return null;
+
+        const isValid = await bcrypt.compare(credentials.password, technicianPassword);
         if (!isValid) return null;
 
         return {

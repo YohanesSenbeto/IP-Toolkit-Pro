@@ -47,18 +47,26 @@ model KnowledgeBaseArticle {
   author       User     @relation("ArticleAuthor", fields: [authorId], references: [id])
 }
 
-model WanIp {
-  id          String   @id @default(cuid())
-  ipAddress   String   @unique
-  cidr        Int
-  description String?
-  location    String?
-  routerModel String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model WanIpPool {
+  id           String   @id @default(cuid())
+  poolName     String
+  startIp      String
+  endIp        String
+  cidr         Int
+  totalIps     Int
+  usedIps      Int
+  availableIps Int
+  description  String?
+  regionId     String
+  interfaceId  String
+  technicianId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now())
 
-  @@map("wan_ips")
+  // Relations
+  region     EthioTelecomRegion     @relation(fields: [regionId], references: [id], name: "RegionPools")
+  interface  EthioTelecomInterface  @relation(fields: [interfaceId], references: [id], name: "InterfacePools")
+  technician EthioTelecomTechnician @relation(fields: [technicianId], references: [id], name: "TechnicianPools")
 }
 
 model RouterModel {
@@ -69,7 +77,7 @@ model RouterModel {
   capabilities String[]
   tutorialUrl  String?
   createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime @default(now())
 
   @@map("router_models")
 }
@@ -81,9 +89,10 @@ model EthioTelecomRegion {
   description String?
   isActive    Boolean                  @default(true)
   createdAt   DateTime                 @default(now())
-  updatedAt   DateTime                 @updatedAt
+  updatedAt   DateTime                 @default(now())
   interfaces  EthioTelecomInterface[]
   technicians EthioTelecomTechnician[]
+  pools       WanIpPool[]              @relation("RegionPools")
 
   @@map("ethio_telecom_regions")
 }
@@ -98,26 +107,28 @@ model EthioTelecomInterface {
   defaultGateway String
   isActive       Boolean            @default(true)
   createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  updatedAt      DateTime           @default(now())
   customerWanIps CustomerWanIp[]
   region         EthioTelecomRegion @relation(fields: [regionId], references: [id])
+  pools          WanIpPool[]        @relation("InterfacePools")
 
   @@map("ethio_telecom_interfaces")
 }
 
 model EthioTelecomTechnician {
-  id         String              @id @default(cuid())
-  employeeId String              @unique
-  username   String              @unique
-  name       String
-  email      String?             @unique
-  regionId   String?
-  isActive   Boolean             @default(true)
-  createdAt  DateTime            @default(now())
-  updatedAt  DateTime            @default(now())
-  region     EthioTelecomRegion? @relation(fields: [regionId], references: [id])
-
-  customerWanIps CustomerWanIp[] // ← back-relation added
+  id             String              @id @default(cuid())
+  employeeId     String              @unique
+  username       String              @unique
+  name           String
+  email          String?             @unique
+  password       String? // ← add this field
+  regionId       String?
+  isActive       Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @default(now())
+  region         EthioTelecomRegion? @relation(fields: [regionId], references: [id])
+  customerWanIps CustomerWanIp[]
+  pools          WanIpPool[]         @relation("TechnicianPools")
 
   @@map("ethio_telecom_technicians")
 }
@@ -128,13 +139,13 @@ model CustomerWanIp {
   accessNumber  String?   @unique
   wanIp         String
   interfaceId   String?
-  technicianId  String? // Add this field for relation
+  technicianId  String?
   customerName  String?
   location      String?
   isActive      Boolean   @default(true)
-  assignedAt    DateTime? // Optional: when IP assigned
+  assignedAt    DateTime?
   createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  updatedAt     DateTime  @default(now())
 
   interface  EthioTelecomInterface?  @relation(fields: [interfaceId], references: [id])
   technician EthioTelecomTechnician? @relation(fields: [technicianId], references: [id])

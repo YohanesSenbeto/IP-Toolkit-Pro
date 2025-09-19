@@ -50,7 +50,26 @@ export default function Home() {
             description:
                 "Step-by-step configuration guides for popular router models including TP-Link, Huawei, and more",
             link: "/knowledge-base/routers",
-            icon: "🔄",
+            icon: (
+                <span
+                    style={{
+                        display: "inline-block",
+                        borderRadius: "50%",
+                        background:
+                            "linear-gradient(135deg, #FFD600 60%, #008060 100%)",
+                        color: "#222",
+                        padding: "0.35em 0.5em",
+                        fontWeight: 700,
+                        fontSize: "1.2em",
+                        boxShadow:
+                            "0 2px 8px 0 rgba(0,0,0,0.08), 0 1.5px 0 #008060 inset",
+                    }}
+                    className="dark:bg-[#008060] dark:text-[#FFD600] dark:shadow-lg"
+                    aria-label="Router Config Icon"
+                >
+                    🔄
+                </span>
+            ),
         },
         {
             title: "Multi-Device Sync",

@@ -1,75 +1,132 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from "tailwindcss"
 
 const config: Config = {
-    darkMode: ['class'],
-    content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
-    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  darkMode: ["class"], // class strategy for dark mode
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
-  	extend: {
-  		backgroundImage: {
-  			'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-  			'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))'
-  		},
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		},
-  		colors: {
-  			background: 'hsl(var(--background))',
-  			foreground: 'hsl(var(--foreground))',
-  			card: {
-  				DEFAULT: 'hsl(var(--card))',
-  				foreground: 'hsl(var(--card-foreground))'
-  			},
-  			popover: {
-  				DEFAULT: 'hsl(var(--popover))',
-  				foreground: 'hsl(var(--popover-foreground))'
-  			},
-  			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
-  			},
-  			secondary: {
-  				DEFAULT: 'hsl(var(--secondary))',
-  				foreground: 'hsl(var(--secondary-foreground))'
-  			},
-  			muted: {
-  				DEFAULT: 'hsl(var(--muted))',
-  				foreground: 'hsl(var(--muted-foreground))'
-  			},
-  			accent: {
-  				DEFAULT: 'hsl(var(--accent))',
-  				foreground: 'hsl(var(--accent-foreground))'
-  			},
-  			destructive: {
-  				DEFAULT: 'hsl(var(--destructive))',
-  				foreground: 'hsl(var(--destructive-foreground))'
-  			},
-  			border: 'hsl(var(--border))',
-  			input: 'hsl(var(--input))',
-  			ring: 'hsl(var(--ring))',
-  			chart: {
-  				'1': 'hsl(var(--chart-1))',
-  				'2': 'hsl(var(--chart-2))',
-  				'3': 'hsl(var(--chart-3))',
-  				'4': 'hsl(var(--chart-4))',
-  				'5': 'hsl(var(--chart-5))'
-  			}
-  		}
-  	}
+    extend: {
+      backgroundImage: {
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+        "gradient-conic":
+          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "calc(var(--radius) - 4px)",
+      },
+      colors: {
+        // 🎨 Ethio Telecom extended brand palette
+        brand: {
+          green: "#008060", // main Ethio Telecom green
+          darkGreen: "#00543C", // deep green
+          yellow: "#FFD600", // accent yellow
+          lightGreen: "#E6F4EA", // pale green bg
+        },
+        background: {
+          DEFAULT: "#F6FFF7",
+          dark: "#0B1F17",
+        },
+        foreground: {
+          DEFAULT: "#00543C",
+          dark: "#F6FFF7",
+        },
+        card: {
+          DEFAULT: "#FFFFFF",
+          foreground: "#00543C",
+          dark: "#11291F",
+          "dark-foreground": "#FFD600",
+        },
+        popover: {
+          DEFAULT: "#F6FFF7",
+          foreground: "#00543C",
+          dark: "#11291F",
+          "dark-foreground": "#FFD600",
+        },
+        primary: {
+          DEFAULT: "#008060",
+          foreground: "#FFFFFF",
+          dark: "#FFD600",
+          "dark-foreground": "#00543C",
+        },
+        secondary: {
+          DEFAULT: "#FFD600",
+          foreground: "#00543C",
+          dark: "#FFD600",
+          "dark-foreground": "#00543C",
+        },
+        muted: {
+          DEFAULT: "#E6F4EA",
+          foreground: "#00543C",
+          dark: "#1A2F25",
+          "dark-foreground": "#FFD600",
+        },
+        accent: {
+          DEFAULT: "#FFD600",
+          foreground: "#008060",
+          dark: "#008060",
+          "dark-foreground": "#FFD600",
+        },
+        destructive: {
+          DEFAULT: "#E53935",
+          foreground: "#FFFFFF",
+          dark: "#FFB4A9",
+          "dark-foreground": "#8B1F1A",
+        },
+        border: {
+          DEFAULT: "#B2DFDB",
+          dark: "#224D3B",
+        },
+        input: {
+          DEFAULT: "#E6F4EA",
+          dark: "#224D3B",
+        },
+        ring: {
+          DEFAULT: "#FFD600",
+          dark: "#FFD600",
+        },
+        chart: {
+          1: "#008060",
+          2: "#FFD600",
+          3: "#00543C",
+          4: "#E6F4EA",
+          5: "#B2DFDB",
+        },
+      },
+    },
   },
   plugins: [
     require("daisyui"),
-    require('@tailwindcss/typography'),
-      require("tailwindcss-animate")
-],
+    require("@tailwindcss/typography"),
+    require("tailwindcss-animate"),
+  ],
   daisyui: {
-    themes: ["winter"],
-    darkTheme: "dark",
+    themes: [
+      {
+        ethio: {
+          primary: "#008060",
+          secondary: "#FFD600",
+          accent: "#FFD600",
+          neutral: "#00543C",
+          "base-100": "#F6FFF7",
+          "base-content": "#00543C",
+        },
+        "ethio-dark": {
+          primary: "#FFD600",
+          secondary: "#008060",
+          accent: "#FFD600",
+          neutral: "#11291F",
+          "base-100": "#0B1F17",
+          "base-content": "#F6FFF7",
+        },
+      },
+    ],
+    darkTheme: "ethio-dark",
   },
 }
+
 export default config

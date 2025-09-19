@@ -4,103 +4,98 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
-const createPoolSchema = z.object({
-  poolName: z.string().min(1, "Pool name is required"),
-  startIp: z.string().ip("Invalid IP address"),
-  endIp: z.string().ip("Invalid IP address"),
-  cidr: z.number().min(1).max(32),
-  regionId: z.string().uuid("Invalid region ID"),
-  interfaceId: z.string().uuid("Invalid interface ID"),
-  description: z.string().optional(),
+// Schema for creating a new IP assignment
+const createIpSchema = z.object({
+  customerName: z.string().min(2),
+  customerId: z.string().min(1),
+  ipAddress: z.string().ip(),
 });
 
-// GET: Fetch technician's IP pools
+// GET: Fetch technician IP pools/stats
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || session.user.role !== "ETHIO_TELECOM_TECHNICIAN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const pools = await prisma.wanIpPool.findMany({
+    // Get all IPs assigned to this technician
+    const customerIPs = await prisma.customerWanIp.findMany({
       where: { technicianId: session.user.id },
       include: {
-        region: true,
         interface: true,
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ pools });
+    // Calculate totals per interface
+    const pools = customerIPs.reduce((acc, ip) => {
+      const interfaceId = ip.interfaceId || "unknown";
+      if (!acc[interfaceId]) {
+        acc[interfaceId] = {
+          interface: ip.interface,
+          totalIps: 0,
+          usedIps: 0,
+          availableIps: 0,
+        };
+      }
+      acc[interfaceId].totalIps += 1;
+      if (ip.isActive) {
+        acc[interfaceId].usedIps += 1;
+      } else {
+        acc[interfaceId].availableIps += 1;
+      }
+      return acc;
+    }, {} as Record<string, any>);
+
+    return NextResponse.json({ pools: Object.values(pools) });
   } catch (error) {
     console.error("Error fetching technician pools:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch IP pools" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch IP pools" }, { status: 500 });
   }
 }
 
-// POST: Create new IP pool
+// POST: Assign new IP to customer
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session || session.user.role !== "ETHIO_TELECOM_TECHNICIAN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const validatedData = createPoolSchema.parse(body);
+    const validatedData = createIpSchema.parse(body);
 
-    // Validate IP range
-    const startIpNum = ipToNumber(validatedData.startIp);
-    const endIpNum = ipToNumber(validatedData.endIp);
-    
-    if (startIpNum >= endIpNum) {
-      return NextResponse.json(
-        { error: "Start IP must be less than end IP" },
-        { status: 400 }
-      );
+    // Check if IP is already assigned
+    const existingIp = await prisma.customerWanIp.findFirst({
+      where: { wanIp: validatedData.ipAddress },
+    });
+
+    if (existingIp) {
+      return NextResponse.json({ error: "IP address already assigned" }, { status: 400 });
     }
 
-    // Calculate total IPs
-    const totalIps = endIpNum - startIpNum + 1;
-
-    // Create the pool
-    const pool = await prisma.wanIpPool.create({
+    // Create the new IP assignment
+    const customerWanIp = await prisma.customerWanIp.create({
       data: {
-        ...validatedData,
-        totalIps,
-        availableIps: totalIps,
-        usedIps: 0,
+        customerName: validatedData.customerName,
+        accountNumber: validatedData.customerId,
+        wanIp: validatedData.ipAddress,
         technicianId: session.user.id,
-      },
-      include: {
-        region: true,
-        interface: true,
+        assignedAt: new Date(),
+        isActive: true,
       },
     });
 
-    return NextResponse.json({ pool }, { status: 201 });
+    return NextResponse.json({ customerWanIp }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.errors[0].message },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: error.errors[0].message }, { status: 400 });
     }
-    
-    console.error("Error creating IP pool:", error);
-    return NextResponse.json(
-      { error: "Failed to create IP pool" },
-      { status: 500 }
-    );
-  }
-}
 
-// Helper function to convert IP to number
-function ipToNumber(ip: string): number {
-  return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0) >>> 0;
+    console.error("Error assigning IP:", error);
+    return NextResponse.json({ error: "Failed to assign IP" }, { status: 500 });
+  }
 }

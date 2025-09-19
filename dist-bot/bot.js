@@ -16,6 +16,22 @@ if (!TOKEN)
 if (!YOUTUBE_API_KEY)
     throw new Error("❌ Missing YOUTUBE_API_KEY in .env");
 const bot = new node_telegram_bot_api_1.default(TOKEN, { polling: true });
+// Basic startup diagnostics
+(async () => {
+    try {
+        const me = await bot.getMe();
+        console.log(`🤖 Telegram bot started as @${me.username} (id=${me.id})`);
+    }
+    catch (e) {
+        console.error('Failed to start Telegram bot. Check TELEGRAM_BOT_TOKEN and network connectivity.');
+    }
+})();
+bot.on('polling_error', (err) => {
+    console.error('Polling error:', err);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled promise rejection in bot:', reason);
+});
 // In-memory sessions
 const sessions = {};
 // /start command

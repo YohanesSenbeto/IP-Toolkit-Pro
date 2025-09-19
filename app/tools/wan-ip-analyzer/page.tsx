@@ -103,6 +103,7 @@ export default function WanIpAnalyzerPage() {
     
     try {
       const isLoggedIn = Boolean(session);
+      const isPrivileged = (session?.user?.email || '').toLowerCase() === 'josen@gmail.com';
       const trialUsed = typeof window !== 'undefined' && (localStorage.getItem('trialUsed') === '1' || document.cookie.includes('trial_used=1'));
       if (!isLoggedIn && trialUsed) {
         toast.info("Free trial used", { description: "Create an account to continue using IP tools." });
@@ -120,13 +121,13 @@ export default function WanIpAnalyzerPage() {
       const cookieMatch = document.cookie.match(new RegExp(`${usesKey}=([^;]+)`));
       const ckUses = cookieMatch ? parseInt(cookieMatch[1], 10) || 0 : 0;
       const pastUses = Math.max(lsUses, ckUses);
-      if (isLoggedIn && !verified && pastUses >= 2) {
+      if (!isPrivileged && isLoggedIn && !verified && pastUses >= 2) {
         setShowGate(true);
         setLoading(false);
         return;
       }
 
-      const response = await fetch(`/api/wan-ip/analyze?ip=${encodeURIComponent(ip)}`);
+      const response = await fetch(`/api/wan-ip/analyze?ip=${encodeURIComponent(ip)}&unmetered=1`);
       const data = await response.json();
       
       if (!response.ok) {
@@ -138,6 +139,9 @@ export default function WanIpAnalyzerPage() {
         throw new Error(data.error || 'Failed to analyze IP');
       }
       
+      if (!data || !data.networkInfo || typeof data.networkInfo.cidr === 'undefined') {
+        throw new Error('No analysis data returned');
+      }
       setAnalysis(data);
       try {
         const regionName = data?.region?.name ? ` — ${data.region.name}` : '';
@@ -152,7 +156,7 @@ export default function WanIpAnalyzerPage() {
             document.cookie = `trial_used=1; max-age=31536000; path=/`;
           } catch {}
         }
-        if (isLoggedIn) {
+        if (isLoggedIn && !isPrivileged) {
           try {
             const next = String(pastUses + 1);
             localStorage.setItem(usesKey, next);

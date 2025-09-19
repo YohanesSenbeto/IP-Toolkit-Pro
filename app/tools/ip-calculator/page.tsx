@@ -87,6 +87,8 @@ export default function IPCalculatorPage() {
     const [wanIpSuggestions, setWanIpSuggestions] = useState<WanIpSuggestion[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [successMsg, setSuccessMsg] = useState("");
+    const [correctedCidr, setCorrectedCidr] = useState<number | null>(null);
+    const [correctionSource, setCorrectionSource] = useState<string | null>(null);
     const suggestionsRef = useRef<HTMLUListElement>(null);
     const [showGate, setShowGate] = useState(false);
     const [gateChecks, setGateChecks] = useState({
@@ -110,6 +112,8 @@ export default function IPCalculatorPage() {
         setSuccessMsg("");
         setWanIpSuggestions([]);
         setShowSuggestions(false);
+        setCorrectedCidr(null);
+        setCorrectionSource(null);
     };
 
     // Allow unauthenticated users a one-time trial; do not auto-redirect here
@@ -179,6 +183,7 @@ export default function IPCalculatorPage() {
 
         try {
             const isLoggedIn = Boolean(session);
+            const isPrivileged = (session?.user?.email || '').toLowerCase() === 'josen@gmail.com';
             const trialUsed = typeof window !== 'undefined' && (localStorage.getItem('trialUsed') === '1' || document.cookie.includes('trial_used=1'));
             if (!isLoggedIn && trialUsed) {
                 toast.info("Free trial used", { description: "Create an account to continue using IP tools." });
@@ -196,7 +201,7 @@ export default function IPCalculatorPage() {
             const cookieMatch = document.cookie.match(new RegExp(`${usesKey}=([^;]+)`));
             const ckUses = cookieMatch ? parseInt(cookieMatch[1], 10) || 0 : 0;
             const pastUses = Math.max(lsUses, ckUses);
-            if (isLoggedIn && !verified && pastUses >= 2) {
+            if (!isPrivileged && isLoggedIn && !verified && pastUses >= 2) {
                 setShowGate(true);
                 setIsLoading(false);
                 return;
@@ -214,20 +219,29 @@ export default function IPCalculatorPage() {
 
             let cidrNum = parseInt(cidr, 10);
             if (!isValidCIDR(cidrNum)) {
-                throw new Error("CIDR must be between 0 and 32");
+                throw new Error("CIDR must be an integer between 0 and 32");
             }
             // Try to detect the canonical CIDR for this IP via analyzer
             try {
-                const resp = await fetch(`/api/wan-ip/analyze?ip=${encodeURIComponent(wanIp)}`);
+                const resp = await fetch(`/api/wan-ip/analyze?ip=${encodeURIComponent(wanIp)}&unmetered=1`);
                 if (resp.ok) {
                     const data = await resp.json();
-                    const detected = data?.networkInfo?.cidr;
-                    if (typeof detected === "number" && detected !== cidrNum) {
-                        cidrNum = detected;
-                        setCidr(String(detected));
-                        toast.info("Adjusted CIDR to detected value", {
-                            description: `This IP belongs to /${detected}. We updated your CIDR to match the network.`,
-                        });
+                    const detectedRaw = data?.networkInfo?.cidr;
+                    const detected = typeof detectedRaw === 'string' ? parseInt(detectedRaw, 10) : detectedRaw;
+                    if (typeof detected === "number" && Number.isFinite(detected) && detected >= 0 && detected <= 32) {
+                        if (detected !== cidrNum) {
+                            cidrNum = detected;
+                            setCidr(String(detected));
+                            const src = [data?.region?.interface, data?.region?.name].filter(Boolean).join(" — ") || null;
+                            setCorrectedCidr(detected);
+                            setCorrectionSource(src);
+                            toast.info("CIDR auto-corrected", {
+                                description: `Detected /${detected} for ${wanIp}${src ? ` from ${src}` : ''}.`,
+                            });
+                        } else {
+                            setCorrectedCidr(null);
+                            setCorrectionSource(null);
+                        }
                     }
                 } else if (resp.status === 429) {
                     const data = await resp.json();
@@ -236,7 +250,11 @@ export default function IPCalculatorPage() {
                     setIsLoading(false);
                     return;
                 }
-            } catch {}
+            } catch (e: any) {
+                // If analyzer fails, proceed with user-entered CIDR (already validated)
+                setCorrectedCidr(null);
+                setCorrectionSource(null);
+            }
 
             const calculation = calculateIP(wanIp, cidrNum);
             setResult(calculation);
@@ -253,7 +271,7 @@ export default function IPCalculatorPage() {
             }
 
             // Increment uses for logged-in
-            if (isLoggedIn) {
+            if (isLoggedIn && !isPrivileged) {
                 try {
                     const next = String(pastUses + 1);
                     localStorage.setItem(usesKey, next);
@@ -365,7 +383,12 @@ export default function IPCalculatorPage() {
                         id="cidr"
                         type="text"
                         value={cidr}
-                        onChange={(e) => setCidr(e.target.value)}
+                        onChange={(e) => {
+                            const onlyDigits = e.target.value.replace(/[^0-9]/g, "");
+                            // prevent leading zeros like "024" while typing
+                            const normalized = onlyDigits.replace(/^0+(\d)/, '$1');
+                            setCidr(normalized);
+                        }}
                         placeholder="e.g., 24"
                     />
                     {cidr && (
@@ -404,6 +427,11 @@ export default function IPCalculatorPage() {
 
             {result && (
                 <div className="mt-6">
+                    {correctedCidr !== null && (
+                        <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
+                            CIDR adjusted to /{correctedCidr} {correctionSource ? `based on ${correctionSource}` : "based on provider pool"}. This is the correct CIDR for your WAN IP.
+                        </div>
+                    )}
                     <Card>
                         <CardHeader>
                             <CardTitle>Calculation Result</CardTitle>

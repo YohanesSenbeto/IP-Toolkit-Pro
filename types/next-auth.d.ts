@@ -7,6 +7,7 @@ declare module "next-auth" {
     user: {
       id: string
       role: string
+      password?: string // added password for typing issue
     } & DefaultSession["user"]
   }
 

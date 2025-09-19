@@ -489,5 +489,167 @@ For technical support or questions about this transformation:
 **Last Updated**: 2025-01-01  
 **Project**: IP Toolkit Pro / NetConfig Hub  
 **Status**: Complete ✅
-## Project Understanding\n\nThe IP Toolkit Pro / NetConfig Hub is a comprehensive network configuration and management platform designed for Ethio Telecom employees, customers, technicians, and network professionals. Its core features include a WAN IP Analyzer for customer IP management, a real-time IP Subnet Calculator, a searchable Knowledge Base with tutorials and video guides, and a robust dashboard system. The platform leverages Next.js 14+, Prisma ORM with a PostgreSQL database, NextAuth.js for authentication (including Google OAuth and credentials), and Zod for validation. It supports role-based access control (USER/ADMIN), dark mode, responsive design, and is built with a focus on security, usability, and extensibility. Primary use cases include network setup, troubleshooting, education, and quick reference for IP networking tasks. The system is tailored to Ethio Telecom's operational needs, supporting advanced workflows for IP assignment, customer lookup, and router recommendations, while providing a modern, professional user experience.
-## Project Understanding\n\nThe IP Toolkit Pro / NetConfig Hub is a comprehensive, enterprise-grade network configuration and management platform tailored for Ethio Telecom employees, customers, technicians, and network professionals. The platform’s primary modules include:\n\n- **WAN IP Analyzer**: Advanced customer management, WAN IP assignment, regional IP pool management, account validation, service type detection (PPPoE/WAN IP), router recommendations, and historical tracking.\n- **IP Subnet Calculator**: Real-time subnet calculations (network/broadcast addresses, subnet masks, host ranges, etc.) with robust Zod-based validation and calculation history for users.\n- **Knowledge Base**: Categorized tutorials, video guides, router-specific documentation, and a searchable, popular-articles-driven knowledge system.\n- **Dashboard**: User stats, recent calculations, and quick navigation to core tools, with role-based access for ADMIN/USER.\n\n**Technical Stack:**\n- Next.js 14+ (App Router)\n- Prisma ORM with PostgreSQL\n- NextAuth.js (Credentials + Google OAuth)\n- Zod for validation\n- Tailwind CSS (with dark mode)\n- TypeScript\n\n**Target Audience:**\n- Ethio Telecom customers (WAN IP management)\n- Employees/Technicians (network config, troubleshooting)\n- Network engineers, IT professionals, students (reference, education)\n\n**Key Use Cases:**\n- Network setup, router configuration, troubleshooting\n- Quick subnet calculations and IP assignments\n- Access to up-to-date guides and tutorials\n\n**Security & UX:**\n- Role-based access control (USER/ADMIN)\n- Secure authentication/session management\n- Responsive, modern UI with dark mode\n\nThis platform streamlines network operations, enhances customer service, and provides a professional, extensible toolkit for Ethio Telecom and its stakeholders.\n
+
+## Frontend Architecture (Tools)
+
+### IP Calculator (app/tools/ip-calculator/page.tsx)
+- Input: User types WAN IP and CIDR.
+- Validation: `isValidIPAddress` and `isValidCIDR` from `lib/utils.ts`.
+- Auto-correction: Calls `/api/wan-ip/analyze?ip=…&unmetered=1`. If the analyzer returns a valid CIDR from the provider pool, the UI overrides the entered CIDR and displays a notice with the source (Interface — Region).
+- Calculation: Uses `calculateIP(wanIp, cidr)` from `lib/utils.ts` to compute network, mask, broadcast, gateway, usable range, and host counts.
+- Save: POSTs to `/api/calculations` for logged-in users.
+
+### WAN IP Analyzer (app/tools/wan-ip-analyzer/page.tsx)
+- Input: User types WAN IP (optional customer account/access numbers).
+- Analysis: Calls `/api/wan-ip/analyze?ip=…&unmetered=1` and renders returned network info (CIDR, mask, range), Region/Interface/defaultGateway, assignment status, and recommendations.
+- Assignment: POST to `/api/wan-ip/analyze` with customer details to assign an IP.
+- Errors: Shows clear messages when analyzer returns no data or errors.
+
+Notes
+- The tools do not pull IPs from seeds automatically. Users provide the WAN IP. The analyzer uses seeded pool data stored in the DB to detect the correct CIDR/gateway.
+
+## Backend Architecture
+
+### Data model (Prisma)
+- Regions: `EthioTelecomRegion`
+- Interfaces: `EthioTelecomInterface` (fields include `ipPoolStart`, `ipPoolEnd`, `subnetMask`, `defaultGateway`, `isActive`)
+- Customer assignments: `CustomerWanIp`
+- Knowledge Base: `KnowledgeBaseArticle`
+
+Seed data
+- `prisma/seed-ethio-telecom.js` populates regions, interfaces (provider pools), and sample customers.
+
+### Core library (lib/cidr-utils.ts)
+- `findRegionForIp(ip, regions)`: Finds the pool containing `ip` by comparing against `ipPoolStart`/`ipPoolEnd`. Converts pool `subnetMask` → CIDR and returns `defaultGateway`.
+- `calculateIpInfo(ip, cidr)`: Computes mask, network, broadcast, first/last usable, total/usable hosts.
+
+### Analyzer API (app/api/wan-ip/analyze/route.ts)
+- Reads regions/interfaces from DB and builds region data.
+- Finds the matching pool via `findRegionForIp` and computes IP info via `calculateIpInfo`.
+- Returns network info, region/interface, default gateway, recommendations, and assignment status.
+- Gating: Guests 1 try; logged-in 2 tries unless social-verified. Bypass for privileged email `josen@gmail.com`. The query `unmetered=1` skips gating and does not increment counters.
+
+## API Reference
+
+### GET /api/wan-ip/analyze
+Analyze a WAN IP against provider pools.
+
+Query params
+- `ip` (required): WAN IP to analyze
+- `unmetered` (optional): `1` to bypass usage gating (used internally by tools)
+
+Success response (200)
+```json
+{
+  "ipAddress": "10.239.139.51",
+  "networkInfo": {
+    "cidr": 19,
+    "subnetMask": "255.255.224.0",
+    "networkAddress": "10.239.128.0",
+    "broadcastAddress": "10.239.159.255",
+    "firstUsableIp": "10.239.128.1",
+    "lastUsableIp": "10.239.159.254",
+    "totalHosts": 8192,
+    "usableHosts": 8190
+  },
+  "region": {
+    "name": "CWR Ambo",
+    "interface": "Vbui300",
+    "defaultGateway": "10.239.128.1"
+  },
+  "recommendations": {
+    "routerModel": "Standard Enterprise Router",
+    "tutorials": ["https://…"],
+    "knowledgeBase": []
+  },
+  "status": { "assigned": false, "available": true }
+}
+```
+
+Errors
+- 400: `{ "error": "Invalid IP address format" }`
+- 404: `{ "error": "IP address not found in any configured region" }`
+- 429: `{ "error": "Usage limit reached, verification required" }`
+
+### POST /api/wan-ip/analyze
+Assign a WAN IP to a customer (creates `CustomerWanIp`).
+
+Body
+```json
+{
+  "accountNumber": "147258369",
+  "accessNumber": "13101833892",
+  "wanIp": "10.239.139.51",
+  "customerName": "Getachew Lemma",
+  "location": "Ambo, Ethiopia"
+}
+```
+
+Success (200)
+```json
+{
+  "success": true,
+  "assignment": {
+    "id": "…",
+    "accountNumber": "147258369",
+    "accessNumber": "13101833892",
+    "wanIp": "10.239.139.51",
+    "customerName": "Getachew Lemma",
+    "location": "Ambo, Ethiopia",
+    "region": "CWR Ambo",
+    "interface": "Vbui300"
+  }
+}
+```
+
+Errors
+- 400: validation errors (missing/invalid fields)
+- 404: interface configuration not found
+- 409: IP already assigned
+
+### GET /api/wan-ip/lookup
+Return WAN IP suggestions for autocomplete.
+
+Query params
+- `q` (required): partial IP string
+
+Success (200)
+```json
+[
+  { "id": "10.239.139.51", "ipAddress": "10.239.139.51", "description": "Sample" }
+]
+```
+
+### GET /api/wan-ip/lookup-by-customer
+Lookup customer/account information.
+
+Query params
+- `accountNumber` (optional)
+- `accessNumber` (optional)
+
+Success (200)
+```json
+{
+  "found": true,
+  "accountNumber": "147258369",
+  "accessNumber": "13101833892",
+  "customerName": "Getachew Lemma",
+  "location": "Ambo, Ethiopia",
+  "wanIp": "10.239.139.51",
+  "interface": { "region": "CWR Ambo", "name": "Vbui300", "defaultGateway": "10.239.128.1" }
+}
+```
+
+### POST /api/calculations
+Save an IP calculation from the calculator.
+
+Body
+```json
+{
+  "title": "Calculation for 10.239.139.51/19",
+  "wanIp": "10.239.139.51",
+  "cidr": 19,
+  "result": { "subnetMask": "255.255.224.0", "defaultGateway": "10.239.128.1", "usableHosts": 8190 }
+}
+```
+

@@ -3,18 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
+    "web:dev": "next dev --turbopack",
+    "dev": "concurrently \"npm run web:dev\" \"npm run bot:dev\"",
+    "web:build": "next build",
+    "build": "concurrently \"npm run web:build\" \"npm run bot:build\"",
     "start": "next start",
+    "dev:all": "concurrently \"npm run dev\" \"npm run bot:dev\"",
+    "build:all": "concurrently \"npm run build\" \"npm run bot:build\"",
     "bot:build": "tsc -p tsconfig.bot.json",
     "bot:start": "node dist-bot/bot.js",
-    "bot:dev": "nodemon --watch 'bot.ts' --exec 'npm run bot:start'",
+    "bot:dev": "concurrently \"tsc -p tsconfig.bot.json -w\" \"nodemon --watch dist-bot/bot.js --exec node dist-bot/bot.js\"",
     "bot": "npm run bot:build && npm run bot:start",
     "start:all": "concurrently \"npm run start\" \"npm run bot\"",
     "lint": "next lint"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.js"
+    "seed": "node prisma/seed-ethio-telecom.js"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
