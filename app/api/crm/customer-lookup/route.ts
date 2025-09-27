@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
               ...(accountNumber && { accountNumber }),
               ...(accessNumber && { accessNumber }),
               isActive: true,
-              serviceType: 'VPN_DATA_ONLY'
+              serviceType: 'VPN_DATA_ONLY' as const,
             },
             include: {
               technician: true,

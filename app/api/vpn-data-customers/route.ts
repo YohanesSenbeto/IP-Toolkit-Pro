@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         found: false,
         message: 'VPN/Data Only customer not found',
-        serviceType: 'VPN_DATA_ONLY',
+        serviceType: 'VPN_DATA_ONLY' as const,
         customerType: 'RESIDENTIAL', // Default assumption
         recommendations: {
           routerModel: 'Cisco ISR 4000 Series',
@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
         location,
         customerType: customerType || 'RESIDENTIAL',
         wanIp,
-        serviceType: 'VPN_DATA_ONLY',
+        serviceType: 'VPN_DATA_ONLY' as const,
         isActive: true,
         updatedAt: new Date()
       },
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         customerName: customerName || 'Unknown Customer',
         location: location || 'Unknown Location',
         customerType: customerType || 'RESIDENTIAL',
-        serviceType: 'VPN_DATA_ONLY',
+        serviceType: 'VPN_DATA_ONLY' as const,
         wanIp,
         isActive: true
       }
