@@ -1,43 +1,36 @@
 import Link from "next/link";
-import { Calculator, Globe, Network, BookOpen, Router } from "lucide-react";
+import { Globe, Router } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const tools = [
   {
     title: "WAN IP Analyzer",
-    description: "Analyze WAN IP addresses with automatic CIDR calculations, region detection, and configuration recommendations",
+    description: "Comprehensive WAN IP analysis with CRM integration, automatic CIDR calculations, and router configuration support",
     icon: Globe,
     link: "/tools/wan-ip-analyzer",
     features: [
+      "CRM customer lookup",
       "Automatic CIDR calculation",
       "Region & interface detection",
+      "Subnet mask & gateway config",
       "Router recommendations",
       "Tutorial videos",
-      "Customer assignment"
+      "PPPOE vs WAN IP detection"
     ]
   },
   {
-    title: "IP Calculator",
-    description: "Traditional IP subnet calculator with CIDR notation support",
-    icon: Calculator,
-    link: "/tools/ip-calculator",
+    title: "Modem Configuration Tutorials",
+    description: "Comprehensive video tutorials for modem and router configuration from Yoh-Tech Solutions YouTube channel",
+    icon: Router,
+    link: "/tools/modem-tutorials",
     features: [
-      "CIDR calculations",
-      "Subnet information",
-      "Host calculations",
-      "Binary representation"
-    ]
-  },
-  {
-    title: "Network Tools",
-    description: "Additional network utilities and diagnostics",
-    icon: Network,
-    link: "/tools/network",
-    features: [
-      "Ping tests",
-      "Traceroute",
-      "DNS lookups",
-      "Port scanning"
+      "Live YouTube integration",
+      "All major modem brands",
+      "Fiber & copper configurations",
+      "Beginner to advanced levels",
+      "Advanced search & filters",
+      "Mobile responsive design",
+      "Real-time video data"
     ]
   }
 ];

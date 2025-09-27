@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
+import { calculateIP } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,27 +58,29 @@ export async function POST(request: NextRequest) {
       throw new Error("Invalid CIDR value");
     })();
 
-    // Validate and sanitize result object
-    const safeResult = (() => {
+
+    // Compute and save all calculation details (including default gateway, etc.)
+    let safeResult: any = {};
+    try {
+      // If result already has all fields, use them; otherwise, compute
       if (
         typeof result === "object" &&
         result !== null &&
         typeof result.subnetMask === "string" &&
         typeof result.usableHosts === "number"
       ) {
-        // Only allow expected keys (subnetMask, usableHosts, and optionally others)
-        // Remove any keys that are not allowed by the schema
-        const allowedKeys = ["subnetMask", "usableHosts"];
-        const sanitized: any = {};
-        for (const key of allowedKeys) {
-          sanitized[key] = result[key];
-        }
-        // Optionally, allow extra keys if schema allows (add here)
-        // e.g. if (typeof result.networkAddress === "string") sanitized.networkAddress = result.networkAddress;
-        return sanitized;
+        // Compute missing fields if needed
+        const computed = calculateIP(safeWanIp, safeCidr);
+        safeResult = {
+          ...computed,
+          ...result,
+        };
+      } else {
+        safeResult = calculateIP(safeWanIp, safeCidr);
       }
-      throw new Error("Invalid result object");
-    })();
+    } catch (e) {
+      throw new Error("Invalid result object or calculation error");
+    }
 
     const calculation = await prisma.calculation.create({
       data: {
@@ -108,18 +111,29 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
     if (!session || !session.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
     // Get user from database
     const user = await prisma.user.findUnique({
       where: { email: session.user.email! },
     });
-
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check for id param
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (id) {
+      // Fetch single calculation by id (must belong to user)
+      const calculation = await prisma.calculation.findFirst({
+        where: { id, userId: user.id },
+      });
+      if (!calculation) {
+        return NextResponse.json({ error: 'Calculation not found' }, { status: 404 });
+      }
+      return NextResponse.json({ calculation });
     }
 
     // Get calculations for user
@@ -128,13 +142,11 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
       take: 50, // Limit to recent 50 calculations
     });
-
     return NextResponse.json({ calculations });
-
   } catch (error) {
     console.error('Error fetching calculations:', error);
     return NextResponse.json(
-      { error: 'Internal server error' }, 
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

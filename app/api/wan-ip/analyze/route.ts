@@ -5,6 +5,50 @@ import { DefaultSession } from 'next-auth';
 import prisma from '@/lib/prisma';
 import { calculateIpInfo, findRegionForIp, getRouterRecommendation, getTutorialUrls, isValidIp } from '@/lib/cidr-utils';
 
+// Helper function to check if an IP is within a range
+function isIpInRange(ip: string, startIp: string, endIp: string): boolean {
+  const ipToNumber = (ip: string) => {
+    return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet), 0);
+  };
+  
+  const ipNum = ipToNumber(ip);
+  const startNum = ipToNumber(startIp);
+  const endNum = ipToNumber(endIp);
+  
+  return ipNum >= startNum && ipNum <= endNum;
+}
+
+// Helper function to convert subnet mask to CIDR
+function getCidrFromSubnetMask(subnetMask: string): number {
+  const maskToCidr: { [key: string]: number } = {
+    '255.255.255.252': 30,
+    '255.255.255.248': 29,
+    '255.255.255.240': 28,
+    '255.255.255.224': 27,
+    '255.255.255.192': 26,
+    '255.255.255.128': 25,
+    '255.255.255.0': 24,
+    '255.255.254.0': 23,
+    '255.255.252.0': 22,
+    '255.255.248.0': 21,
+    '255.255.240.0': 20,
+    '255.255.224.0': 19,
+    '255.255.192.0': 18,
+    '255.255.128.0': 17,
+    '255.255.0.0': 16,
+    '255.254.0.0': 15,
+    '255.252.0.0': 14,
+    '255.248.0.0': 13,
+    '255.240.0.0': 12,
+    '255.224.0.0': 11,
+    '255.192.0.0': 10,
+    '255.128.0.0': 9,
+    '255.0.0.0': 8
+  };
+  
+  return maskToCidr[subnetMask] || 24; // Default to /24 if not found
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Server-side gating: guests 1 try; logged-in 2 tries unless social verified
@@ -79,28 +123,48 @@ export async function GET(request: NextRequest) {
       }))
     }));
 
-    // Find region and interface for this IP
-    const regionInfo = findRegionForIp(wanIp, regionData);
+    // Check if IP is in any Broadband Internet IP pool range
+    let matchedInterface = null;
+    let matchedRegion = null;
     
-    if (!regionInfo) {
+    for (const region of regions) {
+      for (const iface of region.interfaces) {
+        // Check if IP is within the interface's IP pool range
+        if (isIpInRange(wanIp, iface.ipPoolStart, iface.ipPoolEnd)) {
+          matchedInterface = iface;
+          matchedRegion = region;
+          break;
+        }
+      }
+      if (matchedInterface) break;
+    }
+
+    if (!matchedInterface || !matchedRegion) {
       return NextResponse.json({
         ipAddress: wanIp,
-        error: 'IP address not found in any configured region',
+        error: 'IP address not found in any Broadband Internet IP pool range',
         availableRegions: regions.map(r => ({
           name: r.name,
-          code: r.code
+          code: r.code,
+          interfaces: r.interfaces.map(i => ({
+            name: i.name,
+            ipPoolStart: i.ipPoolStart,
+            ipPoolEnd: i.ipPoolEnd
+          }))
         }))
       });
     }
 
-    // Calculate IP information
-    const ipInfo = calculateIpInfo(wanIp, regionInfo.cidr);
-    
+
+    // Calculate IP information using the matched interface's subnet mask
+    const cidr = getCidrFromSubnetMask(matchedInterface.subnetMask);
+    const ipInfo = calculateIpInfo(wanIp, cidr);
+
     // Get router recommendation
-    const recommendedRouter = getRouterRecommendation(regionInfo.region, regionInfo.interfaceName);
-    
+    const recommendedRouter = getRouterRecommendation(matchedRegion.name, matchedInterface.name);
+
     // Get tutorial URLs
-    const tutorialUrls = getTutorialUrls(regionInfo.region, regionInfo.interfaceName);
+    const tutorialUrls = getTutorialUrls(matchedRegion.name, matchedInterface.name);
 
     // Check if this IP is already assigned to a customer
     const existingCustomer = await prisma.customerWanIp.findFirst({
@@ -122,8 +186,8 @@ export async function GET(request: NextRequest) {
       where: {
         published: true,
         OR: [
-          { title: { contains: regionInfo.region, mode: 'insensitive' } },
-          { content: { contains: regionInfo.interfaceName, mode: 'insensitive' } },
+          { title: { contains: matchedRegion.name, mode: 'insensitive' } },
+          { content: { contains: matchedInterface.name, mode: 'insensitive' } },
           { category: { contains: 'WAN', mode: 'insensitive' } }
         ]
       },
@@ -150,9 +214,15 @@ export async function GET(request: NextRequest) {
         usableHosts: ipInfo.usableHosts
       },
       region: {
-        name: regionInfo.region,
-        interface: regionInfo.interfaceName,
-        defaultGateway: regionInfo.defaultGateway
+        name: matchedRegion.name,
+        code: matchedRegion.code || null
+      },
+      interface: {
+        name: matchedInterface.name,
+        ipPoolStart: matchedInterface.ipPoolStart,
+        ipPoolEnd: matchedInterface.ipPoolEnd,
+        subnetMask: matchedInterface.subnetMask,
+        defaultGateway: matchedInterface.defaultGateway
       },
       recommendations: {
         routerModel: recommendedRouter,

@@ -191,7 +191,7 @@ async function main() {
             name: "Vbui300",
             regionId: cwr.id,
             ipPoolStart: "10.239.128.2",
-            ipPoolEnd: "10.239.159.254",
+            ipPoolEnd: "10.239.191.254",
             subnetMask: "255.255.224.0",
             defaultGateway: "10.239.128.1",
         },
@@ -258,7 +258,7 @@ async function main() {
     });
 
     // Create sample customer data with WAN IP assignments
-    const customers = [
+    const broadbandCustomers = [
         // SWAAZ/SARBET customers
         {
             accountNumber: "742684130",
@@ -342,8 +342,9 @@ async function main() {
         }
     ];
 
-    // Create customer WAN IP assignments
-    for (const customer of customers) {
+
+    // Create broadband customer WAN IP assignments
+    for (const customer of broadbandCustomers) {
         const interfaceRecord = await prisma.ethioTelecomInterface.findFirst({
             where: {
                 name: customer.interfaceName,
@@ -362,6 +363,8 @@ async function main() {
                     interfaceId: interfaceRecord.id,
                     customerName: customer.customerName,
                     location: customer.location,
+                    serviceType: "WAN_IP",
+                    customerType: "RESIDENTIAL",
                     isActive: true
                 },
                 create: {
@@ -371,11 +374,14 @@ async function main() {
                     interfaceId: interfaceRecord.id,
                     customerName: customer.customerName,
                     location: customer.location,
+                    serviceType: "WAN_IP",
+                    customerType: "RESIDENTIAL",
                     isActive: true
                 }
             });
         }
     }
+
 
     console.log("✅ Ethio Telecom regional IP data seeded successfully!");
 }

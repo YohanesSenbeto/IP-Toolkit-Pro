@@ -48,7 +48,7 @@ model KnowledgeBaseArticle {
 }
 
 model WanIpPool {
-  id           String   @id @default(cuid())
+  id           String                 @id @default(cuid())
   poolName     String
   startIp      String
   endIp        String
@@ -60,13 +60,11 @@ model WanIpPool {
   regionId     String
   interfaceId  String
   technicianId String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @default(now())
-
-  // Relations
-  region     EthioTelecomRegion     @relation(fields: [regionId], references: [id], name: "RegionPools")
-  interface  EthioTelecomInterface  @relation(fields: [interfaceId], references: [id], name: "InterfacePools")
-  technician EthioTelecomTechnician @relation(fields: [technicianId], references: [id], name: "TechnicianPools")
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @default(now())
+  interface    EthioTelecomInterface  @relation("InterfacePools", fields: [interfaceId], references: [id])
+  region       EthioTelecomRegion     @relation("RegionPools", fields: [regionId], references: [id])
+  technician   EthioTelecomTechnician @relation("TechnicianPools", fields: [technicianId], references: [id])
 }
 
 model RouterModel {
@@ -90,9 +88,9 @@ model EthioTelecomRegion {
   isActive    Boolean                  @default(true)
   createdAt   DateTime                 @default(now())
   updatedAt   DateTime                 @default(now())
+  pools       WanIpPool[]              @relation("RegionPools")
   interfaces  EthioTelecomInterface[]
   technicians EthioTelecomTechnician[]
-  pools       WanIpPool[]              @relation("RegionPools")
 
   @@map("ethio_telecom_regions")
 }
@@ -108,9 +106,9 @@ model EthioTelecomInterface {
   isActive       Boolean            @default(true)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @default(now())
+  pools          WanIpPool[]        @relation("InterfacePools")
   customerWanIps CustomerWanIp[]
   region         EthioTelecomRegion @relation(fields: [regionId], references: [id])
-  pools          WanIpPool[]        @relation("InterfacePools")
 
   @@map("ethio_telecom_interfaces")
 }
@@ -121,34 +119,35 @@ model EthioTelecomTechnician {
   username       String              @unique
   name           String
   email          String?             @unique
-  password       String? // ← add this field
   regionId       String?
   isActive       Boolean             @default(true)
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @default(now())
-  region         EthioTelecomRegion? @relation(fields: [regionId], references: [id])
-  customerWanIps CustomerWanIp[]
+  password       String?
   pools          WanIpPool[]         @relation("TechnicianPools")
+  customerWanIps CustomerWanIp[]
+  region         EthioTelecomRegion? @relation(fields: [regionId], references: [id])
 
   @@map("ethio_telecom_technicians")
 }
 
 model CustomerWanIp {
-  id            String    @id @default(cuid())
-  accountNumber String    @unique
-  accessNumber  String?   @unique
+  id            String                  @id @default(cuid())
+  accountNumber String                  @unique
+  accessNumber  String?                 @unique
   wanIp         String
   interfaceId   String?
-  technicianId  String?
   customerName  String?
   location      String?
-  isActive      Boolean   @default(true)
+  isActive      Boolean                 @default(true)
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @default(now())
   assignedAt    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now())
-
-  interface  EthioTelecomInterface?  @relation(fields: [interfaceId], references: [id])
-  technician EthioTelecomTechnician? @relation(fields: [technicianId], references: [id])
+  technicianId  String?
+  customerType  CustomerType            @default(RESIDENTIAL)
+  serviceType   ServiceType             @default(PPPOE)
+  interface     EthioTelecomInterface?  @relation(fields: [interfaceId], references: [id])
+  technician    EthioTelecomTechnician? @relation(fields: [technicianId], references: [id])
 
   @@map("customer_wan_ips")
 }
@@ -157,4 +156,16 @@ enum Role {
   USER
   ADMIN
   ETHIO_TELECOM_TECHNICIAN
+}
+
+enum CustomerType {
+  RESIDENTIAL
+  ENTERPRISE
+}
+
+enum ServiceType {
+  PPPOE
+  WAN_IP
+  BROADBAND_INTERNET
+  VPN_DATA_ONLY
 }

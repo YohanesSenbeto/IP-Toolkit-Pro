@@ -25,18 +25,11 @@ export default function Home() {
             icon: "🌐",
         },
         {
-            title: "IP Calculator",
+            title: "Modem Configuration Tutorials",
             description:
-                "Advanced IP subnet calculator with CIDR support, network address, broadcast address, and usable host range calculations",
-            link: "/tools/ip-calculator",
-            icon: "🔢",
-        },
-        {
-            title: "Knowledge Base",
-            description:
-                "Comprehensive tutorials and guides for Ethio Telecom equipment and network configurations",
-            link: "/knowledge-base",
-            icon: "📚",
+                "Comprehensive video tutorials for modem and router configuration from Yoh-Tech Solutions YouTube channel",
+            link: "/tools/modem-tutorials",
+            icon: "📺",
         },
         {
             title: "History & Save",
@@ -44,39 +37,6 @@ export default function Home() {
                 "Save your calculations with custom titles and access them anytime from your dashboard",
             link: "/dashboard",
             icon: "💾",
-        },
-        {
-            title: "Router Configs",
-            description:
-                "Step-by-step configuration guides for popular router models including TP-Link, Huawei, and more",
-            link: "/knowledge-base/routers",
-            icon: (
-                <span
-                    style={{
-                        display: "inline-block",
-                        borderRadius: "50%",
-                        background:
-                            "linear-gradient(135deg, #FFD600 60%, #008060 100%)",
-                        color: "#222",
-                        padding: "0.35em 0.5em",
-                        fontWeight: 700,
-                        fontSize: "1.2em",
-                        boxShadow:
-                            "0 2px 8px 0 rgba(0,0,0,0.08), 0 1.5px 0 #008060 inset",
-                    }}
-                    className="dark:bg-[#008060] dark:text-[#FFD600] dark:shadow-lg"
-                    aria-label="Router Config Icon"
-                >
-                    🔄
-                </span>
-            ),
-        },
-        {
-            title: "Multi-Device Sync",
-            description:
-                "Access your saved calculations and history from any device with your account",
-            link: "/dashboard",
-            icon: "📱",
         },
     ];
 

@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LogOut, LayoutDashboard, UserPlus, LogIn, Menu, Home } from "lucide-react";
+import { LogOut, LayoutDashboard, UserPlus, LogIn, Menu, Home, Globe, Play, History } from "lucide-react";
 
 export default function NavBar() {
   const { data: session, status } = useSession();
@@ -54,6 +54,31 @@ export default function NavBar() {
 
         {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-4">
+          {/* Main Navigation */}
+          <div className="flex items-center space-x-1">
+            <Link href="/tools/wan-ip-analyzer">
+              <Button variant="ghost" className="flex items-center gap-2 text-sm">
+                <Globe className="h-4 w-4" />
+                WAN IP Analyzer
+              </Button>
+            </Link>
+            <Link href="/tools/modem-tutorials">
+              <Button variant="ghost" className="flex items-center gap-2 text-sm">
+                <Play className="h-4 w-4" />
+                Tutorials
+              </Button>
+            </Link>
+            {session && (
+              <Link href="/dashboard">
+                <Button variant="ghost" className="flex items-center gap-2 text-sm">
+                  <History className="h-4 w-4" />
+                  Dashboard
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          {/* User Menu */}
           {isLoading ? (
             <div className="w-20 h-4 bg-muted rounded animate-pulse"></div>
           ) : !session ? (
@@ -138,6 +163,17 @@ export default function NavBar() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href="/tools/wan-ip-analyzer" className="flex items-center">
+                      <Globe className="mr-2 h-4 w-4" /> WAN IP Analyzer
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/tools/modem-tutorials" className="flex items-center">
+                      <Play className="mr-2 h-4 w-4" /> Tutorials
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => signIn()}>
                     <LogIn className="mr-2 h-4 w-4" /> Sign In
                   </DropdownMenuItem>
@@ -161,10 +197,25 @@ export default function NavBar() {
                       <Home className="mr-2 h-4 w-4" /> Home
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/tools/wan-ip-analyzer" className="flex items-center">
+                      <Globe className="mr-2 h-4 w-4" /> WAN IP Analyzer
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/tools/modem-tutorials" className="flex items-center">
+                      <Play className="mr-2 h-4 w-4" /> Tutorials
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="flex items-center">
+                      <History className="mr-2 h-4 w-4" /> Dashboard
+                    </Link>
+                  </DropdownMenuItem>
                   {session.user.role === "ETHIO_TELECOM_TECHNICIAN" && (
                     <DropdownMenuItem asChild>
                       <Link href="/technician/dashboard" className="flex items-center">
-                        <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                        <LayoutDashboard className="mr-2 h-4 w-4" /> Technician Dashboard
                       </Link>
                     </DropdownMenuItem>
                   )}
