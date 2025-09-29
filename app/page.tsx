@@ -45,7 +45,7 @@ export default function Home() {
             {/* Hero Section */}
             <div className="container mx-auto px-4 py-16 text-center">
                 <div className="max-w-4xl mx-auto">
-                    <h1 className="text-5xl md:text-6xl font-bold text-foreground mb-6">
+                    <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
                         IP Toolkit <span className="text-primary">Pro</span>
                     </h1>
                     <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
@@ -67,9 +67,7 @@ export default function Home() {
                     ) : (
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
                             <Link href="/tools/wan-ip-analyzer">
-                                <Button size="lg">
-                                    Start Analyzing
-                                </Button>
+                                <Button size="lg">Start Analyzing</Button>
                             </Link>
                             <Link href="/dashboard">
                                 <Button variant="outline" size="lg">
@@ -131,7 +129,11 @@ export default function Home() {
                             Join thousands of Ethio Telecom professionals using
                             IP Toolkit Pro daily
                         </p>
-                        <Button onClick={() => signIn()} size="lg" className="bg-primary-foreground text-primary hover:bg-primary-foreground/90">
+                        <Button
+                            onClick={() => signIn()}
+                            size="lg"
+                            className="bg-primary-foreground text-primary hover:bg-primary-foreground/90"
+                        >
                             Create Free Account
                         </Button>
                     </div>
