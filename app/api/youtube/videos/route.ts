@@ -65,101 +65,117 @@ export async function GET(request: NextRequest) {
 
         const uploadsPlaylistId = channelData.items[0].contentDetails.relatedPlaylists.uploads;
 
-        // Get videos from the uploads playlist
-        const videosResponse = await fetch(
-            `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&key=${apiKey}`
-        );
 
-        if (!videosResponse.ok) {
-            throw new Error('Failed to fetch videos from playlist');
-        }
+        // --- PAGINATION: Fetch all videos from the uploads playlist ---
+        let allPlaylistItems: any[] = [];
+        let nextPageToken: string | undefined = undefined;
+        do {
+            const url: string =
+                `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}` +
+                `&maxResults=50&key=${apiKey}` +
+                (nextPageToken ? `&pageToken=${nextPageToken}` : '');
+            const resp: Response = await fetch(url);
+            if (!resp.ok) throw new Error('Failed to fetch videos from playlist');
+            const data: any = await resp.json();
+            if (data.items && data.items.length > 0) {
+                allPlaylistItems.push(...data.items);
+            }
+            nextPageToken = data.nextPageToken;
+        } while (nextPageToken);
 
-        const videosData = await videosResponse.json();
-
-        if (!videosData.items || videosData.items.length === 0) {
+        if (allPlaylistItems.length === 0) {
             return NextResponse.json({ videos: [] });
         }
 
-        // Get video IDs for detailed information
-        const videoIds = videosData.items.map((item: any) => item.snippet.resourceId.videoId).join(',');
-
-        // Get detailed video information
-        const detailsResponse = await fetch(
-            `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoIds}&key=${apiKey}`
-        );
-
-        if (!detailsResponse.ok) {
-            throw new Error('Failed to fetch video details');
+        // Get video IDs for detailed information (in batches of 50)
+        const allVideoIds: string[] = allPlaylistItems.map((item: any) => item.snippet.resourceId.videoId);
+        let allVideos: YouTubeVideo[] = [];
+        for (let i = 0; i < allVideoIds.length; i += 50) {
+            const batchIds = allVideoIds.slice(i, i + 50).join(',');
+            const detailsResponse = await fetch(
+                `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${batchIds}&key=${apiKey}`
+            );
+            if (!detailsResponse.ok) throw new Error('Failed to fetch video details');
+            const detailsData = await detailsResponse.json();
+            const batchVideos: YouTubeVideo[] = detailsData.items.map((video: any) => ({
+                id: video.id,
+                title: video.snippet.title,
+                description: video.snippet.description,
+                thumbnail: video.snippet.thumbnails.high?.url || video.snippet.thumbnails.default?.url,
+                duration: video.contentDetails.duration,
+                publishedAt: video.snippet.publishedAt,
+                viewCount: parseInt(video.statistics.viewCount || '0'),
+                likeCount: parseInt(video.statistics.likeCount || '0'),
+                url: `https://www.youtube.com/watch?v=${video.id}`,
+                channelTitle: video.snippet.channelTitle,
+                tags: video.snippet.tags || []
+            }));
+            allVideos.push(...batchVideos);
         }
 
-        const detailsData = await detailsResponse.json();
+        const videos: YouTubeVideo[] = allVideos;
 
-        // Transform the data to match our interface
-        const videos: YouTubeVideo[] = detailsData.items.map((video: any) => ({
-            id: video.id,
-            title: video.snippet.title,
-            description: video.snippet.description,
-            thumbnail: video.snippet.thumbnails.high?.url || video.snippet.thumbnails.default?.url,
-            duration: video.contentDetails.duration,
-            publishedAt: video.snippet.publishedAt,
-            viewCount: parseInt(video.statistics.viewCount || '0'),
-            likeCount: parseInt(video.statistics.likeCount || '0'),
-            url: `https://www.youtube.com/watch?v=${video.id}`,
-            channelTitle: video.snippet.channelTitle,
-            tags: video.snippet.tags || []
-        }));
-
-        // Filter videos that are related to modem/router configuration with enhanced criteria
-        const filteredVideos = videos.filter(video => {
-            const title = video.title.toLowerCase();
+        // Debug: log total videos fetched before filtering
+        console.log('YouTube API: Total videos fetched from channel:', videos.length);
+        const primaryKeywords = [
+            'modem', 'router', 'configuration', 'setup', 'wan', 'lan', 'wifi',
+            'huawei', 'tp-link', 'tplink', 'd-link', 'dlink', 'cisco', 'netgear',
+            'zte', 'linksys', 'fiber', 'copper', 'ethernet', 'dsl', 'pppoe',
+            'network', 'internet', 'connection', 'tutorial', 'guide',
+            'how to configure', 'configure', 'atamitti', 'ማድረግ'
+        ];
+        const excludeKeywords = [
+            'gaming', 'music', 'movie', 'song', 'entertainment', 'comedy',
+            'cooking', 'travel', 'sports', 'news', 'politics', 'lifestyle',
+            'fashion', 'beauty', 'health', 'fitness', 'education', 'school',
+            'funny', 'tiktok', 'compilation', 'shorts', 'viral', 'meme',
+            'prank', 'challenge', 'dance', 'reaction', 'review', 'unboxing',
+            'vlog', 'daily', 'life', 'story', 'fail', 'win', 'epic',
+            'amazing', 'incredible', 'shocking', 'crazy', 'insane'
+        ];
+        // Explicitly exclude specific videos by title or ID
+        const excludeTitles = [
+            'part 2 interview of ceo w/zerit firewot tamiru about current technology ክፍል ሁለት ቃለ መጠይቅ'
+        ];
+        const excludeIds = [
+            '8-cc54wk3ai'
+        ];
+        const alwaysIncludeTitles = [
+            'how to configure gpon ont tg 2212 router: step-by-step guide for beginners',
+            'in ethiopia d-link wi-fi router set up | በኢትዮጵያ d-link wi-fi ራውተር ያዋቅሩ',
+            'how to hide wi-fi name on zte wi-fi routers | zte ራውተር ላይ የwi-fi ስም እንዴት መደበቅ ይቻላል',
+            'zte wi-fi router configuration | የ zte wi-fi ራውተር ውቅር',
+            'zte wi-fi router set up in ethiopia | በኢትዮጵያ zte wi-fi ራውተር በቀላሉ ማስተካከል',
+            
+        ];
+        const alwaysIncludeIds = [
+            'UoGAksPaUcs'.toLowerCase(),
+            'uKHQA2xzNYE'.toLowerCase(),
+            'kBBcFeXU3hg'.toLowerCase(),
+            'ENkLo67fcvo'.toLowerCase(),
+            'xCZwGHIN4Uc'.toLowerCase(),
+            // (Removed: "8-CC54Wk3aI")
+        ];
+        const filteredVideos: typeof videos = videos.filter(video => {
+            const title = video.title.trim().toLowerCase();
             const description = video.description.toLowerCase();
-            
-            // Primary modem/router keywords (must contain at least one)
-            const primaryKeywords = [
-                'modem', 'router', 'configuration', 'setup', 'wan', 'lan', 'wifi',
-                'huawei', 'tp-link', 'tplink', 'd-link', 'dlink', 'cisco', 'netgear',
-                'zte', 'linksys', 'fiber', 'copper', 'ethernet', 'dsl', 'pppoe',
-                'network', 'internet', 'connection', 'tutorial', 'guide'
-            ];
-            
-            // Secondary tech keywords (bonus points)
-            const secondaryKeywords = [
-                'ip', 'subnet', 'gateway', 'dns', 'dhcp', 'nat', 'firewall',
-                'port', 'forwarding', 'qos', 'bandwidth', 'speed', 'latency',
-                'mesh', 'access point', 'switch', 'bridge', 'repeater'
-            ];
-            
-            // Exclude non-tech content
-            const excludeKeywords = [
-                'gaming', 'music', 'movie', 'song', 'entertainment', 'comedy',
-                'cooking', 'travel', 'sports', 'news', 'politics', 'lifestyle',
-                'fashion', 'beauty', 'health', 'fitness', 'education', 'school',
-                'funny', 'tiktok', 'compilation', 'shorts', 'viral', 'meme',
-                'prank', 'challenge', 'dance', 'reaction', 'review', 'unboxing',
-                'vlog', 'daily', 'life', 'story', 'fail', 'win', 'epic',
-                'amazing', 'incredible', 'shocking', 'crazy', 'insane'
-            ];
-            
-            // Check for exclusion keywords first
-            const hasExcludeKeywords = excludeKeywords.some(keyword => 
+            const id = (video.id || '').toLowerCase();
+            // Exclude if exact title or ID matches exclude lists
+            if (excludeTitles.includes(title) || excludeIds.includes(id)) return false;
+            // Always include if exact title or ID matches always-include lists
+            if (alwaysIncludeTitles.includes(title) || alwaysIncludeIds.includes(id)) return true;
+            // Exclude videos with any exclude keyword
+            const hasExcludeKeywords = excludeKeywords.some(keyword =>
                 title.includes(keyword) || description.includes(keyword)
             );
-            
             if (hasExcludeKeywords) return false;
-            
-            // Check for primary keywords
-            const hasPrimaryKeywords = primaryKeywords.some(keyword => 
+            // Match if any primary keyword is present (case-insensitive, anywhere)
+            return primaryKeywords.some(keyword =>
                 title.includes(keyword) || description.includes(keyword)
             );
-            
-            // Check for secondary keywords (bonus)
-            const hasSecondaryKeywords = secondaryKeywords.some(keyword => 
-                title.includes(keyword) || description.includes(keyword)
-            );
-            
-            // Must have primary keywords, secondary keywords are bonus
-            return hasPrimaryKeywords;
         });
+        // Sort by view count descending (most viewed first)
+        filteredVideos.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
 
         // Enhanced categorization function
         const categorizeVideo = (video: YouTubeVideo) => {
@@ -270,21 +286,25 @@ export async function GET(request: NextRequest) {
             return Math.round(score);
         };
 
+
         // Categorize all filtered videos
         const categorizedVideos = filteredVideos.map(categorizeVideo);
 
-        // Sort by relevance score (highest first), then by view count
+
+
+        // Pin the always-include video(s) by title or ID to the top, then sort the rest by view count descending
         categorizedVideos.sort((a, b) => {
-            if (b.relevanceScore !== a.relevanceScore) {
-                return b.relevanceScore - a.relevanceScore;
-            }
-            return b.viewCount - a.viewCount;
+            const aIsPin = alwaysIncludeTitles.includes(a.title.trim().toLowerCase()) || alwaysIncludeIds.includes((a.id || '').toLowerCase());
+            const bIsPin = alwaysIncludeTitles.includes(b.title.trim().toLowerCase()) || alwaysIncludeIds.includes((b.id || '').toLowerCase());
+            if (aIsPin && !bIsPin) return -1;
+            if (!aIsPin && bIsPin) return 1;
+            return (b.viewCount || 0) - (a.viewCount || 0);
         });
 
         return NextResponse.json({
             videos: categorizedVideos,
             totalCount: categorizedVideos.length,
-            channelTitle: videosData.items[0]?.snippet?.channelTitle || 'Yoh-Tech Solutions',
+            channelTitle: allPlaylistItems[0]?.snippet?.channelTitle || 'Yoh-Tech Solutions',
             categories: {
                 modemModels: [...new Set(categorizedVideos.map(v => v.modemModel))].sort(),
                 connectionTypes: [...new Set(categorizedVideos.map(v => v.connectionType))].sort(),

@@ -1,3 +1,18 @@
+model WanIpAnalyzerHistory {
+  id            String   @id @default(cuid())
+  userId        String?  // nullable for guests
+  wanIp         String
+  subnetMask    String?
+  defaultGateway String?
+  cidr          Int?
+  usableHosts   Int?
+  networkAddress   String?
+  broadcastAddress String?
+  totalHosts       Int?
+  createdAt     DateTime @default(now())
+  user          User?    @relation(fields: [userId], references: [id])
+  // Add more fields as needed (region, interface, etc)
+}
 generator client {
   provider = "prisma-client-js"
 }
@@ -18,7 +33,8 @@ model User {
   emailVerified DateTime?
   image         String?
   calculations  Calculation[]
-  knowledgeBase KnowledgeBaseArticle[] @relation("ArticleAuthor")
+  tutorialVideos TutorialVideos[] @relation("ArticleAuthor")
+  wanIpAnalyzerHistory WanIpAnalyzerHistory[]
 }
 
 model Calculation {
@@ -32,7 +48,7 @@ model Calculation {
   user      User     @relation(fields: [userId], references: [id])
 }
 
-model KnowledgeBaseArticle {
+model TutorialVideos {
   id           String   @id @default(cuid())
   title        String
   slug         String   @unique
@@ -44,6 +60,7 @@ model KnowledgeBaseArticle {
   published    Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  views        Int      @default(0)
   author       User     @relation("ArticleAuthor", fields: [authorId], references: [id])
 }
 

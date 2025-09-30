@@ -67,11 +67,19 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const unmetered = searchParams.get('unmetered') === '1';
     if (!unmetered && !session && used >= 1) {
-      return NextResponse.json({ error: 'Trial limit reached' }, { status: 429 });
+      return NextResponse.json({
+        error: 'Trial limit reached',
+        message: 'To unlock unlimited usage, please verify your account by subscribing to our YouTube channel.',
+        youtube: 'https://www.youtube.com/@Yoh-Tech-Solutions'
+      }, { status: 429 });
     }
     if (!unmetered && session && !verified && !isPrivileged) {
       if (used >= 2) {
-        return NextResponse.json({ error: 'Usage limit reached, verification required' }, { status: 429 });
+        return NextResponse.json({
+          error: 'Usage limit reached, verification required',
+          message: 'To unlock unlimited usage, please verify your account by subscribing to our YouTube channel.',
+          youtube: 'https://www.youtube.com/@Yoh-Tech-Solutions'
+        }, { status: 429 });
       }
     }
     const wanIp = searchParams.get('ip');
@@ -111,10 +119,26 @@ export async function GET(request: NextRequest) {
     console.log('Sample region data:', regions[0]);
 
     // Format regions data for CIDR utils
-    const regionData = regions.map(region => ({
+    const regionData = regions.map((region: {
+      name: string;
+      code?: string;
+      interfaces: {
+        name: string;
+        ipPoolStart: string;
+        ipPoolEnd: string;
+        subnetMask: string;
+        defaultGateway: string;
+      }[];
+    }) => ({
       name: region.name,
       code: region.code || '',
-      interfaces: region.interfaces.map(iface => ({
+      interfaces: region.interfaces.map((iface: {
+        name: string;
+        ipPoolStart: string;
+        ipPoolEnd: string;
+        subnetMask: string;
+        defaultGateway: string;
+      }) => ({
         name: iface.name,
         ipPoolStart: iface.ipPoolStart,
         ipPoolEnd: iface.ipPoolEnd,
@@ -143,10 +167,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         ipAddress: wanIp,
         error: 'IP address not found in any Broadband Internet IP pool range',
-        availableRegions: regions.map(r => ({
+        availableRegions: regions.map((r: {
+          name: string;
+          code?: string;
+          interfaces: {
+            name: string;
+            ipPoolStart: string;
+            ipPoolEnd: string;
+          }[];
+        }) => ({
           name: r.name,
           code: r.code,
-          interfaces: r.interfaces.map(i => ({
+          interfaces: r.interfaces.map((i: {
+            name: string;
+            ipPoolStart: string;
+            ipPoolEnd: string;
+          }) => ({
             name: i.name,
             ipPoolStart: i.ipPoolStart,
             ipPoolEnd: i.ipPoolEnd
@@ -181,8 +217,8 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Get related knowledge base articles for this region
-    const knowledgeArticles = await prisma.knowledgeBaseArticle.findMany({
+    // Get related tutorial videos for this region
+    const tutorialVideos = await prisma.tutorialVideos.findMany({
       where: {
         published: true,
         OR: [
@@ -227,7 +263,7 @@ export async function GET(request: NextRequest) {
       recommendations: {
         routerModel: recommendedRouter,
         tutorials: tutorialUrls,
-        knowledgeBase: knowledgeArticles
+        tutorialVideos: tutorialVideos
       },
       status: existingCustomer ? {
         assigned: true,
@@ -240,6 +276,57 @@ export async function GET(request: NextRequest) {
         available: true
       }
     };
+
+    // Log WAN IP analysis to history (if not error and not unmetered)
+    try {
+      let userId: string | null = null;
+      if (session?.user?.email) {
+        const user = await prisma.user.findUnique({
+          where: { email: session.user.email },
+          select: { id: true },
+        });
+        userId = user?.id || null;
+      }
+      // Only save if this WAN IP and CIDR are different from the most recent for this user
+      if (userId) {
+        const lastEntry = await prisma.wanIpAnalyzerHistory.findFirst({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (!lastEntry || lastEntry.wanIp !== wanIp || lastEntry.cidr !== cidr) {
+          await prisma.wanIpAnalyzerHistory.create({
+            data: {
+              userId,
+              wanIp,
+              subnetMask: ipInfo.subnetMask,
+              defaultGateway: matchedInterface.defaultGateway,
+              cidr,
+              usableHosts: ipInfo.usableHosts,
+              networkAddress: ipInfo.networkAddress,
+              broadcastAddress: ipInfo.broadcastAddress,
+              totalHosts: ipInfo.totalHosts,
+            },
+          });
+        }
+      } else {
+        // For guests, always save (or you can skip if you want)
+        await prisma.wanIpAnalyzerHistory.create({
+          data: {
+            userId: null,
+            wanIp,
+            subnetMask: ipInfo.subnetMask,
+            defaultGateway: matchedInterface.defaultGateway,
+            cidr,
+            usableHosts: ipInfo.usableHosts,
+            networkAddress: ipInfo.networkAddress,
+            broadcastAddress: ipInfo.broadcastAddress,
+            totalHosts: ipInfo.totalHosts,
+          },
+        });
+      }
+    } catch (historyError) {
+      console.error('Failed to log WAN IP analyzer history:', historyError);
+    }
 
     const res = NextResponse.json(response);
     // Increment counters
@@ -334,10 +421,26 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    const regionData = regions.map(region => ({
+    const regionData = regions.map((region: {
+      name: string;
+      code?: string;
+      interfaces: {
+        name: string;
+        ipPoolStart: string;
+        ipPoolEnd: string;
+        subnetMask: string;
+        defaultGateway: string;
+      }[];
+    }) => ({
       name: region.name,
       code: region.code || '',
-      interfaces: region.interfaces.map(iface => ({
+      interfaces: region.interfaces.map((iface: {
+        name: string;
+        ipPoolStart: string;
+        ipPoolEnd: string;
+        subnetMask: string;
+        defaultGateway: string;
+      }) => ({
         name: iface.name,
         ipPoolStart: iface.ipPoolStart,
         ipPoolEnd: iface.ipPoolEnd,

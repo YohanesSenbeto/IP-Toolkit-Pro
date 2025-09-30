@@ -53,8 +53,8 @@ export const userLoginSchema = z.object({
   password: z.string().min(1)
 });
 
-// Knowledge base article schema
-export const knowledgeBaseArticleSchema = z.object({
+// Tutorial video schema
+export const tutorialVideoSchema = z.object({
   title: z.string().min(5).max(200),
   slug: z.string().min(5).max(200).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
     message: "Slug must contain only lowercase letters, numbers, and hyphens"
@@ -91,4 +91,4 @@ export const calculationSchema = z.object({
 export type IPCalculatorFormData = z.infer<typeof ipCalculatorSchema>;
 export type UserRegistrationFormData = z.infer<typeof userRegistrationSchema>;
 export type UserLoginFormData = z.infer<typeof userLoginSchema>;
-export type KnowledgeBaseArticleFormData = z.infer<typeof knowledgeBaseArticleSchema>;
+export type TutorialVideoFormData = z.infer<typeof tutorialVideoSchema>;

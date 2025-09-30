@@ -1,6 +1,160 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import React, { ReactNode, useState, useEffect } from "react";
+// BookStyleResults component for paginated/swipeable cards
+import { FC } from "react";
+type BookStyleResultsProps = {
+    analysis: WanIpAnalysis;
+    setShowRouterConfig: (b: boolean) => void;
+    setShowTutorials: (b: boolean) => void;
+};
+
+const BookStyleResults: FC<BookStyleResultsProps> = ({
+    analysis,
+    setShowRouterConfig,
+    setShowTutorials,
+}) => {
+    const [page, setPage] = useState(0);
+    const cards = [
+        {
+            title: "WAN IP Address",
+            content: (
+                <div className="flex flex-col items-center justify-center h-40">
+                    <span className="text-2xl font-bold text-blue-700 font-mono">
+                        {analysis.ipAddress}
+                    </span>
+                </div>
+            ),
+        },
+        {
+            title: "Subnet Mask & CIDR",
+            content: (
+                <div className="flex flex-col items-center justify-center h-40">
+                    <span className="text-lg font-semibold text-green-700">
+                        {analysis.networkInfo?.subnetMask}
+                    </span>
+                    <span className="text-sm text-gray-600 mt-2">
+                        CIDR: /{analysis.networkInfo?.cidr}
+                    </span>
+                </div>
+            ),
+        },
+        {
+            title: "Network Details",
+            content: (
+                <div className="flex flex-col items-center justify-center h-40 space-y-1">
+                    <span>
+                        <strong>Network:</strong>{" "}
+                        {analysis.networkInfo?.networkAddress}
+                    </span>
+                    <span>
+                        <strong>Broadcast:</strong>{" "}
+                        {analysis.networkInfo?.broadcastAddress}
+                    </span>
+                    <span>
+                        <strong>Usable:</strong>{" "}
+                        {analysis.networkInfo?.firstUsableIp} -{" "}
+                        {analysis.networkInfo?.lastUsableIp}
+                    </span>
+                    <span>
+                        <strong>Total Hosts:</strong>{" "}
+                        {analysis.networkInfo?.totalHosts?.toLocaleString()}
+                    </span>
+                    <span>
+                        <strong>Usable Hosts:</strong>{" "}
+                        {analysis.networkInfo?.usableHosts?.toLocaleString()}
+                    </span>
+                </div>
+            ),
+        },
+        analysis.interface
+            ? {
+                  title: "Regional Info",
+                  content: (
+                      <div className="flex flex-col items-center justify-center h-40 space-y-1">
+                          <span>
+                              <strong>Interface:</strong>{" "}
+                              {analysis.interface.name}
+                          </span>
+                          <span>
+                              <strong>Region:</strong> {analysis.region?.name}
+                          </span>
+                          <span>
+                              <strong>Gateway:</strong>{" "}
+                              {analysis.interface.defaultGateway}
+                          </span>
+                          <span>
+                              <strong>Subnet:</strong>{" "}
+                              {analysis.interface.subnetMask}
+                          </span>
+                      </div>
+                  ),
+              }
+            : null,
+        {
+            title: "Actions",
+            content: (
+                <div className="flex flex-col items-center justify-center h-40 gap-4">
+                    <Button
+                        onClick={() => setShowRouterConfig(true)}
+                        className="w-40 bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                        Generate Router Config
+                    </Button>
+                    <Button
+                        onClick={() => setShowTutorials(true)}
+                        className="w-40 bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                        View Tutorials
+                    </Button>
+                </div>
+            ),
+        },
+    ].filter(Boolean);
+
+    const currentCard = cards[page] as
+        | { title: string; content: React.ReactNode }
+        | undefined;
+
+    return (
+        <Card className="mb-6 max-w-md mx-auto">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    {currentCard ? currentCard.title : ""}
+                </CardTitle>
+            </CardHeader>
+            <CardContent>
+                {currentCard ? currentCard.content : null}
+                <div className="flex justify-between items-center mt-6">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(0, p - 1))}
+                        disabled={page === 0}
+                        className="rounded-full px-4"
+                    >
+                        Prev
+                    </Button>
+                    <span className="text-xs text-gray-500">
+                        {page + 1} / {cards.length}
+                    </span>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                            setPage((p) => Math.min(cards.length - 1, p + 1))
+                        }
+                        disabled={page === cards.length - 1}
+                        className="rounded-full px-4"
+                    >
+                        Next
+                    </Button>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +211,18 @@ export default function WanIpAnalyzerPage() {
     const router = useRouter();
     const [ipAddress, setIpAddress] = useState("");
     const [analysis, setAnalysis] = useState<WanIpAnalysis | null>(null);
+    // Auto-scroll to network config card on mobile/tablet after analysis loads
+    useEffect(() => {
+        if (analysis && typeof window !== "undefined") {
+            const isMobileOrTablet = window.innerWidth < 1024;
+            if (isMobileOrTablet) {
+                const card = document.getElementById("network-config-card");
+                if (card) {
+                    card.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }
+        }
+    }, [analysis]);
     const [customerLookup, setCustomerLookup] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -95,6 +261,19 @@ export default function WanIpAnalyzerPage() {
             const data = await response.json();
 
             if (!response.ok) {
+                // Show YouTube subscribe link for both trial and usage limit errors
+                if (
+                    (data.error ===
+                        "Usage limit reached, verification required" ||
+                        data.error === "Trial limit reached") &&
+                    data.youtube
+                ) {
+                    setError(
+                        `${data.error}. To unlock unlimited usage, please verify your account by subscribing to our YouTube channel: ` +
+                            `<a href='${data.youtube}' target='_blank' rel='noopener noreferrer' class='text-blue-600 underline'>Subscribe to Yoh-Tech Solutions</a>`
+                    );
+                    return;
+                }
                 throw new Error(data.error || "Failed to analyze IP");
             }
 
@@ -232,21 +411,23 @@ export default function WanIpAnalyzerPage() {
     };
 
     return (
-        <div className="container mx-auto px-0 py-0 md:px-2 md:py-4">
-            <div className="max-w-4xl mx-auto">
-                <div className="mb-1 md:mb-1">
-                    <p className="text-muted-foreground px-1 py-2 text-medium">
-                        Analyze WAN IP addresses for Ethio Telecom network
-                        configuration
-                    </p>
+        <div className="w-full min-h-screen bg-background text-foreground">
+            <div className="max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-10">
+                <div className="max-w-4xl mx-auto">
+                    <div className="mb-1 md:mb-1">
+                        <p className="text-muted-foreground px-1 py-2 text-medium">
+                            Analyze WAN IP addresses for Ethio Telecom network
+                            configuration
+                        </p>
+                    </div>
                 </div>
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid lg:grid-cols-3 gap-1 mb-1 justify-center">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4 mb-1 justify-center">
                 {/* Left Side - Search Form */}
                 <div className="lg:col-span-2 mx-auto">
-                    <Card className="p-2 md:p-4">
+                    <Card className="p-2 md:p-4 bg-background text-foreground">
                         <CardHeader className="pb-2">
                             <CardTitle className="text-lg md:text-xl">
                                 Search Customer or Analyze WAN IP
@@ -414,7 +595,10 @@ export default function WanIpAnalyzerPage() {
                 {/* Right Side - Network Configuration Summary */}
                 <div className="lg:col-span-1">
                     {analysis && (
-                        <Card className="bg-gradient-to-b from-blue-50 to-indigo-50 border-blue-200 sticky top-4">
+                        <Card
+                            className="bg-card text-card-foreground border-blue-200 sticky top-4"
+                            id="network-config-card"
+                        >
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-blue-800 text-base">
                                     <Globe className="h-4 w-4" />
@@ -424,7 +608,7 @@ export default function WanIpAnalyzerPage() {
                             <CardContent>
                                 <div className="space-y-3">
                                     {/* WAN IP Address */}
-                                    <div className="bg-white rounded-lg p-3 shadow-sm border border-blue-100">
+                                    <div className="bg-card text-card-foreground rounded-lg p-3 shadow-sm border border-blue-100">
                                         <div className="flex items-center gap-2 mb-1">
                                             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
                                             <h3 className="font-semibold text-gray-800 text-xs">
@@ -437,7 +621,7 @@ export default function WanIpAnalyzerPage() {
                                     </div>
 
                                     {/* Subnet Mask */}
-                                    <div className="bg-white rounded-lg p-3 shadow-sm border border-green-100">
+                                    <div className="bg-card text-card-foreground rounded-lg p-3 shadow-sm border border-green-100">
                                         <div className="flex items-center gap-2 mb-1">
                                             <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
                                             <h3 className="font-semibold text-gray-800 text-xs">
@@ -453,7 +637,7 @@ export default function WanIpAnalyzerPage() {
                                     </div>
 
                                     {/* Default Gateway */}
-                                    <div className="bg-white rounded-lg p-3 shadow-sm border border-purple-100">
+                                    <div className="bg-card text-card-foreground rounded-lg p-3 shadow-sm border border-purple-100">
                                         <div className="flex items-center gap-2 mb-1">
                                             <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
                                             <h3 className="font-semibold text-gray-800 text-xs">
@@ -470,7 +654,7 @@ export default function WanIpAnalyzerPage() {
                                     </div>
 
                                     {/* Additional Info */}
-                                    <div className="bg-white rounded-lg p-2 shadow-sm border border-gray-100">
+                                    <div className="bg-card text-card-foreground rounded-lg p-2 shadow-sm border border-gray-100">
                                         <h3 className="font-semibold text-gray-800 text-xs mb-1">
                                             Network Details
                                         </h3>
@@ -530,7 +714,10 @@ export default function WanIpAnalyzerPage() {
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
                     <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-red-500" />
-                        <span className="text-red-600">{error}</span>
+                        <span
+                            className="text-red-600"
+                            dangerouslySetInnerHTML={{ __html: error }}
+                        />
                     </div>
                 </div>
             )}
@@ -941,108 +1128,13 @@ export default function WanIpAnalyzerPage() {
                 </Card>
             )}
 
-            {/* IP Analysis Results */}
+            {/* IP Analysis Results - Book/Bible Style Card Navigation on Mobile */}
             {analysis && (
-                <Card className="mb-6">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                            Analysis Results for {analysis.ip}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-6">
-                            {/* Basic Network Information */}
-                            <div>
-                                <h3 className="text-lg font-semibold mb-3 text-blue-600">
-                                    Network Information
-                                </h3>
-                                <div className="grid md:grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <strong>IP Address:</strong>{" "}
-                                        {analysis.ipAddress}
-                                    </div>
-                                    <div>
-                                        <strong>CIDR:</strong> /
-                                        {analysis.networkInfo?.cidr}
-                                    </div>
-                                    <div>
-                                        <strong>Subnet Mask:</strong>{" "}
-                                        {analysis.networkInfo?.subnetMask}
-                                    </div>
-                                    <div>
-                                        <strong>Network Address:</strong>{" "}
-                                        {analysis.networkInfo?.networkAddress}
-                                    </div>
-                                    <div>
-                                        <strong>Broadcast Address:</strong>{" "}
-                                        {analysis.networkInfo?.broadcastAddress}
-                                    </div>
-                                    <div>
-                                        <strong>Total Hosts:</strong>{" "}
-                                        {analysis.networkInfo?.totalHosts?.toLocaleString() ||
-                                            "N/A"}
-                                    </div>
-                                    <div>
-                                        <strong>Usable Hosts:</strong>{" "}
-                                        {analysis.networkInfo?.usableHosts?.toLocaleString() ||
-                                            "N/A"}
-                                    </div>
-                                    <div>
-                                        <strong>Usable IP Range:</strong>{" "}
-                                        {analysis.networkInfo?.firstUsableIp} -{" "}
-                                        {analysis.networkInfo?.lastUsableIp}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Regional Information */}
-                            {analysis.interface && (
-                                <div>
-                                    <h3 className="text-lg font-semibold mb-3 text-purple-600">
-                                        Regional Information
-                                    </h3>
-                                    <div className="grid md:grid-cols-2 gap-4 text-sm bg-purple-50 p-4 rounded-lg">
-                                        <div>
-                                            <strong>Interface:</strong>{" "}
-                                            {analysis.interface.name}
-                                        </div>
-                                        <div>
-                                            <strong>Region:</strong>{" "}
-                                            {analysis.region?.name}
-                                        </div>
-                                        <div>
-                                            <strong>Default Gateway:</strong>{" "}
-                                            {analysis.interface.defaultGateway}
-                                        </div>
-                                        <div>
-                                            <strong>Subnet Mask:</strong>{" "}
-                                            {analysis.interface.subnetMask}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-4 pt-4 border-t">
-                                <Button
-                                    onClick={() => setShowRouterConfig(true)}
-                                    variant="outline"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                    Generate Router Config
-                                </Button>
-                                <Button
-                                    onClick={() => setShowTutorials(true)}
-                                    variant="outline"
-                                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                                >
-                                    View Tutorials
-                                </Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                <BookStyleResults
+                    analysis={analysis}
+                    setShowRouterConfig={setShowRouterConfig}
+                    setShowTutorials={setShowTutorials}
+                />
             )}
 
             {/* Router Configuration Generator */}

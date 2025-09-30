@@ -1,41 +1,43 @@
-"use client"
+"use client";
 
-import { Moon, Sun, Laptop } from "lucide-react"
-import { useTheme } from "@/lib/theme-provider"
-import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "@/lib/theme-provider";
 
 export function ThemeToggle() {
-  const { setTheme, theme, resolvedTheme } = useTheme()
+    const { setTheme, resolvedTheme } = useTheme();
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9">
-          <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-          <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-          <span className="sr-only">Toggle theme</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>
-          <Sun className="mr-2 h-4 w-4" />
-          <span>Light</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
-          <Moon className="mr-2 h-4 w-4" />
-          <span>Dark</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
-          <Laptop className="mr-2 h-4 w-4" />
-          <span>System</span>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  )
+    // true = dark, false = light
+    const isDark = resolvedTheme === "dark";
+
+    return (
+        <button
+            type="button"
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            className="relative flex items-center gap-2 px-2 py-1 rounded-full bg-muted hover:bg-accent transition-colors border border-border focus:outline-none focus:ring-2 focus:ring-primary"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+        >
+            <Sun
+                className={`h-4 w-4 transition-all ${
+                    isDark ? "opacity-40" : "opacity-100"
+                }`}
+            />
+            <span className="relative inline-block w-10 h-6">
+                <span
+                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-10 h-4 rounded-full transition-colors duration-200 ${
+                        isDark ? "bg-gray-600" : "bg-yellow-300"
+                    }`}
+                />
+                <span
+                    className={`absolute top-1/2 -translate-y-1/2 left-0 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 border border-gray-300 ${
+                        isDark ? "translate-x-5" : "translate-x-0"
+                    }`}
+                />
+            </span>
+            <Moon
+                className={`h-4 w-4 transition-all ${
+                    isDark ? "opacity-100" : "opacity-40"
+                }`}
+            />
+        </button>
+    );
 }

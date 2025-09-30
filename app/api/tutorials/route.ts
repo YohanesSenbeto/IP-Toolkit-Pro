@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    // Get tutorial videos from knowledge base
-    const tutorials = await prisma.knowledgeBaseArticle.findMany({
+    // Get tutorial videos
+    const tutorials = await prisma.tutorialVideos.findMany({
       where: whereConditions,
       select: {
         id: true,
@@ -57,7 +57,17 @@ export async function GET(request: NextRequest) {
     let filteredTutorials = tutorials;
 
     if (serviceType || region) {
-      filteredTutorials = tutorials.filter(tutorial => {
+      filteredTutorials = tutorials.filter((tutorial: {
+        id: string;
+        title: string;
+        slug: string;
+        content: string | null;
+        videoUrl: string;
+        category: string;
+        routerModels: string[];
+        createdAt: Date;
+        updatedAt: Date;
+      }) => {
         const content = tutorial.content?.toLowerCase() || '';
         const title = tutorial.title.toLowerCase();
         
@@ -90,7 +100,17 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      tutorials: filteredTutorials.map(tutorial => ({
+      tutorials: filteredTutorials.map((tutorial: {
+        id: string;
+        title: string;
+        slug: string;
+        content: string | null;
+        videoUrl: string;
+        category: string;
+        routerModels: string[];
+        createdAt: Date;
+        updatedAt: Date;
+      }) => ({
         id: tutorial.id,
         title: tutorial.title,
         slug: tutorial.slug,
@@ -144,7 +164,7 @@ export async function POST(request: NextRequest) {
       .replace(/(^-|-$)/g, '');
 
     // Create tutorial
-    const tutorial = await prisma.knowledgeBaseArticle.create({
+  const tutorial = await prisma.tutorialVideos.create({
       data: {
         title,
         slug,

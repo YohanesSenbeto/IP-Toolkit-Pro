@@ -15,28 +15,33 @@ function CalculationDetailContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
-    const [calculation, setCalculation] = useState<any>(null);
+    const [entry, setEntry] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [showSaveDialog, setShowSaveDialog] = useState(false);
     const [saving, setSaving] = useState(false);
     const [poolInfo, setPoolInfo] = useState<any>(null);
     const [poolLoading, setPoolLoading] = useState(false);
 
+    // Fetch entry from backend by id param in URL
     useEffect(() => {
-        const tempKey = searchParams.get("tempKey");
-        if (tempKey && typeof window !== "undefined") {
-            const raw = sessionStorage.getItem(tempKey);
-            if (raw) {
-                try {
-                    setCalculation(JSON.parse(raw));
-                } catch {
-                    setCalculation(null);
-                }
-            }
+        const id = searchParams.get("id");
+        if (!id) {
             setLoading(false);
-        } else {
-            setLoading(false);
+            setEntry(null);
+            return;
         }
+        setLoading(true);
+        fetch(`/api/wan-ip/history/detail?id=${encodeURIComponent(id)}`)
+            .then(async (res) => {
+                if (res.ok) {
+                    const data = await res.json();
+                    setEntry(data.entry);
+                } else {
+                    setEntry(null);
+                }
+            })
+            .catch(() => setEntry(null))
+            .finally(() => setLoading(false));
     }, [searchParams]);
 
     useEffect(() => {
@@ -58,30 +63,63 @@ function CalculationDetailContent() {
                 setPoolLoading(false);
             }
         }
-        if (calculation && calculation.wanIp) {
-            fetchPoolInfo(calculation.wanIp);
+        if (entry && entry.wanIp) {
+            fetchPoolInfo(entry.wanIp);
         }
-    }, [calculation]);
+    }, [entry]);
 
     if (loading) {
         return <div className="p-8 text-center text-lg">Loading...</div>;
     }
+    if (!entry) {
+        return (
+            <div className="p-8 text-center text-lg text-red-600">
+                Entry not found.
+            </div>
+        );
+    }
+
+    // Helper for displaying empty fields as em-dash
+    const display = (val: any) => {
+        if (val === undefined || val === null || val === "" || val === "N/A")
+            return <span className="text-gray-400">—</span>;
+        return val;
+    };
+
+    // Prefer poolInfo/interface data for network fields if available
+    const getField = (primary: any, secondary: any) => {
+        if (
+            primary !== undefined &&
+            primary !== null &&
+            primary !== "" &&
+            primary !== "N/A"
+        )
+            return primary;
+        if (
+            secondary !== undefined &&
+            secondary !== null &&
+            secondary !== "" &&
+            secondary !== "N/A"
+        )
+            return secondary;
+        return undefined;
+    };
+
+    // Format date/time
+    const dateTime = entry.createdAt ? (
+        new Date(entry.createdAt).toLocaleString()
+    ) : (
+        <span className="text-gray-400">—</span>
+    );
 
     return (
         <div>
-            <div className="container mx-auto px-4 py-8">
-                {/* Save Calculation Dialog */}
-                <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Save This Calculation?</DialogTitle>
-                            <DialogDescription>
-                                This data is important for your records. Would
-                                you like to save this WAN IP analysis?
-                            </DialogDescription>
-                        </DialogHeader>
-                    </DialogContent>
-                </Dialog>
+            <div className="w-full max-w-screen-lg mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-10">
+                {/* Date/Time */}
+                <div className="mb-4 text-right text-sm text-gray-500 content-left">
+                    <span className="font-semibold">Analyzed At:</span>{" "}
+                    {dateTime}
+                </div>
 
                 {/* Router Recommendations */}
                 <div className="mb-4">
@@ -89,27 +127,31 @@ function CalculationDetailContent() {
                         Router Recommendations
                     </h3>
                     <div className="text-sm">
-                        {calculation?.routerRecommendation ||
-                            "No recommendation available"}
+                        {display(entry.routerRecommendation) || (
+                            <span className="text-gray-400">
+                                No recommendation available
+                            </span>
+                        )}
                     </div>
                 </div>
 
                 {/* WAN IP, Subnet Mask, Default Gateway Table */}
-                <div className="mb-6">
+                <div className="mb-4">
                     <h3 className="font-bold text-lg mb-2 text-green-700">
                         Important for Modem/Router Configuration
                     </h3>
                     <div className="overflow-x-auto">
                         <table className="min-w-[350px] border text-base">
-                            <tbody>
+                            <tbody className="text-sm ">
                                 <tr>
                                     <td className="font-bold border px-2 py-2">
                                         WAN IP Address
                                     </td>
                                     <td className="font-mono border px-2 py-2 text-green-700 font-bold">
-                                        {calculation?.wanIp ||
-                                            poolInfo?.interface?.ipPoolStart ||
-                                            "N/A"}
+                                        {display(
+                                            entry.wanIp ||
+                                                poolInfo?.interface?.ipPoolStart
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -117,9 +159,10 @@ function CalculationDetailContent() {
                                         Subnet Mask
                                     </td>
                                     <td className="font-mono border px-2 py-2 text-green-700 font-bold">
-                                        {poolInfo?.interface?.subnetMask ||
-                                            calculation?.subnetMask ||
-                                            "N/A"}
+                                        {display(
+                                            poolInfo?.interface?.subnetMask ||
+                                                entry.subnetMask
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -127,11 +170,14 @@ function CalculationDetailContent() {
                                         Default Gateway
                                     </td>
                                     <td className="font-mono border px-2 py-2 text-green-700 font-bold">
-                                        {poolInfo?.interface?.defaultGateway
-                                            ? poolInfo.interface.defaultGateway
-                                            : poolInfo?.pool?.defaultGateway
-                                            ? poolInfo.pool.defaultGateway
-                                            : "N/A"}
+                                        {display(
+                                            poolInfo?.interface?.defaultGateway
+                                                ? poolInfo.interface
+                                                      .defaultGateway
+                                                : poolInfo?.pool?.defaultGateway
+                                                ? poolInfo.pool.defaultGateway
+                                                : undefined
+                                        )}
                                     </td>
                                 </tr>
                             </tbody>
@@ -153,7 +199,19 @@ function CalculationDetailContent() {
                                         CIDR
                                     </td>
                                     <td className="font-mono border px-2 py-1">
-                                        /{calculation?.cidr || "N/A"}
+                                        {getField(
+                                            entry.cidr,
+                                            poolInfo?.interface?.cidr
+                                        ) ? (
+                                            `/${getField(
+                                                entry.cidr,
+                                                poolInfo?.interface?.cidr
+                                            )}`
+                                        ) : (
+                                            <span className="text-gray-400">
+                                                —
+                                            </span>
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -161,7 +219,13 @@ function CalculationDetailContent() {
                                         Network Address
                                     </td>
                                     <td className="font-mono border px-2 py-1">
-                                        {calculation?.networkAddress || "N/A"}
+                                        {display(
+                                            getField(
+                                                poolInfo?.interface
+                                                    ?.networkAddress,
+                                                entry.networkAddress
+                                            )
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -169,7 +233,13 @@ function CalculationDetailContent() {
                                         Broadcast Address
                                     </td>
                                     <td className="font-mono border px-2 py-1">
-                                        {calculation?.broadcastAddress || "N/A"}
+                                        {display(
+                                            getField(
+                                                poolInfo?.interface
+                                                    ?.broadcastAddress,
+                                                entry.broadcastAddress
+                                            )
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -177,8 +247,13 @@ function CalculationDetailContent() {
                                         First IP
                                     </td>
                                     <td className="font-mono border px-2 py-1">
-                                        {poolInfo?.interface?.ipPoolStart ||
-                                            "N/A"}
+                                        {display(
+                                            getField(
+                                                poolInfo?.interface
+                                                    ?.ipPoolStart,
+                                                entry.firstIp
+                                            )
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -186,9 +261,12 @@ function CalculationDetailContent() {
                                         Last IP
                                     </td>
                                     <td className="font-mono border px-2 py-1">
-                                        {poolInfo?.interface?.ipPoolEnd ||
-                                            calculation?.lastIp ||
-                                            "N/A"}
+                                        {display(
+                                            getField(
+                                                poolInfo?.interface?.ipPoolEnd,
+                                                entry.lastIp
+                                            )
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -196,8 +274,15 @@ function CalculationDetailContent() {
                                         Total Hosts
                                     </td>
                                     <td className="font-mono border px-2 py-1">
-                                        {calculation?.totalHosts?.toLocaleString() ||
-                                            "N/A"}
+                                        {display(
+                                            getField(
+                                                poolInfo?.interface?.totalHosts?.toLocaleString?.() ||
+                                                    poolInfo?.interface
+                                                        ?.totalHosts,
+                                                entry.totalHosts?.toLocaleString?.() ||
+                                                    entry.totalHosts
+                                            )
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -205,8 +290,15 @@ function CalculationDetailContent() {
                                         Usable Hosts
                                     </td>
                                     <td className="font-mono border px-2 py-1">
-                                        {calculation?.usableHosts?.toLocaleString() ||
-                                            "N/A"}
+                                        {display(
+                                            getField(
+                                                poolInfo?.interface?.usableHosts?.toLocaleString?.() ||
+                                                    poolInfo?.interface
+                                                        ?.usableHosts,
+                                                entry.usableHosts?.toLocaleString?.() ||
+                                                    entry.usableHosts
+                                            )
+                                        )}
                                     </td>
                                 </tr>
                                 {/* Region & Interface Info (minus Default Gateway) */}
@@ -215,12 +307,14 @@ function CalculationDetailContent() {
                                         Region Name
                                     </td>
                                     <td className="border px-2 py-1">
-                                        {poolInfo?.interface?.regionName
-                                            ? poolInfo.interface.regionName
-                                            : calculation?.regionName ||
-                                              calculation?.region ||
-                                              calculation?.region_name ||
-                                              "N/A"}
+                                        {display(
+                                            getField(
+                                                poolInfo?.interface?.regionName,
+                                                entry.regionName ||
+                                                    entry.region ||
+                                                    entry.region_name
+                                            )
+                                        )}
                                     </td>
                                 </tr>
                                 <tr>
@@ -228,13 +322,15 @@ function CalculationDetailContent() {
                                         Interface
                                     </td>
                                     <td className="border px-2 py-1">
-                                        {poolInfo?.interface?.name
-                                            ? poolInfo.interface.name
-                                            : calculation?.interfaceName ||
-                                              calculation?.interface ||
-                                              calculation?.interface_name ||
-                                              calculation?.interfaceType ||
-                                              "N/A"}
+                                        {display(
+                                            getField(
+                                                poolInfo?.interface?.name,
+                                                entry.interfaceName ||
+                                                    entry.interface ||
+                                                    entry.interface_name ||
+                                                    entry.interfaceType
+                                            )
+                                        )}
                                     </td>
                                 </tr>
                                 {/* Assignment Status */}
@@ -243,7 +339,7 @@ function CalculationDetailContent() {
                                         Assignment Status
                                     </td>
                                     <td className="border px-2 py-1">
-                                        {calculation?.assignmentStatus || "N/A"}
+                                        {display(entry.assignmentStatus)}
                                     </td>
                                 </tr>
                                 <tr>
@@ -251,7 +347,7 @@ function CalculationDetailContent() {
                                         Customer
                                     </td>
                                     <td className="border px-2 py-1">
-                                        {calculation?.customerName || "N/A"}
+                                        {display(entry.customerName)}
                                     </td>
                                 </tr>
                                 <tr>
@@ -259,7 +355,7 @@ function CalculationDetailContent() {
                                         Account
                                     </td>
                                     <td className="border px-2 py-1">
-                                        {calculation?.accountNumber || "N/A"}
+                                        {display(entry.accountNumber)}
                                     </td>
                                 </tr>
                                 <tr>
@@ -267,7 +363,7 @@ function CalculationDetailContent() {
                                         Location
                                     </td>
                                     <td className="border px-2 py-1">
-                                        {calculation?.location || "N/A"}
+                                        {display(entry.location)}
                                     </td>
                                 </tr>
                             </tbody>
@@ -281,7 +377,9 @@ function CalculationDetailContent() {
 
 export default function CalculationDetailPage() {
     return (
-        <Suspense fallback={<div className="p-8 text-center text-lg">Loading...</div>}>
+        <Suspense
+            fallback={<div className="p-8 text-center text-lg">Loading...</div>}
+        >
             <CalculationDetailContent />
         </Suspense>
     );

@@ -73,27 +73,75 @@ export default function CalculationDetailPage() {
     const result = calculation.result || {};
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="w-full max-w-screen-md mx-auto px-1 sm:px-4 py-4 md:py-8 text-xs sm:text-sm">
             <Button
                 variant="outline"
                 onClick={() => router.back()}
-                className="mb-4"
+                className="mb-4 w-full sm:w-auto"
             >
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
             </Button>
             <Card>
                 <CardHeader>
-                    <CardTitle>Network Information</CardTitle>
-                    <CardDescription>
+                    <CardTitle className="text-sm sm:text-base">
+                        Network Information
+                    </CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">
                         Detailed IP calculation and assignment info
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-2 sm:p-4 text-xs sm:text-sm">
+                    {/* Important for Modem/Router Configuration */}
                     <div className="mb-4">
-                        <h3 className="font-semibold text-lg mb-2">
+                        <h3 className="font-semibold text-xs sm:text-base mb-2 text-green-900">
+                            Important for Modem/Router Configuration
+                        </h3>
+                        <div className="flex flex-col gap-0.5 w-full max-w-full">
+                            <div className="flex flex-col xs:flex-row items-stretch xs:items-center border rounded-t-md overflow-hidden text-xs sm:text-sm">
+                                <div className="bg-green-100 font-semibold w-full xs:w-1/2 border-b xs:border-b-0 xs:border-r border-green-200 px-2 py-1 whitespace-pre-line break-words">
+                                    WAN IP Address
+                                </div>
+                                <div
+                                    className="px-2 py-1 w-full xs:w-1/2 font-mono bg-white break-all whitespace-pre-line overflow-hidden"
+                                    style={{ wordBreak: "break-all" }}
+                                >
+                                    {calculation.wanIp}
+                                </div>
+                            </div>
+                            <div className="flex flex-col xs:flex-row items-stretch xs:items-center border-l border-r border-green-200 overflow-hidden text-xs sm:text-sm">
+                                <div className="bg-green-50 font-semibold w-full xs:w-1/2 border-b xs:border-b-0 xs:border-r border-green-200 px-2 py-1 whitespace-pre-line break-words">
+                                    Subnet Mask
+                                </div>
+                                <div
+                                    className="px-2 py-1 w-full xs:w-1/2 font-mono bg-white break-all whitespace-pre-line overflow-hidden"
+                                    style={{ wordBreak: "break-all" }}
+                                >
+                                    {result.subnetMask ||
+                                        calculation.subnetMask ||
+                                        "N/A"}
+                                </div>
+                            </div>
+                            <div className="flex flex-col xs:flex-row items-stretch xs:items-center border rounded-b-md overflow-hidden text-xs sm:text-sm">
+                                <div className="bg-green-50 font-semibold w-full xs:w-1/2 border-b xs:border-b-0 xs:border-r border-green-200 px-2 py-1 whitespace-pre-line break-words">
+                                    Default Gateway
+                                </div>
+                                <div
+                                    className="px-2 py-1 w-full xs:w-1/2 font-mono bg-white break-all whitespace-pre-line overflow-hidden"
+                                    style={{ wordBreak: "break-all" }}
+                                >
+                                    {result.defaultGateway ||
+                                        calculation.defaultGateway ||
+                                        "N/A"}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {/* IP Details */}
+                    <div className="mb-4 min-w-[320px]">
+                        <h3 className="font-semibold text-base sm:text-lg mb-2">
                             IP Details
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                             <div>
                                 <span className="font-semibold">
                                     IP Address:
@@ -136,11 +184,12 @@ export default function CalculationDetailPage() {
                             </div>
                         </div>
                     </div>
+                    {/* Usable Range */}
                     <div className="mb-4">
-                        <h3 className="font-semibold text-lg mb-2">
+                        <h3 className="font-semibold text-base sm:text-lg mb-2">
                             Usable Range
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                             <div>
                                 <span className="font-semibold">First IP:</span>{" "}
                                 <span className="font-mono">
@@ -173,11 +222,12 @@ export default function CalculationDetailPage() {
                             </div>
                         </div>
                     </div>
+                    {/* Region & Interface Information */}
                     <div className="mb-4">
-                        <h3 className="font-semibold text-lg mb-2">
+                        <h3 className="font-semibold text-base sm:text-lg mb-2">
                             Region & Interface Information
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                             <div>
                                 <span className="font-semibold">
                                     Region Name:
@@ -210,11 +260,12 @@ export default function CalculationDetailPage() {
                             </div>
                         </div>
                     </div>
+                    {/* Assignment Status */}
                     <div className="mb-4">
-                        <h3 className="font-semibold text-lg mb-2">
+                        <h3 className="font-semibold text-base sm:text-lg mb-2">
                             Assignment Status
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                        <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1 text-sm">
                             <div>
                                 <span className="font-semibold">Status:</span>{" "}
                                 <span>
@@ -249,8 +300,9 @@ export default function CalculationDetailPage() {
                             </div>
                         </div>
                     </div>
+                    {/* Router Recommendations */}
                     <div className="mb-4">
-                        <h3 className="font-semibold text-lg mb-2">
+                        <h3 className="font-semibold text-base sm:text-lg mb-2">
                             Router Recommendations
                         </h3>
                         <div className="text-sm">
@@ -259,8 +311,9 @@ export default function CalculationDetailPage() {
                                 "No recommendation available"}
                         </div>
                     </div>
+                    {/* Tutorial Videos */}
                     <div className="mb-4">
-                        <h3 className="font-semibold text-lg mb-2">
+                        <h3 className="font-semibold text-base sm:text-lg mb-2">
                             Tutorial Videos
                         </h3>
                         <div className="flex flex-col gap-2">
@@ -280,42 +333,13 @@ export default function CalculationDetailPage() {
                                         rel="noopener noreferrer"
                                         className="text-blue-600 underline"
                                     >
-                                        Watch Tutorial →
+                                        {vid.title
+                                            ? vid.title
+                                            : "Watch Tutorial →"}
                                     </a>
                                 ))
                             ) : (
                                 <span>No tutorial videos available</span>
-                            )}
-                        </div>
-                    </div>
-                    <div className="mb-4">
-                        <h3 className="font-semibold text-lg mb-2">
-                            Knowledge Base Articles
-                        </h3>
-                        <div className="text-sm">
-                            {(
-                                result.knowledgeBaseArticles ||
-                                calculation.knowledgeBaseArticles ||
-                                []
-                            ).length > 0 ? (
-                                (
-                                    result.knowledgeBaseArticles ||
-                                    calculation.knowledgeBaseArticles
-                                ).map((art: any, idx: number) => (
-                                    <a
-                                        key={idx}
-                                        href={art.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 underline"
-                                    >
-                                        {art.title}
-                                    </a>
-                                ))
-                            ) : (
-                                <span>
-                                    No knowledge base articles available
-                                </span>
                             )}
                         </div>
                     </div>
