@@ -48,9 +48,9 @@ export default function NavBar() {
 
     return (
         <header className="border-b bg-background shadow-sm transition-colors duration-300">
-            <nav className="container flex items-center justify-between pl-1 pr-4 py-4 min-w-0">
+            <nav className="w-full flex items-center justify-between pr-4 py-4 min-w-0 md:ml-auto">
                 {/* Logo / Brand */}
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 ml-0">
                     <Link
                         href="/"
                         aria-label="IP Toolkit Pro Home"
@@ -73,7 +73,7 @@ export default function NavBar() {
                         </span>
                     </Link>
                 </div>
-                <div className="hidden md:flex items-center space-x-4 ml-auto">
+                <div className="hidden md:flex items-center space-x-4">
                     {/* Main Navigation */}
                     <div className="flex items-center space-x-1">
                         <Link href="/tools/wan-ip-analyzer">

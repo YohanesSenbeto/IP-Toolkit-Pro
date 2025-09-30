@@ -41,20 +41,31 @@ export default function Home() {
     ];
 
     return (
-        <div className="min-h-screen bg-background w-full">
+        <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-white to-purple-100 px-2 sm:px-4 md:px-8">
             {/* Hero Section */}
-            <section className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-8 py-10 md:py-16 text-center">
-                <div className="max-w-4xl mx-auto">
-                    <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                        IP Toolkit <span className="text-primary">Pro</span>
-                    </h1>
-                    <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-                        The ultimate network configuration platform for Ethio
-                        Telecom professionals and customers
+            <section className="w-full max-w-screen-xl mx-auto px-0 py-0 text-left">
+                <div className="max-w-4xl mx-auto flex flex-col items-start">
+                    <p className="text-xl md:text-2xl font-bold mb-8 max-w-3xl pt-8 bg-gradient-to-r from-teal-500 via-emerald-400 to-orange-400 bg-clip-text text-transparent drop-shadow-lg animate-gradient-x">
+                        <span className="inline-block px-1 py-0.5 rounded-lg shadow-md bg-white/10 backdrop-blur-sm">
+                            <span className="text-teal-700">The ultimate</span>{" "}
+                            <span className="text-emerald-700">
+                                network configuration
+                            </span>{" "}
+                            <span className="text-orange-600">platform</span>{" "}
+                            <span className="text-teal-700">for</span>{" "}
+                            <span className="text-emerald-700">
+                                Ethio Telecom
+                            </span>{" "}
+                            <span className="text-orange-600">
+                                professionals
+                            </span>{" "}
+                            <span className="text-teal-700">and</span>{" "}
+                            <span className="text-emerald-700">customers</span>
+                        </span>
                     </p>
 
                     {!session ? (
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 w-full">
                             <Button onClick={() => signIn()} size="lg">
                                 Get Started Free
                             </Button>
@@ -65,12 +76,15 @@ export default function Home() {
                             </Link>
                         </div>
                     ) : (
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+                        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 w-full">
                             <Link href="/tools/wan-ip-analyzer">
                                 <Button size="lg">Start Analyzing</Button>
                             </Link>
                             <Link href="/dashboard">
-                                <Button variant="outline" size="lg">
+                                <Button
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    size="lg"
+                                >
                                     View Dashboard
                                 </Button>
                             </Link>
@@ -80,36 +94,36 @@ export default function Home() {
             </section>
 
             {/* Features Grid */}
-            <section className="w-full max-w-screen-xl mx-auto px-4 sm:px-6 md:px-8 py-10 md:py-16">
-                <div className="text-center mb-12 md:mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+            <section className="w-full max-w-screen-xl mx-auto px-0 py-0">
+                <div className="text-center mb-10 md:mb-14 px-2">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold text-foreground mb-2 leading-tight">
                         Everything You Need for Network Configuration
                     </h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    <p className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
                         Powerful tools and comprehensive resources designed
                         specifically for Ethio Telecom's network environment
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 w-full">
                     {features.map((feature, index) => (
                         <Link key={index} href={feature.link}>
-                            <Card className="h-full transition-all duration-300 hover:shadow-xl hover:scale-105 cursor-pointer">
-                                <CardHeader>
-                                    <div className="text-3xl mb-4">
+                            <Card className="h-full bg-gradient-to-br from-blue-100 via-white to-purple-100 border-4 border-blue-300 shadow-2xl hover:shadow-blue-400 hover:scale-105 transition-all duration-300 cursor-pointer rounded-2xl px-2 py-2 flex flex-col justify-between min-h-[220px] max-w-md mx-auto hover:bg-gradient-to-tl hover:from-purple-100 hover:to-blue-100">
+                                <CardHeader className="flex flex-col items-center text-center p-0 mb-0">
+                                    <div className="text-xl mb-1 drop-shadow-lg animate-bounce-slow">
                                         {feature.icon}
                                     </div>
-                                    <CardTitle className="text-xl">
+                                    <CardTitle className="text-xs sm:text-sm md:text-base font-bold text-blue-800 mb-0.5 drop-shadow">
                                         {feature.title}
                                     </CardTitle>
-                                    <CardDescription className="text-muted-foreground mt-2">
+                                    <CardDescription className="text-purple-700/90 mt-0.5 text-[10px] sm:text-xs md:text-sm leading-tight font-medium">
                                         {feature.description}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <div className="text-primary font-medium flex items-center gap-2">
+                                <CardContent className="flex flex-col items-center justify-end p-0 mt-0">
+                                    <div className="text-white bg-gradient-to-r from-blue-500 to-purple-500 font-bold flex items-center gap-1 text-[10px] md:text-xs px-2 py-1 rounded-full shadow-md hover:from-purple-500 hover:to-blue-500 transition-colors">
                                         Explore Feature
-                                        <span className="text-lg">→</span>
+                                        <span className="text-xs">→</span>
                                     </div>
                                 </CardContent>
                             </Card>
