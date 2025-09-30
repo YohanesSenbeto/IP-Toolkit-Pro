@@ -119,26 +119,10 @@ export async function GET(request: NextRequest) {
     console.log('Sample region data:', regions[0]);
 
     // Format regions data for CIDR utils
-    const regionData = regions.map((region: {
-      name: string;
-      code?: string;
-      interfaces: {
-        name: string;
-        ipPoolStart: string;
-        ipPoolEnd: string;
-        subnetMask: string;
-        defaultGateway: string;
-      }[];
-    }) => ({
+    const regionData = regions.map(region => ({
       name: region.name,
-      code: region.code || '',
-      interfaces: region.interfaces.map((iface: {
-        name: string;
-        ipPoolStart: string;
-        ipPoolEnd: string;
-        subnetMask: string;
-        defaultGateway: string;
-      }) => ({
+      code: region.code ?? '',
+      interfaces: region.interfaces.map(iface => ({
         name: iface.name,
         ipPoolStart: iface.ipPoolStart,
         ipPoolEnd: iface.ipPoolEnd,
@@ -167,22 +151,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         ipAddress: wanIp,
         error: 'IP address not found in any Broadband Internet IP pool range',
-        availableRegions: regions.map((r: {
-          name: string;
-          code?: string;
-          interfaces: {
-            name: string;
-            ipPoolStart: string;
-            ipPoolEnd: string;
-          }[];
-        }) => ({
+        availableRegions: regions.map(r => ({
           name: r.name,
-          code: r.code,
-          interfaces: r.interfaces.map((i: {
-            name: string;
-            ipPoolStart: string;
-            ipPoolEnd: string;
-          }) => ({
+          code: r.code ?? '',
+          interfaces: r.interfaces.map(i => ({
             name: i.name,
             ipPoolStart: i.ipPoolStart,
             ipPoolEnd: i.ipPoolEnd
@@ -421,26 +393,10 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    const regionData = regions.map((region: {
-      name: string;
-      code?: string;
-      interfaces: {
-        name: string;
-        ipPoolStart: string;
-        ipPoolEnd: string;
-        subnetMask: string;
-        defaultGateway: string;
-      }[];
-    }) => ({
+    const regionData = regions.map(region => ({
       name: region.name,
-      code: region.code || '',
-      interfaces: region.interfaces.map((iface: {
-        name: string;
-        ipPoolStart: string;
-        ipPoolEnd: string;
-        subnetMask: string;
-        defaultGateway: string;
-      }) => ({
+      code: region.code ?? '',
+      interfaces: region.interfaces.map(iface => ({
         name: iface.name,
         ipPoolStart: iface.ipPoolStart,
         ipPoolEnd: iface.ipPoolEnd,

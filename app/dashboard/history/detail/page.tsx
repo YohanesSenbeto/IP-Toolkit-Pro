@@ -123,9 +123,6 @@ function CalculationDetailContent() {
 
                 {/* Router Recommendations */}
                 <div className="mb-4">
-                    <h3 className="font-semibold text-lg mb-2">
-                        Router Recommendations
-                    </h3>
                     <div className="text-sm">
                         {display(entry.routerRecommendation) || (
                             <span className="text-gray-400">

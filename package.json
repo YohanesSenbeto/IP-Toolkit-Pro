@@ -17,9 +17,6 @@
     "start:all": "concurrently \"npm run start\" \"npm run bot\"",
     "lint": "next lint"
   },
-  "prisma": {
-    "seed": "node prisma/seed-ethio-telecom.js"
-  },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
     "@hookform/resolvers": "^5.2.1",

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate totals per interface
-    const pools = customerIPs.reduce((acc, ip) => {
+  const pools = customerIPs.reduce((acc: any, ip: any) => {
       const interfaceId = ip.interfaceId || "unknown";
       if (!acc[interfaceId]) {
         acc[interfaceId] = {

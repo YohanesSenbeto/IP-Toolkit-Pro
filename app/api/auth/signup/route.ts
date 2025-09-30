@@ -1,10 +1,10 @@
 // app/api/auth/signup/route.ts
 import { NextResponse } from "next/server";
-import { PrismaClient, Role } from "@prisma/client";
+import Prisma from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
-const prisma = new PrismaClient();
+const prisma = new Prisma.PrismaClient();
 
 // ✅ Zod validation schema (align with Prisma Role)
 const signupSchema = z.object({

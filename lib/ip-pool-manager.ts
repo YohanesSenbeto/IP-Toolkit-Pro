@@ -154,7 +154,7 @@ class IPPoolManager {
       // If not found, return available pools
       return {
         found: false,
-        availablePools: pools.map(pool => ({
+  availablePools: pools.map((pool: any) => ({
           id: pool.id,
           regionId: pool.regionId,
           regionName: pool.region.name,
@@ -212,7 +212,7 @@ class IPPoolManager {
         }
       });
 
-      const assignedIPSet = new Set(assignedIPs.map(ip => ip.wanIp));
+  const assignedIPSet = new Set(assignedIPs.map((ip: any) => ip.wanIp));
       const availableIPs: string[] = [];
 
       // Generate available IPs
@@ -344,14 +344,14 @@ class IPPoolManager {
 
       const stats = {
         totalPools: pools.length,
-        totalIPs: pools.reduce((sum, pool) => sum + pool.totalIps, 0),
-        usedIPs: pools.reduce((sum, pool) => sum + pool.usedIps, 0),
-        availableIPs: pools.reduce((sum, pool) => sum + pool.availableIps, 0),
+  totalIPs: pools.reduce((sum: number, pool: any) => sum + pool.totalIps, 0),
+  usedIPs: pools.reduce((sum: number, pool: any) => sum + pool.usedIps, 0),
+  availableIPs: pools.reduce((sum: number, pool: any) => sum + pool.availableIps, 0),
         poolsByRegion: {} as Record<string, number>
       };
 
       // Count pools by region
-      pools.forEach(pool => {
+  pools.forEach((pool: any) => {
         const regionName = pool.region.name;
         stats.poolsByRegion[regionName] = (stats.poolsByRegion[regionName] || 0) + 1;
       });

@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
         title: string;
         slug: string;
         content: string | null;
-        videoUrl: string;
+        videoUrl: string | null;
         category: string;
         routerModels: string[];
         createdAt: Date;
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
         title: string;
         slug: string;
         content: string | null;
-        videoUrl: string;
+        videoUrl: string | null;
         category: string;
         routerModels: string[];
         createdAt: Date;
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
         id: tutorial.id,
         title: tutorial.title,
         slug: tutorial.slug,
-        videoUrl: tutorial.videoUrl,
+        videoUrl: tutorial.videoUrl ?? '',
         category: tutorial.category,
         routerModels: tutorial.routerModels,
         description: tutorial.content?.substring(0, 200) + '...',

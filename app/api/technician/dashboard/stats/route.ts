@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
     });
 
     const totalIPs = customerIPs.length;
-    const assignedIPs = customerIPs.filter(ip => ip.isActive).length;
-    const availableIPs = customerIPs.filter(ip => !ip.isActive).length;
+  const assignedIPs = customerIPs.filter((ip: { isActive: boolean }) => ip.isActive).length;
+  const availableIPs = customerIPs.filter((ip: { isActive: boolean }) => !ip.isActive).length;
 
     return NextResponse.json({
       totalIPs,
