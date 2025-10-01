@@ -117,7 +117,7 @@ const BookStyleResults: FC<BookStyleResultsProps> = ({
         | undefined;
 
     return (
-        <Card className="mb-6 max-w-md mx-auto">
+        <Card className="mb-4 max-w-xs mx-auto min-h-[160px]">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-500" />
@@ -207,22 +207,11 @@ interface WanIpAnalysis {
 }
 
 export default function WanIpAnalyzerPage() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const router = useRouter();
+    // All hooks must be called unconditionally and before any early return
     const [ipAddress, setIpAddress] = useState("");
     const [analysis, setAnalysis] = useState<WanIpAnalysis | null>(null);
-    // Auto-scroll to network config card on mobile/tablet after analysis loads
-    useEffect(() => {
-        if (analysis && typeof window !== "undefined") {
-            const isMobileOrTablet = window.innerWidth < 1024;
-            if (isMobileOrTablet) {
-                const card = document.getElementById("network-config-card");
-                if (card) {
-                    card.scrollIntoView({ behavior: "smooth", block: "start" });
-                }
-            }
-        }
-    }, [analysis]);
     const [customerLookup, setCustomerLookup] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -245,6 +234,50 @@ export default function WanIpAnalyzerPage() {
             | "BROADBAND_INTERNET"
             | "VPN_DATA_ONLY",
     });
+
+    // Protect route: redirect guests to sign in
+    useEffect(() => {
+        if (status === "loading") return;
+        if (!session) {
+            toast.info(
+                "To access WAN IP Analyzer, you must sign in. If you don't have an account, please register first.",
+                {
+                    action: {
+                        label: "Sign In",
+                        onClick: () => router.push("/auth/signin"),
+                    },
+                    cancel: {
+                        label: "Sign Up",
+                        onClick: () => router.push("/auth/signup"),
+                    },
+                    duration: 8000,
+                    dismissible: true,
+                }
+            );
+            router.push("/auth/signin");
+        }
+    }, [session, status, router]);
+
+    // Auto-scroll to network config card on mobile/tablet after analysis loads
+    useEffect(() => {
+        if (analysis && typeof window !== "undefined") {
+            const isMobileOrTablet = window.innerWidth < 1024;
+            if (isMobileOrTablet) {
+                const card = document.getElementById("network-config-card");
+                if (card) {
+                    card.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }
+        }
+    }, [analysis]);
+
+    if (status === "loading" || !session) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
 
     const analyzeIp = async (ip: string) => {
         setLoading(true);
@@ -412,7 +445,7 @@ export default function WanIpAnalyzerPage() {
 
     return (
         <div className="w-full min-h-screen bg-background text-foreground">
-            <div className="max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-10">
+            <div className="max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-2 md:py-4">
                 <div className="max-w-4xl mx-auto">
                     <div className="mb-1 md:mb-1">
                         <p className="text-muted-foreground px-1 py-2 text-medium">
@@ -424,17 +457,17 @@ export default function WanIpAnalyzerPage() {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4 mb-1 justify-center">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4 mb-1 justify-end mt-4 md:mt-8 pr-0 lg:pr-8 xl:pr-16">
                 {/* Left Side - Search Form */}
-                <div className="lg:col-span-2 mx-auto">
-                    <Card className="p-2 md:p-4 bg-background text-foreground">
-                        <CardHeader className="pb-2">
-                            <CardTitle className="text-lg md:text-xl">
+                <div className="lg:col-span-2 ml-auto">
+                    <Card className="p-0.5 md:p-1 bg-background text-foreground w-full ml-0">
+                        <CardHeader className="pb-1">
+                            <CardTitle className="text-base md:text-lg">
                                 Search Customer or Analyze WAN IP
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="pt-0">
-                            <div className="space-y-2 md:space-y-3">
+                            <div className="space-y-1 md:space-y-2">
                                 {/* Account Number */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">
@@ -502,7 +535,7 @@ export default function WanIpAnalyzerPage() {
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="mt-4 flex flex-col sm:flex-row gap-3 sm:items-center">
+                                <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:items-center">
                                     <Button
                                         onClick={handleSubmit}
                                         disabled={loading || !ipAddress}
@@ -548,7 +581,7 @@ export default function WanIpAnalyzerPage() {
                                 </div>
 
                                 {/* Help Text */}
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-1">
                                     <div className="flex items-start gap-1">
                                         <div className="text-blue-600 mt-0.5">
                                             💡
