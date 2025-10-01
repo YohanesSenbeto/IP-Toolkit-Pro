@@ -73,7 +73,7 @@ export default function NavBar() {
                         >
                             IP TOOLKit{" "}
                             <span className="font-black dark:text-gray-100 font-serif">
-                                Pro
+                                App
                             </span>
                         </span>
                     </Link>

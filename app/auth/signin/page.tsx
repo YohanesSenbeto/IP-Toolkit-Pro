@@ -88,7 +88,7 @@ export default function SignInPage() {
                         <h2 className="mt-1 text-center text-lg font-extrabold bg-gradient-to-r from-teal-600 via-emerald-500 to-orange-400 bg-clip-text text-transparent drop-shadow">
                             Sign in to{" "}
                             <span className="font-black bg-gradient-to-r from-teal-600 via-emerald-500 to-orange-400 bg-clip-text text-transparent drop-shadow">
-                                IP Toolkit Pro
+                                IP Toolkit App
                             </span>
                         </h2>
                         <p className="mt-1 text-center text-xs text-gray-700 dark:text-gray-300 font-medium">

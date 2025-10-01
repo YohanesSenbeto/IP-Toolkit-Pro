@@ -65,7 +65,7 @@ export default function SignUpPage() {
                         </h2>
                         <p className="mt-1 text-center text-xs text-gray-700 dark:text-gray-300 font-medium">
                             <span className="font-black bg-gradient-to-r from-teal-600 via-emerald-500 to-orange-400 bg-clip-text text-transparent drop-shadow">
-                                IP Toolkit Pro
+                                IP Toolkit App
                             </span>{" "}
                             and start managing your network configurations
                         </p>

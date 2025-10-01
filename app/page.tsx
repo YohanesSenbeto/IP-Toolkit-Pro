@@ -37,7 +37,7 @@ export default function Home() {
                             }}
                         >
                             IP TOOLKit{" "}
-                            <span className="font-black font-serif">Pro</span>
+                            <span className="font-black font-serif">App</span>
                         </span>
                     </h1>
                     <p className="text-center text-lg mb-4 font-semibold font-serif drop-shadow">
