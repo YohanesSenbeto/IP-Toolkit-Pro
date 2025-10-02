@@ -58,14 +58,16 @@ export default function NavBar() {
                         aria-label="IP Toolkit Pro Home"
                         className="group flex items-center gap-2 min-w-0"
                     >
-                        <img
-                            src="/ethio-img-logo.png"
-                            alt="Ethio Telecom Logo"
-                            className="h-10 w-auto sm:h-12 mr-1"
-                            style={{ marginLeft: "-0.5rem" }}
-                        />
+                        <span className="dark:bg-white dark:rounded-lg dark:p-1">
+                            <img
+                                src="/ethio-img-logo.png"
+                                alt="Ethio Telecom Logo"
+                                className="h-10 max-w-xs w-auto sm:h-12 mr-1 object-contain"
+                                style={{ display: "block" }}
+                            />
+                        </span>
                         <span
-                            className="font-extrabold tracking-tight whitespace-nowrap text-base xs:text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl 2xl:text-5xl ml-0 font-serif text-gray-800 dark:text-white drop-shadow"
+                            className="font-extrabold tracking-tight whitespace-nowrap text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl ml-0 font-serif text-gray-800 dark:text-white drop-shadow"
                             style={{
                                 lineHeight: 1.1,
                                 marginLeft: "-0.25rem",
@@ -79,6 +81,9 @@ export default function NavBar() {
                     <div className="flex-1 hidden md:block"></div>
                     {/* Desktop Nav Links & User Menu (hidden on mobile) */}
                     <div className="hidden md:flex items-center space-x-4 my-auto">
+                        <span className="flex items-center">
+                            <ThemeToggle />
+                        </span>
                         <Link href="/tools/wan-ip-analyzer">
                             <Button
                                 variant="ghost"
@@ -123,7 +128,7 @@ export default function NavBar() {
                                         className="relative h-9 w-9 rounded-full"
                                     >
                                         <Avatar className="h-9 w-9">
-                                            <AvatarFallback className="bg-primary text-white">
+                                            <AvatarFallback className="bg-yellow-400 border-2 border-primary text-black flex items-center justify-center">
                                                 {userInitial}
                                             </AvatarFallback>
                                         </Avatar>
@@ -138,13 +143,6 @@ export default function NavBar() {
                                     className="w-56"
                                     align="end"
                                 >
-                                    <DropdownMenuItem asChild>
-                                        <span className="flex items-center w-full cursor-pointer">
-                                            <ThemeToggle />
-                                            <span className="ml-2">Theme</span>
-                                        </span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
                                     <DropdownMenuLabel>
                                         <div className="flex flex-col space-y-1">
                                             <p className="text-sm font-medium leading-none">
@@ -194,6 +192,12 @@ export default function NavBar() {
                 {/* Mobile menu dropdown */}
                 {mobileMenuOpen && (
                     <div className="fixed inset-0 z-50 bg-white dark:bg-gray-950 bg-opacity-95 flex flex-col items-center justify-start pt-24 px-4 space-y-4 md:hidden overflow-y-auto">
+                        <div
+                            className="w-full flex items-center gap-2 text-lg px-2 py-1 rounded hover:bg-accent transition-colors cursor-pointer justify-center"
+                            onClick={() => setMobileMenuOpen(false)}
+                        >
+                            <ThemeToggle /> <span>Theme</span>
+                        </div>
                         <Button
                             variant="ghost"
                             className="w-full flex items-center gap-2 text-lg"
@@ -244,7 +248,7 @@ export default function NavBar() {
                                 <div className="w-full flex flex-col items-center space-y-2">
                                     <div className="flex items-center gap-2">
                                         <Avatar className="h-9 w-9">
-                                            <AvatarFallback className="bg-primary text-white">
+                                            <AvatarFallback className="bg-yellow-400 border-2 border-primary text-black flex items-center justify-center">
                                                 {userInitial}
                                             </AvatarFallback>
                                         </Avatar>
@@ -279,12 +283,6 @@ export default function NavBar() {
                                 </Button>
                             </>
                         )}
-                        <div
-                            className="w-full flex items-center gap-2 text-lg px-2 py-1 rounded hover:bg-accent transition-colors cursor-pointer justify-center"
-                            onClick={() => setMobileMenuOpen(false)}
-                        >
-                            <ThemeToggle /> <span>Theme</span>
-                        </div>
                     </div>
                 )}
             </nav>

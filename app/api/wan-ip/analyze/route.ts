@@ -249,7 +249,9 @@ export async function GET(request: NextRequest) {
       }
     };
 
+
     // Log WAN IP analysis to history (if not error and not unmetered)
+    let latestHistoryId: string | null = null;
     try {
       let userId: string | null = null;
       if (session?.user?.email) {
@@ -259,7 +261,6 @@ export async function GET(request: NextRequest) {
         });
         userId = user?.id || null;
       }
-      // Only save if this WAN IP and CIDR are different from the most recent for this user
       if (userId) {
         const lastEntry = await prisma.wanIpAnalyzerHistory.findFirst({
           where: { userId },
@@ -280,6 +281,12 @@ export async function GET(request: NextRequest) {
             },
           });
         }
+        // Always fetch the latest entry after possible create
+        const latestEntry = await prisma.wanIpAnalyzerHistory.findFirst({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+        });
+        latestHistoryId = latestEntry?.id || null;
       } else {
         // For guests, always save (or you can skip if you want)
         await prisma.wanIpAnalyzerHistory.create({
@@ -295,12 +302,18 @@ export async function GET(request: NextRequest) {
             totalHosts: ipInfo.totalHosts,
           },
         });
+        // Always fetch the latest guest entry
+        const latestEntry = await prisma.wanIpAnalyzerHistory.findFirst({
+          where: { userId: null },
+          orderBy: { createdAt: 'desc' },
+        });
+        latestHistoryId = latestEntry?.id || null;
       }
     } catch (historyError) {
       console.error('Failed to log WAN IP analyzer history:', historyError);
     }
 
-    const res = NextResponse.json(response);
+    const res = NextResponse.json({ ...response, historyId: latestHistoryId });
     // Increment counters
     if (!unmetered && !session) {
       res.headers.append('Set-Cookie', `trial_used=1; Max-Age=31536000; Path=/; HttpOnly; SameSite=Lax`);
