@@ -56,18 +56,20 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="w-full max-w-screen-xl mx-auto px-1 sm:px-4 md:px-8 py-4 md:py-10">
+        <div className="w-full max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-4 md:py-10 bg-background text-foreground min-h-screen">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-gray-600 mt-2">
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+                    Dashboard
+                </h1>
+                <p className="text-muted-foreground mt-2 text-base sm:text-lg">
                     Welcome back, {session.user?.name || session.user?.email}!
                 </p>
             </div>
 
             {/* Recent WAN IP Analyzer History */}
-            <Card className="mb-8">
+            <Card className="mb-8 bg-card text-card-foreground">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                         <Globe className="h-5 w-5 text-blue-600" />
                         Recent WAN IP Analyzed
                     </CardTitle>
@@ -97,14 +99,14 @@ export default function DashboardPage() {
                             {wanIpHistory.slice(0, 5).map((entry) => (
                                 <div
                                     key={entry.id}
-                                    className="border rounded-lg p-3 sm:p-4 bg-blue-50/50 flex flex-col gap-2"
+                                    className="border rounded-lg p-3 sm:p-4 bg-blue-50/70 dark:bg-blue-950/30 flex flex-col gap-2"
                                 >
                                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1 sm:gap-0">
-                                        <h4 className="font-medium text-blue-900 text-base sm:text-lg break-all">
+                                        <h4 className="font-medium text-blue-900 dark:text-blue-200 text-base sm:text-lg break-all">
                                             {entry.wanIp}
                                             {entry.cidr ? `/${entry.cidr}` : ""}
                                         </h4>
-                                        <span className="text-xs sm:text-sm text-gray-500">
+                                        <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                                             {new Date(
                                                 entry.createdAt
                                             ).toLocaleString()}
@@ -112,7 +114,7 @@ export default function DashboardPage() {
                                     </div>
                                     <div className="grid grid-cols-1 xs:grid-cols-2 gap-x-4 gap-y-1 text-sm mb-2">
                                         <div>
-                                            <span className="font-semibold text-blue-700">
+                                            <span className="font-semibold text-blue-700 dark:text-blue-300">
                                                 Subnet Mask:
                                             </span>
                                             <span className="ml-1 font-mono text-xs">
@@ -120,7 +122,7 @@ export default function DashboardPage() {
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-blue-700">
+                                            <span className="font-semibold text-blue-700 dark:text-blue-300">
                                                 Default Gateway:
                                             </span>
                                             <span className="ml-1 font-mono text-xs">
@@ -128,7 +130,7 @@ export default function DashboardPage() {
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-blue-700">
+                                            <span className="font-semibold text-blue-700 dark:text-blue-300">
                                                 CIDR:
                                             </span>
                                             <span className="ml-1 font-mono text-xs">
@@ -138,7 +140,7 @@ export default function DashboardPage() {
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-blue-700">
+                                            <span className="font-semibold text-blue-700 dark:text-blue-300">
                                                 Hosts:
                                             </span>
                                             <span className="ml-1 font-mono text-xs">
@@ -178,9 +180,9 @@ export default function DashboardPage() {
             </Card>
 
             {/* Quick Actions */}
-            <Card>
+            <Card className="mt-8 bg-card text-card-foreground">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base md:text-lg">
                         <TrendingUp className="h-5 w-5 text-blue-600" />
                         Quick Actions
                     </CardTitle>
@@ -191,7 +193,7 @@ export default function DashboardPage() {
                 <CardContent className="space-y-3">
                     <Link href="/tools/wan-ip-analyzer">
                         <Button
-                            className="w-full justify-start bg-blue-600 hover:bg-blue-700 text-white"
+                            className="w-full justify-start"
                             variant="default"
                         >
                             <Globe className="mr-2 h-4 w-4" />
@@ -201,7 +203,7 @@ export default function DashboardPage() {
 
                     <Link href="/tools/modem-tutorials">
                         <Button
-                            className="w-full justify-start bg-purple-600 hover:bg-purple-700 text-white"
+                            className="w-full justify-start"
                             variant="default"
                         >
                             <Play className="mr-2 h-4 w-4" />

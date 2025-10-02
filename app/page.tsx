@@ -19,56 +19,30 @@ export default function Home() {
     // Only show sign in/sign up for guests
     if (!session) {
         return (
-            <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-br from-cyan-50 via-white to-emerald-100 dark:from-gray-900 dark:via-gray-950 dark:to-emerald-900 px-2 sm:px-4 md:px-8">
+            <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 px-4">
                 <div className="max-w-md w-full flex flex-col items-center gap-6 py-16">
-                    <h1 className="text-3xl md:text-4xl font-extrabold text-center drop-shadow mb-2">
-                        <span
-                            className="block text-emerald-900 dark:text-emerald-200 font-extrabold"
-                            style={{ letterSpacing: "-0.01em" }}
-                        >
-                            Welcome to
-                        </span>
-                        <span
-                            className="block font-extrabold tracking-tight whitespace-nowrap text-3xl md:text-4xl lg:text-5xl font-serif bg-gradient-to-r from-[#8dc63f] via-[#0097db] to-[#ffe000] bg-clip-text text-transparent drop-shadow"
-                            style={{
-                                lineHeight: 1.1,
-                                fontFamily:
-                                    "Georgia, Times, Times New Roman, serif",
-                            }}
-                        >
-                            IP TOOLKit{" "}
-                            <span className="font-black font-serif">App</span>
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-2 text-gray-800">
+                        Welcome to
+                        <span className="block font-bold text-2xl sm:text-3xl md:text-4xl mt-1 text-gray-700">
+                            IP TOOLKit App
                         </span>
                     </h1>
-                    <p className="text-center text-lg mb-4 font-semibold font-serif drop-shadow">
-                        <span className="bg-gradient-to-r from-[#8dc63f] to-[#ffe000] bg-clip-text text-transparent">
-                            Sign in to access{" "}
-                        </span>
-                        <span className="text-[#0097db] font-bold">
-                            all features
-                        </span>
-                        <span className="bg-gradient-to-r from-[#8dc63f] to-[#ffe000] bg-clip-text text-transparent">
-                            , or create an account if you{" "}
-                        </span>
-                        <span className="text-[#0097db] font-bold">
-                            haven't registered yet.
-                        </span>
+                    <p className="text-center text-base mb-4 text-gray-500">
+                        Sign in to access all features, or create an account if
+                        you haven't registered yet.
                     </p>
                     <div className="flex flex-col gap-4 w-full">
                         <Button
+                            className="w-full bg-black text-white hover:bg-gray-900 border-none text-lg font-bold py-3 rounded-lg shadow-md transition-all duration-150"
+                            style={{ minHeight: 48 }}
                             onClick={() => signIn()}
-                            size="lg"
-                            className="w-full bg-gradient-to-r from-[#8dc63f] via-[#0097db] to-[#ffe000] bg-clip-text text-transparent border border-emerald-200 font-bold dark:from-emerald-300 dark:via-sky-400 dark:to-cyan-300 dark:border-emerald-400"
                         >
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#8dc63f] via-[#0097db] to-[#ffe000] dark:from-emerald-300 dark:via-sky-400 dark:to-cyan-300">
-                                Sign In
-                            </span>
+                            Sign In
                         </Button>
                         <Link href="/auth/signup" className="w-full">
                             <Button
-                                variant="outline"
-                                size="lg"
-                                className="w-full border-emerald-200 text-emerald-700 font-bold dark:border-emerald-400 dark:text-emerald-200"
+                                className="w-full bg-black text-white hover:bg-gray-900 border-none text-lg font-bold py-3 rounded-lg shadow-md transition-all duration-150"
+                                style={{ minHeight: 48 }}
                             >
                                 Sign Up
                             </Button>
@@ -105,52 +79,34 @@ export default function Home() {
     ];
 
     return (
-        <div className="min-h-screen w-full bg-gradient-to-br from-cyan-50 via-white to-emerald-100 dark:from-gray-900 dark:via-gray-950 dark:to-emerald-900 px-2 sm:px-4 md:px-8 pt-12 sm:pt-16 md:pt-20 lg:pt-24 flex flex-col items-center">
+        <div className="min-h-screen w-full bg-gray-50 px-4 pt-8 flex flex-col items-center">
             {/* Hero Section */}
-            <section className="w-full max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-0 text-center">
+            <section className="w-full max-w-screen-xl mx-auto px-2 py-0 text-center">
                 <div className="max-w-4xl mx-auto flex flex-col items-center w-full">
                     <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12 w-full max-w-full">
                         <Link
                             href="/tools/wan-ip-analyzer"
                             className="w-full sm:w-auto"
                         >
-                            <Button
-                                size="lg"
-                                variant="outline"
-                                className="w-full sm:w-auto border border-teal-200 text-[#13a3b3] font-extrabold text-lg px-10 py-3 shadow-md hover:bg-teal-50 hover:border-teal-300 transition-colors"
-                            >
-                                <span className="text-[#13a3b3] font-extrabold">
-                                    Start Analyzing
-                                </span>
+                            <Button className="bg-gray-800 text-white hover:bg-gray-700 border-none">
+                                Start Analyzing
                             </Button>
                         </Link>
                         <Link href="/dashboard" className="w-full sm:w-auto">
-                            <Button
-                                size="lg"
-                                variant="outline"
-                                className="w-full sm:w-auto border border-teal-200 text-[#13a3b3] font-extrabold text-lg px-10 py-3 shadow-md hover:bg-teal-50 hover:border-teal-300 transition-colors"
-                            >
-                                <span className="text-[#13a3b3] font-extrabold">
-                                    View Dashboard
-                                </span>
+                            <Button className="bg-gray-800 text-white hover:bg-gray-700 border-none">
+                                View Dashboard
                             </Button>
                         </Link>
                     </div>
                 </div>
             </section>
             {/* Features Grid */}
-            <section className="w-full max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-0 dark:pt-12">
+            <section className="w-full max-w-screen-xl mx-auto px-2 py-0">
                 <div className="text-center mb-8 md:mb-10 px-2">
-                    <h2
-                        className="text-4xl md:text-5xl font-extrabold mb-2 leading-tight text-[#13a3b3] drop-shadow"
-                        style={{
-                            fontFamily:
-                                "Georgia, Times, Times New Roman, serif",
-                        }}
-                    >
+                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2 leading-tight text-gray-800">
                         Everything You Need for Network Configuration
                     </h2>
-                    <p className="text-2xl md:text-3xl max-w-3xl mx-auto leading-relaxed text-[#13a3b3] font-serif font-bold drop-shadow">
+                    <p className="text-base sm:text-lg max-w-3xl mx-auto leading-relaxed text-gray-500">
                         Powerful tools and comprehensive resources designed
                         specifically for Ethio Telecom's network environment
                     </p>
@@ -158,23 +114,26 @@ export default function Home() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 w-full">
                     {features.map((feature, index) => (
                         <Link key={index} href={feature.link}>
-                            <Card className="h-full bg-gradient-to-br from-cyan-100 via-white to-emerald-100 border-2 border-emerald-200 shadow-md hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer rounded-xl px-2 py-2 flex flex-col justify-between min-h-[140px] max-w-xs mx-auto hover:bg-gradient-to-tl hover:from-emerald-100 hover:to-cyan-100 dark:from-gray-800 dark:via-gray-900 dark:to-emerald-950 dark:border-emerald-700 dark:hover:from-emerald-950 dark:hover:to-gray-800">
-                                <CardHeader className="flex flex-col items-center text-center p-0 mb-0">
-                                    <div className="text-lg mb-1 drop-shadow-lg animate-bounce-slow">
+                            <Card className="h-full bg-white border border-gray-200 shadow-sm hover:shadow-lg hover:bg-gray-100 transition-all duration-200 cursor-pointer rounded-2xl px-5 py-6 flex flex-col justify-between min-h-[180px] max-w-xs mx-auto transform hover:scale-[1.03]">
+                                <CardHeader className="flex flex-col items-center text-center p-0 mb-0 gap-2">
+                                    <div className="text-3xl mb-2 drop-shadow-sm text-gray-700">
                                         {feature.icon}
                                     </div>
-                                    <CardTitle className="text-xs sm:text-sm font-bold text-emerald-800 mb-0.5 drop-shadow dark:text-emerald-200">
+                                    <CardTitle className="text-base font-bold text-gray-800 mb-1">
                                         {feature.title}
                                     </CardTitle>
-                                    <CardDescription className="text-sky-700/90 mt-0.5 text-[10px] sm:text-xs leading-tight font-medium dark:text-sky-200/90">
+                                    <CardDescription className="text-gray-500 mt-0.5 text-sm leading-tight font-normal">
                                         {feature.description}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="flex flex-col items-center justify-end p-0 mt-0">
-                                    <div className="text-white bg-gradient-to-r from-emerald-500 to-cyan-500 font-bold flex items-center gap-1 text-[10px] px-2 py-1 rounded-full shadow-md hover:from-cyan-500 hover:to-emerald-500 transition-colors dark:from-emerald-400 dark:to-cyan-400 dark:hover:from-cyan-400 dark:hover:to-emerald-400">
-                                        Explore Feature
-                                        <span className="text-xs">→</span>
-                                    </div>
+                                <CardContent className="flex flex-col items-center justify-end p-0 mt-2">
+                                    <Button
+                                        size="sm"
+                                        className="rounded-full px-4 py-1 font-semibold shadow hover:shadow-md bg-gray-800 text-white hover:bg-gray-700 border-none"
+                                    >
+                                        Explore Feature{" "}
+                                        <span className="text-xs ml-1">→</span>
+                                    </Button>
                                 </CardContent>
                             </Card>
                         </Link>

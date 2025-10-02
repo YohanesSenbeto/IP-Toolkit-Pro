@@ -14,141 +14,103 @@ const BookStyleResults: FC<BookStyleResultsProps> = ({
     setShowRouterConfig,
     setShowTutorials,
 }) => {
-    const [page, setPage] = useState(0);
-    const cards = [
-        {
-            title: "WAN IP Address",
-            content: (
-                <div className="flex flex-col items-center justify-center h-40">
-                    <span className="text-2xl font-bold text-blue-700 font-mono">
-                        {analysis.ipAddress}
-                    </span>
-                </div>
-            ),
-        },
-        {
-            title: "Subnet Mask & CIDR",
-            content: (
-                <div className="flex flex-col items-center justify-center h-40">
-                    <span className="text-lg font-semibold text-green-700">
-                        {analysis.networkInfo?.subnetMask}
-                    </span>
-                    <span className="text-sm text-gray-600 mt-2">
-                        CIDR: /{analysis.networkInfo?.cidr}
-                    </span>
-                </div>
-            ),
-        },
-        {
-            title: "Network Details",
-            content: (
-                <div className="flex flex-col items-center justify-center h-40 space-y-1">
-                    <span>
-                        <strong>Network:</strong>{" "}
-                        {analysis.networkInfo?.networkAddress}
-                    </span>
-                    <span>
-                        <strong>Broadcast:</strong>{" "}
-                        {analysis.networkInfo?.broadcastAddress}
-                    </span>
-                    <span>
-                        <strong>Usable:</strong>{" "}
-                        {analysis.networkInfo?.firstUsableIp} -{" "}
-                        {analysis.networkInfo?.lastUsableIp}
-                    </span>
-                    <span>
-                        <strong>Total Hosts:</strong>{" "}
-                        {analysis.networkInfo?.totalHosts?.toLocaleString()}
-                    </span>
-                    <span>
-                        <strong>Usable Hosts:</strong>{" "}
-                        {analysis.networkInfo?.usableHosts?.toLocaleString()}
-                    </span>
-                </div>
-            ),
-        },
-        analysis.interface
-            ? {
-                  title: "Regional Info",
-                  content: (
-                      <div className="flex flex-col items-center justify-center h-40 space-y-1">
-                          <span>
-                              <strong>Interface:</strong>{" "}
-                              {analysis.interface.name}
-                          </span>
-                          <span>
-                              <strong>Region:</strong> {analysis.region?.name}
-                          </span>
-                          <span>
-                              <strong>Gateway:</strong>{" "}
-                              {analysis.interface.defaultGateway}
-                          </span>
-                          <span>
-                              <strong>Subnet:</strong>{" "}
-                              {analysis.interface.subnetMask}
-                          </span>
-                      </div>
-                  ),
-              }
-            : null,
-        {
-            title: "Actions",
-            content: (
-                <div className="flex flex-col items-center justify-center h-40 gap-4">
-                    <Button
-                        onClick={() => setShowRouterConfig(true)}
-                        className="w-40 bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                        Generate Router Config
-                    </Button>
-                    <Button
-                        onClick={() => setShowTutorials(true)}
-                        className="w-40 bg-purple-600 hover:bg-purple-700 text-white"
-                    >
-                        View Tutorials
-                    </Button>
-                </div>
-            ),
-        },
-    ].filter(Boolean);
-
-    const currentCard = cards[page] as
-        | { title: string; content: React.ReactNode }
-        | undefined;
-
+    // Responsive: always show WAN IP, Subnet Mask, Default Gateway at top with 'Important' label
+    const defaultGateway =
+        analysis.interface?.defaultGateway ||
+        analysis.region?.defaultGateway ||
+        "-";
     return (
-        <Card className="mb-4 max-w-xs mx-auto min-h-[160px]">
+        <Card className="mb-4 w-full max-w-xs sm:max-w-md md:max-w-lg lg:max-w-2xl xl:max-w-3xl mx-auto min-h-[160px] bg-black text-white">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    {currentCard ? currentCard.title : ""}
+                    <CheckCircle className="h-5 w-5 text-green-400" />
+                    WAN IP Analysis Results
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                {currentCard ? currentCard.content : null}
-                <div className="flex justify-between items-center mt-6">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPage((p) => Math.max(0, p - 1))}
-                        disabled={page === 0}
-                        className="rounded-full px-4"
-                    >
-                        Prev
-                    </Button>
-                    <span className="text-xs text-gray-500">
-                        {page + 1} / {cards.length}
-                    </span>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                            setPage((p) => Math.min(cards.length - 1, p + 1))
-                        }
-                        disabled={page === cards.length - 1}
-                        className="rounded-full px-4"
-                    >
-                        Next
+                {/* Important section - always horizontal */}
+                <div className="w-full bg-black rounded-2xl p-4 lg:p-8 mb-6 border border-gray-800 shadow-lg">
+                    <div className="mb-4 text-center">
+                        <span className="inline-block px-4 py-1 rounded-full bg-yellow-600 text-sm font-bold uppercase tracking-wider text-white shadow-sm">
+                            Important
+                        </span>
+                    </div>
+                    <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 md:gap-10 lg:gap-8 text-center w-full">
+                        <div className="flex flex-col items-center flex-1">
+                            <div className="text-sm text-gray-300 mb-1 font-semibold tracking-wide lg:text-base">
+                                WAN IP Address
+                            </div>
+                            <div className="text-xl font-extrabold text-blue-200 font-mono break-all lg:text-2xl">
+                                {analysis.ipAddress}
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-center flex-1">
+                            <div className="text-sm text-gray-300 mb-1 font-semibold tracking-wide lg:text-base">
+                                Subnet Mask
+                            </div>
+                            <div className="text-xl font-extrabold text-green-200 font-mono lg:text-2xl">
+                                {analysis.networkInfo?.subnetMask}
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-center flex-1">
+                            <div className="text-sm text-gray-300 mb-1 font-semibold tracking-wide lg:text-base">
+                                Default Gateway
+                            </div>
+                            <div className="text-xl font-extrabold text-purple-200 font-mono lg:text-2xl">
+                                {defaultGateway}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* List all other information below */}
+                <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex flex-col gap-1">
+                        <span>
+                            <strong>Network:</strong>{" "}
+                            {analysis.networkInfo?.networkAddress}
+                        </span>
+                        <span>
+                            <strong>Broadcast:</strong>{" "}
+                            {analysis.networkInfo?.broadcastAddress}
+                        </span>
+                        <span>
+                            <strong>Usable:</strong>{" "}
+                            {analysis.networkInfo?.firstUsableIp} -{" "}
+                            {analysis.networkInfo?.lastUsableIp}
+                        </span>
+                        <span>
+                            <strong>Total Hosts:</strong>{" "}
+                            {analysis.networkInfo?.totalHosts?.toLocaleString()}
+                        </span>
+                        <span>
+                            <strong>Usable Hosts:</strong>{" "}
+                            {analysis.networkInfo?.usableHosts?.toLocaleString()}
+                        </span>
+                        <span>
+                            <strong>CIDR:</strong> /{analysis.networkInfo?.cidr}
+                        </span>
+                    </div>
+                    {analysis.interface && (
+                        <div className="flex flex-col gap-1 mt-2">
+                            <span>
+                                <strong>Interface:</strong>{" "}
+                                {analysis.interface.name}
+                            </span>
+                            <span>
+                                <strong>Region:</strong> {analysis.region?.name}
+                            </span>
+                            <span>
+                                <strong>Subnet:</strong>{" "}
+                                {analysis.interface.subnetMask}
+                            </span>
+                        </div>
+                    )}
+                </div>
+                <div className="flex flex-col items-center justify-center gap-2 mt-4">
+                    <Button asChild>
+                        <a href="/dashboard" className="w-full text-center">
+                            Go to Details Page
+                        </a>
                     </Button>
                 </div>
             </CardContent>
@@ -158,7 +120,22 @@ const BookStyleResults: FC<BookStyleResultsProps> = ({
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertCircle, CheckCircle, X, Globe, Play, Router } from "lucide-react";
+import {
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerDescription,
+} from "@/components/ui/drawer";
+import {
+    AlertCircle,
+    CheckCircle,
+    X,
+    Globe,
+    Play,
+    Router,
+    Info,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -207,6 +184,9 @@ interface WanIpAnalysis {
 }
 
 export default function WanIpAnalyzerPage() {
+    const [searchType, setSearchType] = useState<
+        "wanIp" | "accountNumber" | "accessNumber"
+    >("wanIp");
     const { data: session, status } = useSession();
     const router = useRouter();
     // All hooks must be called unconditionally and before any early return
@@ -234,6 +214,7 @@ export default function WanIpAnalyzerPage() {
             | "BROADBAND_INTERNET"
             | "VPN_DATA_ONLY",
     });
+    const [showHelp, setShowHelp] = React.useState(false);
 
     // Protect route: redirect guests to sign in
     useEffect(() => {
@@ -323,9 +304,63 @@ export default function WanIpAnalyzerPage() {
         setLoading(true);
         setError(null);
         try {
-            await analyzeIp(ipAddress);
+            let ipToAnalyze = "";
+            if (searchType === "wanIp") {
+                ipToAnalyze = ipAddress;
+            } else if (
+                searchType === "accountNumber" &&
+                assignmentForm.accountNumber
+            ) {
+                // Fetch WAN IP by account number
+                const params = new URLSearchParams({
+                    accountNumber: assignmentForm.accountNumber,
+                });
+                const response = await fetch(
+                    `/api/crm/customer-lookup?${params}`
+                );
+                const result = await response.json();
+                if (
+                    !response.ok ||
+                    !result.found ||
+                    !result.networkConfig?.wanIp
+                ) {
+                    throw new Error(
+                        result.error ||
+                            "WAN IP not found for this account number"
+                    );
+                }
+                ipToAnalyze = result.networkConfig.wanIp;
+            } else if (
+                searchType === "accessNumber" &&
+                assignmentForm.accessNumber
+            ) {
+                // Fetch WAN IP by access number
+                const params = new URLSearchParams({
+                    accessNumber: assignmentForm.accessNumber,
+                });
+                const response = await fetch(
+                    `/api/crm/customer-lookup?${params}`
+                );
+                const result = await response.json();
+                if (
+                    !response.ok ||
+                    !result.found ||
+                    !result.networkConfig?.wanIp
+                ) {
+                    throw new Error(
+                        result.error ||
+                            "WAN IP not found for this access number"
+                    );
+                }
+                ipToAnalyze = result.networkConfig.wanIp;
+            }
+            if (!ipToAnalyze) {
+                throw new Error("No WAN IP to analyze");
+            }
+            setIpAddress(ipToAnalyze); // update UI with found IP
+            await analyzeIp(ipToAnalyze);
         } catch (err) {
-            // error already handled
+            setError(err instanceof Error ? err.message : "An error occurred");
         } finally {
             setLoading(false);
         }
@@ -443,10 +478,87 @@ export default function WanIpAnalyzerPage() {
         }
     };
 
+    // HelpToggle component for usage instructions (top-level, not covering form)
+    function HelpToggle({
+        show,
+        onClick,
+    }: {
+        show: boolean;
+        onClick: () => void;
+    }) {
+        return (
+            <div className="w-full flex items-center justify-end mb-2">
+                <button
+                    type="button"
+                    aria-label="Show usage instructions"
+                    onClick={onClick}
+                    className="flex items-center gap-1 text-blue-600 hover:text-blue-800 focus:outline-none"
+                >
+                    <Info className="h-4 w-4" />
+                    <span className="font-semibold">Help</span>
+                </button>
+            </div>
+        );
+    }
+
     return (
         <div className="w-full min-h-screen bg-background text-foreground">
             <div className="max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-2 md:py-4">
                 <div className="max-w-4xl mx-auto">
+                    <HelpToggle
+                        show={showHelp}
+                        onClick={() => setShowHelp((v) => !v)}
+                    />
+                    <div className="relative w-full flex justify-end">
+                        <div>
+                            {showHelp && (
+                                <div className="fixed md:absolute top-2 right-2 md:right-[-80px] left-2 md:left-auto w-[calc(100vw-1rem)] md:w-auto max-w-sm md:max-w-xs bg-blue-50 border border-blue-200 rounded-md shadow-lg p-4 md:p-2 text-blue-900 dark:bg-gray-900 dark:text-blue-100 dark:border-blue-800 text-xs z-[100]">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-blue-600 text-base">
+                                                💡
+                                            </span>
+                                            <span className="font-bold text-sm">
+                                                How to use:
+                                            </span>
+                                        </div>
+                                        <button
+                                            aria-label="Close help"
+                                            className="ml-2 p-1 rounded hover:bg-blue-100 dark:hover:bg-gray-800 focus:outline-none"
+                                            onClick={() => setShowHelp(false)}
+                                        >
+                                            <X className="h-4 w-4 text-blue-600" />
+                                        </button>
+                                    </div>
+                                    <ul className="list-disc pl-4 space-y-1">
+                                        <li>
+                                            <span className="font-semibold">
+                                                If you have WAN IP:
+                                            </span>{" "}
+                                            Enter your WAN IP address and click
+                                            "Analyze IP"
+                                        </li>
+                                        <li>
+                                            <span className="font-semibold">
+                                                If you don't have WAN IP:
+                                            </span>{" "}
+                                            Enter your Account Number OR Access
+                                            Number from your Customer Acceptance
+                                            Sheet and click "Search Customer"
+                                        </li>
+                                        <li>
+                                            <span className="font-semibold">
+                                                Both methods:
+                                            </span>{" "}
+                                            Will provide your network
+                                            configuration and router setup
+                                            information
+                                        </li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     <div className="mb-1 md:mb-1">
                         <p className="text-muted-foreground px-1 py-2 text-medium">
                             Analyze WAN IP addresses for Ethio Telecom network
@@ -457,10 +569,10 @@ export default function WanIpAnalyzerPage() {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4 mb-1 justify-end mt-4 md:mt-8 pr-0 lg:pr-8 xl:pr-16">
+            <div className="flex flex-col lg:flex-row gap-4 mb-1 mt-4 md:mt-8 px-2 md:px-4 xl:px-0 w-full max-w-6xl mx-auto">
                 {/* Left Side - Search Form */}
-                <div className="lg:col-span-2 ml-auto">
-                    <Card className="p-0.5 md:p-1 bg-background text-foreground w-full ml-0">
+                <div className="w-full max-w-md mx-auto lg:mx-0 lg:w-[420px] flex-shrink-0">
+                    <Card className="p-0.5 md:p-1 bg-background text-foreground w-full">
                         <CardHeader className="pb-1">
                             <CardTitle className="text-base md:text-lg">
                                 Search Customer or Analyze WAN IP
@@ -468,108 +580,121 @@ export default function WanIpAnalyzerPage() {
                         </CardHeader>
                         <CardContent className="pt-0">
                             <div className="space-y-1 md:space-y-2">
-                                {/* Account Number */}
+                                {/* Search Type Selector */}
                                 <div>
                                     <label className="block text-sm font-medium mb-2">
-                                        Account Number:
+                                        Search By:
                                     </label>
-                                    <Input
-                                        type="text"
-                                        placeholder="9 digits (e.g.701234567)"
-                                        value={assignmentForm.accountNumber}
+                                    <select
+                                        className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        value={searchType}
                                         onChange={(e) =>
-                                            setAssignmentForm((prev) => ({
-                                                ...prev,
-                                                accountNumber: e.target.value,
-                                            }))
+                                            setSearchType(
+                                                e.target.value as
+                                                    | "wanIp"
+                                                    | "accountNumber"
+                                                    | "accessNumber"
+                                            )
                                         }
-                                        maxLength={9}
-                                        className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                    />
+                                    >
+                                        <option value="wanIp">
+                                            WAN IP Address
+                                        </option>
+                                        <option value="accountNumber">
+                                            Account Number
+                                        </option>
+                                        <option value="accessNumber">
+                                            Access Number
+                                        </option>
+                                    </select>
                                 </div>
 
-                                {/* Access Number */}
-                                <div>
-                                    <label className="block text-sm font-medium mb-2">
-                                        Access Number:
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        placeholder="11 digits (e.g., 13100123456)"
-                                        value={assignmentForm.accessNumber}
-                                        onChange={(e) =>
-                                            setAssignmentForm((prev) => ({
-                                                ...prev,
-                                                accessNumber: e.target.value,
-                                            }))
-                                        }
-                                        maxLength={11}
-                                        className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                    />
-                                </div>
-
-                                {/* WAN IP Address */}
-                                <div className="relative">
-                                    <label className="block text-sm font-medium mb-2">
-                                        WAN IP Address:
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        placeholder="e.g., 10.239.139.51"
-                                        value={ipAddress}
-                                        onChange={(e) =>
-                                            setIpAddress(e.target.value)
-                                        }
-                                        className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                    />
-                                    {ipAddress && (
-                                        <button
-                                            type="button"
-                                            aria-label="Clear WAN IP"
-                                            onClick={() => setIpAddress("")}
-                                            className="absolute right-2 top-9 p-1 rounded hover:bg-gray-100"
-                                        >
-                                            <X className="h-4 w-4 text-gray-500" />
-                                        </button>
-                                    )}
-                                </div>
+                                {/* Conditionally Rendered Input */}
+                                {searchType === "wanIp" && (
+                                    <div className="relative">
+                                        <label className="block text-sm font-medium mb-2">
+                                            WAN IP Address:
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            placeholder="e.g., 10.239.139.51"
+                                            value={ipAddress}
+                                            onChange={(e) =>
+                                                setIpAddress(e.target.value)
+                                            }
+                                            className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        />
+                                        {ipAddress && (
+                                            <button
+                                                type="button"
+                                                aria-label="Clear WAN IP"
+                                                onClick={() => setIpAddress("")}
+                                                className="absolute right-2 top-9 p-1 rounded hover:bg-gray-100"
+                                            >
+                                                <X className="h-4 w-4 text-gray-500" />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                                {searchType === "accountNumber" && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">
+                                            Account Number:
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            placeholder="9 digits (e.g.701234567)"
+                                            value={assignmentForm.accountNumber}
+                                            onChange={(e) =>
+                                                setAssignmentForm((prev) => ({
+                                                    ...prev,
+                                                    accountNumber:
+                                                        e.target.value,
+                                                }))
+                                            }
+                                            maxLength={9}
+                                            className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        />
+                                    </div>
+                                )}
+                                {searchType === "accessNumber" && (
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">
+                                            Access Number:
+                                        </label>
+                                        <Input
+                                            type="text"
+                                            placeholder="11 digits (e.g., 13100123456)"
+                                            value={assignmentForm.accessNumber}
+                                            onChange={(e) =>
+                                                setAssignmentForm((prev) => ({
+                                                    ...prev,
+                                                    accessNumber:
+                                                        e.target.value,
+                                                }))
+                                            }
+                                            maxLength={11}
+                                            className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                        />
+                                    </div>
+                                )}
 
                                 {/* Action Buttons */}
                                 <div className="mt-2 flex flex-col sm:flex-row gap-2 sm:items-center">
                                     <Button
                                         onClick={handleSubmit}
-                                        disabled={loading || !ipAddress}
-                                        className="bg-blue-600 hover:bg-blue-700"
-                                    >
-                                        {loading
-                                            ? "Analyzing..."
-                                            : "Analyze IP"}
-                                    </Button>
-
-                                    <Button
-                                        onClick={() =>
-                                            handleCustomerLookup({
-                                                accountNumber:
-                                                    assignmentForm.accountNumber ||
-                                                    undefined,
-                                                accessNumber:
-                                                    assignmentForm.accessNumber ||
-                                                    undefined,
-                                            })
-                                        }
                                         disabled={
                                             loading ||
-                                            (!assignmentForm.accountNumber &&
+                                            (searchType === "wanIp" &&
+                                                !ipAddress) ||
+                                            (searchType === "accountNumber" &&
+                                                !assignmentForm.accountNumber) ||
+                                            (searchType === "accessNumber" &&
                                                 !assignmentForm.accessNumber)
                                         }
-                                        variant="outline"
-                                        className="bg-green-600 hover:bg-green-700 text-white"
                                     >
-                                        {loading
-                                            ? "Searching..."
-                                            : "Search Customer"}
+                                        {loading ? "Analyzing..." : "Analyze"}
                                     </Button>
-
                                     <Button
                                         type="button"
                                         onClick={handleClear}
@@ -578,47 +703,6 @@ export default function WanIpAnalyzerPage() {
                                     >
                                         Clear
                                     </Button>
-                                </div>
-
-                                {/* Help Text */}
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-1">
-                                    <div className="flex items-start gap-1">
-                                        <div className="text-blue-600 mt-0.5">
-                                            💡
-                                        </div>
-                                        <div>
-                                            <h4 className="font-semibold text-blue-800">
-                                                How to use:
-                                            </h4>
-                                            <ul className="text-sm text-blue-700 mt-1 space-y-1">
-                                                <li>
-                                                    <strong>
-                                                        If you have WAN IP:
-                                                    </strong>{" "}
-                                                    Enter your WAN IP address
-                                                    and click "Analyze IP"
-                                                </li>
-                                                <li>
-                                                    <strong>
-                                                        If you don't have WAN
-                                                        IP:
-                                                    </strong>{" "}
-                                                    Enter your Account Number OR
-                                                    Access Number from your
-                                                    Customer Acceptance Sheet
-                                                    and click "Search Customer"
-                                                </li>
-                                                <li>
-                                                    <strong>
-                                                        Both methods:
-                                                    </strong>{" "}
-                                                    Will provide your network
-                                                    configuration and router
-                                                    setup information
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </CardContent>
@@ -730,7 +814,6 @@ export default function WanIpAnalyzerPage() {
                                             }
                                             variant="outline"
                                             size="sm"
-                                            className="w-full bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700"
                                         >
                                             <Play className="h-4 w-4 mr-2" />
                                             View Tutorials
@@ -748,7 +831,7 @@ export default function WanIpAnalyzerPage() {
                     <div className="flex items-center gap-2">
                         <AlertCircle className="h-4 w-4 text-red-500" />
                         <span
-                            className="text-red-600"
+                            className="text-red-500"
                             dangerouslySetInnerHTML={{ __html: error }}
                         />
                     </div>
@@ -763,14 +846,14 @@ export default function WanIpAnalyzerPage() {
                             {customerLookup.found ? (
                                 <>
                                     <CheckCircle className="h-5 w-5 text-green-500" />
-                                    <span className="text-green-600">
+                                    <span className="text-green-500">
                                         Customer Found ({customerLookup.source})
                                     </span>
                                 </>
                             ) : (
                                 <>
                                     <AlertCircle className="h-5 w-5 text-blue-500" />
-                                    <span className="text-blue-600">
+                                    <span className="text-blue-500">
                                         Service Type:{" "}
                                         {customerLookup.serviceType ===
                                         "BROADBAND_INTERNET"
@@ -790,7 +873,7 @@ export default function WanIpAnalyzerPage() {
                                 {customerLookup.found ? (
                                     <>
                                         <CheckCircle className="h-4 w-4 text-green-500" />
-                                        <span className="text-green-600 font-semibold">
+                                        <span className="text-green-500 font-semibold">
                                             Service Type:{" "}
                                             {customerLookup.customer
                                                 ?.serviceType ===
@@ -808,7 +891,7 @@ export default function WanIpAnalyzerPage() {
                                 ) : (
                                     <>
                                         <AlertCircle className="h-4 w-4 text-blue-500" />
-                                        <span className="text-blue-600 font-semibold">
+                                        <span className="text-blue-500 font-semibold">
                                             Service Type:{" "}
                                             {customerLookup.serviceType ===
                                             "BROADBAND_INTERNET"
@@ -856,8 +939,8 @@ export default function WanIpAnalyzerPage() {
                                                     customerLookup.customer
                                                         .customerType ===
                                                     "ENTERPRISE"
-                                                        ? "bg-blue-100 text-blue-800"
-                                                        : "bg-green-100 text-green-800"
+                                                        ? "bg-blue-100 text-blue-500"
+                                                        : "bg-green-100 text-green-500"
                                                 }`}
                                             >
                                                 {
@@ -873,8 +956,8 @@ export default function WanIpAnalyzerPage() {
                                                     customerLookup.customer
                                                         .serviceStatus ===
                                                     "ACTIVE"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : "bg-red-100 text-red-800"
+                                                        ? "bg-green-100 text-green-500"
+                                                        : "bg-red-100 text-red-500"
                                                 }`}
                                             >
                                                 {
@@ -888,10 +971,10 @@ export default function WanIpAnalyzerPage() {
                                     {/* PPPOE Configuration */}
                                     {customerLookup.pppoeConfig && (
                                         <div className="border-t pt-3">
-                                            <h4 className="font-semibold mb-2 text-green-600">
+                                            <h4 className="font-semibold mb-2 text-green-500">
                                                 PPPOE Configuration
                                             </h4>
-                                            <div className="grid md:grid-cols-2 gap-4 text-sm bg-green-50 p-3 rounded-lg">
+                                            <div className="grid md:grid-cols-2 gap-4 text-sm bg-green-100 p-3 rounded-lg">
                                                 <div>
                                                     <strong>Username:</strong>{" "}
                                                     {
@@ -933,10 +1016,10 @@ export default function WanIpAnalyzerPage() {
                                     {/* Network Configuration */}
                                     {customerLookup.networkConfig && (
                                         <div className="border-t pt-3">
-                                            <h4 className="font-semibold mb-2 text-blue-600">
+                                            <h4 className="font-semibold mb-2 text-blue-500">
                                                 Network Configuration
                                             </h4>
-                                            <div className="grid md:grid-cols-2 gap-4 text-sm bg-blue-50 p-3 rounded-lg">
+                                            <div className="grid md:grid-cols-2 gap-4 text-sm bg-blue-100 p-3 rounded-lg">
                                                 <div>
                                                     <strong>WAN IP:</strong>{" "}
                                                     {customerLookup
@@ -1022,10 +1105,10 @@ export default function WanIpAnalyzerPage() {
                                     {/* Router Information */}
                                     {customerLookup.customer?.routerInfo && (
                                         <div className="border-t pt-3">
-                                            <h4 className="font-semibold mb-2 text-purple-600">
+                                            <h4 className="font-semibold mb-2 text-purple-500">
                                                 Router Information
                                             </h4>
-                                            <div className="grid md:grid-cols-2 gap-4 text-sm bg-purple-50 p-3 rounded-lg">
+                                            <div className="grid md:grid-cols-2 gap-4 text-sm bg-purple-100 p-3 rounded-lg">
                                                 <div>
                                                     <strong>Model:</strong>{" "}
                                                     {customerLookup.customer
@@ -1055,10 +1138,10 @@ export default function WanIpAnalyzerPage() {
                                     {/* Technician Information */}
                                     {customerLookup.customer?.technician && (
                                         <div className="border-t pt-3">
-                                            <h4 className="font-semibold mb-2 text-orange-600">
+                                            <h4 className="font-semibold mb-2 text-orange-500">
                                                 Assigned Technician
                                             </h4>
-                                            <div className="grid md:grid-cols-2 gap-4 text-sm bg-orange-50 p-3 rounded-lg">
+                                            <div className="grid md:grid-cols-2 gap-4 text-sm bg-orange-100 p-3 rounded-lg">
                                                 <div>
                                                     <strong>Name:</strong>{" "}
                                                     {
@@ -1090,10 +1173,10 @@ export default function WanIpAnalyzerPage() {
                                     {/* Router Recommendations */}
                                     {customerLookup.recommendations && (
                                         <div className="border-t pt-3">
-                                            <h4 className="font-semibold mb-2 text-green-600">
+                                            <h4 className="font-semibold mb-2 text-green-500">
                                                 Router Recommendations
                                             </h4>
-                                            <div className="bg-green-50 p-3 rounded-lg">
+                                            <div className="bg-green-100 p-3 rounded-lg">
                                                 <div className="mb-2">
                                                     <strong>
                                                         Recommended Model:
@@ -1131,7 +1214,7 @@ export default function WanIpAnalyzerPage() {
                                                                                 }
                                                                                 target="_blank"
                                                                                 rel="noopener noreferrer"
-                                                                                className="text-blue-600 hover:underline text-sm"
+                                                                                className="text-blue-500 hover:underline text-sm"
                                                                             >
                                                                                 {
                                                                                     tutorial.title
@@ -1161,93 +1244,131 @@ export default function WanIpAnalyzerPage() {
                 </Card>
             )}
 
-            {/* IP Analysis Results - Book/Bible Style Card Navigation on Mobile */}
-            {analysis && (
-                <BookStyleResults
-                    analysis={analysis}
-                    setShowRouterConfig={setShowRouterConfig}
-                    setShowTutorials={setShowTutorials}
-                />
-            )}
+            {/* WAN IP Analysis Results Drawer */}
+            <Drawer
+                open={!!analysis}
+                onOpenChange={(open) => {
+                    if (!open) setAnalysis(null);
+                }}
+            >
+                <DrawerContent
+                    side="right"
+                    showCloseIcon={true}
+                    onClose={() => setAnalysis(null)}
+                >
+                    <DrawerHeader>
+                        <DrawerTitle>WAN IP Analysis Results</DrawerTitle>
+                        <DrawerDescription>
+                            Detailed analysis and actions for the provided WAN
+                            IP.
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    {analysis && (
+                        <div className="px-4 pb-6">
+                            <BookStyleResults
+                                analysis={analysis}
+                                setShowRouterConfig={setShowRouterConfig}
+                                setShowTutorials={setShowTutorials}
+                            />
+                        </div>
+                    )}
+                </DrawerContent>
+            </Drawer>
 
-            {/* Router Configuration Generator */}
-            {showRouterConfig && analysis && (
-                <Card className="mb-6">
-                    <CardHeader>
-                        <CardTitle>Router Configuration Generator</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <RouterConfigGenerator
-                            wanIp={analysis.ipAddress}
-                            subnetMask={analysis.networkInfo?.subnetMask}
-                            defaultGateway={
-                                analysis.interface?.defaultGateway ||
-                                analysis.region?.defaultGateway
-                            }
-                            dnsServers={["8.8.8.8", "8.8.4.4"]}
-                            onConfigGenerated={(config) => {
-                                console.log("Router config generated:", config);
-                                toast.success(
-                                    "Router configuration generated successfully"
-                                );
-                            }}
-                        />
-                        <div className="mt-4 flex justify-end">
+            {/* Router Configuration Drawer */}
+            <Drawer
+                open={showRouterConfig}
+                onOpenChange={(open) => {
+                    if (!open) setShowRouterConfig(false);
+                }}
+            >
+                <DrawerContent
+                    side="right"
+                    showCloseIcon={true}
+                    onClose={() => setShowRouterConfig(false)}
+                >
+                    <DrawerHeader>
+                        <DrawerTitle>
+                            Router Configuration Generator
+                        </DrawerTitle>
+                        <DrawerDescription>
+                            Generate configuration for your router based on WAN
+                            IP analysis.
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="px-4 pb-6">
+                        {analysis && (
+                            <RouterConfigGenerator
+                                wanIp={analysis.ipAddress}
+                                subnetMask={analysis.networkInfo?.subnetMask}
+                                defaultGateway={
+                                    analysis.interface?.defaultGateway ||
+                                    analysis.region?.defaultGateway
+                                }
+                                dnsServers={["8.8.8.8", "8.8.4.4"]}
+                                onConfigGenerated={(config) => {
+                                    console.log(
+                                        "Router config generated:",
+                                        config
+                                    );
+                                    toast.success(
+                                        "Router configuration generated successfully"
+                                    );
+                                }}
+                            />
+                        )}
+                    </div>
+                </DrawerContent>
+            </Drawer>
+
+            {/* Tutorial Video Library Drawer */}
+            <Drawer
+                open={showTutorials}
+                onOpenChange={(open) => {
+                    if (!open) setShowTutorials(false);
+                }}
+            >
+                <DrawerContent
+                    side="right"
+                    showCloseIcon={true}
+                    onClose={() => setShowTutorials(false)}
+                >
+                    <DrawerHeader>
+                        <DrawerTitle>Tutorial Video Library</DrawerTitle>
+                        <DrawerDescription>
+                            Access comprehensive modem/router configuration
+                            tutorials.
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="text-center py-8 px-4">
+                        <div className="mb-4">
+                            <Router className="h-16 w-16 text-blue-500 mx-auto" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                            Access Comprehensive Tutorial Library
+                        </h3>
+                        <p className="text-gray-600 mb-6">
+                            Our dedicated Modem Configuration Tutorials page
+                            provides access to all video tutorials from the
+                            Yoh-Tech Solutions YouTube channel, with advanced
+                            filtering and categorization.
+                        </p>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
                             <Button
-                                variant="outline"
-                                onClick={() => setShowRouterConfig(false)}
+                                onClick={() =>
+                                    window.open(
+                                        "/tools/modem-tutorials",
+                                        "_blank"
+                                    )
+                                }
                             >
-                                Close
+                                <Play className="h-4 w-4 mr-2" />
+                                Open Tutorial Library
                             </Button>
                         </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* Tutorial Video Library */}
-            {showTutorials && (
-                <Card className="mb-6">
-                    <CardHeader>
-                        <CardTitle>Tutorial Video Library</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-center py-8">
-                            <div className="mb-4">
-                                <Router className="h-16 w-16 text-blue-500 mx-auto" />
-                            </div>
-                            <h3 className="text-xl font-semibold text-gray-800 mb-2">
-                                Access Comprehensive Tutorial Library
-                            </h3>
-                            <p className="text-gray-600 mb-6">
-                                Our dedicated Modem Configuration Tutorials page
-                                provides access to all video tutorials from the
-                                Yoh-Tech Solutions YouTube channel, with
-                                advanced filtering and categorization.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                                <Button
-                                    onClick={() =>
-                                        window.open(
-                                            "/tools/modem-tutorials",
-                                            "_blank"
-                                        )
-                                    }
-                                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                                >
-                                    <Play className="h-4 w-4 mr-2" />
-                                    Open Tutorial Library
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => setShowTutorials(false)}
-                                >
-                                    Close
-                                </Button>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
+                    </div>
+                </DrawerContent>
+            </Drawer>
         </div>
     );
 }
