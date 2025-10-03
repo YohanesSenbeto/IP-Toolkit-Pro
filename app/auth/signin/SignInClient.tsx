@@ -83,23 +83,23 @@ export default function SignInClient() {
     }
 
     return (
-        <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-blue-50 via-white to-emerald-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-200">
+        <div className="min-h-screen w-full flex flex-col bg-white text-black dark:bg-white dark:text-black transition-colors duration-200">
             {/* NavBar should be visible above the login form if not already handled globally */}
             <main className="flex-1 flex items-center justify-center w-full">
                 <div className="w-full max-w-md space-y-4 p-1 sm:p-2 md:p-3 lg:p-4 mt-[-7vh]">
                     <div className="flex flex-col items-center mb-6">
-                        <h2 className="mt-1 text-center text-lg font-extrabold bg-gradient-to-r from-teal-600 via-emerald-500 to-orange-400 bg-clip-text text-transparent drop-shadow">
+                        <h2 className="mt-1 text-center text-lg font-extrabold text-black dark:text-black">
                             Sign in to{" "}
-                            <span className="font-black bg-gradient-to-r from-teal-600 via-emerald-500 to-orange-400 bg-clip-text text-transparent drop-shadow">
+                            <span className="font-black text-black dark:text-black">
                                 IP Toolkit App
                             </span>
                         </h2>
-                        <p className="mt-1 text-center text-xs text-gray-700 dark:text-gray-300 font-medium">
+                        <p className="mt-1 text-center text-xs font-medium text-black dark:text-black">
                             Access your network configuration tools
                         </p>
                     </div>
 
-                    <Card className="w-full h-full bg-white/90 dark:bg-gray-800/90 shadow-2xl border-2 border-emerald-200 dark:border-emerald-700 transition-colors duration-200 p-2 sm:p-3 md:p-4 flex flex-col justify-center">
+                    <Card className="w-full h-full bg-white dark:bg-white shadow-2xl border-2 border-emerald-200 dark:border-emerald-700 transition-colors duration-200 p-2 sm:p-3 md:p-4 flex flex-col justify-center text-black dark:text-black">
                         <CardContent className="pt-2">
                             {error && (
                                 <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
@@ -116,15 +116,15 @@ export default function SignInClient() {
                                 <div>
                                     <label
                                         htmlFor="email"
-                                        className="block text-xs font-medium text-gray-700 dark:text-gray-300"
+                                        className="block text-sm/6 font-medium text-white"
                                     >
                                         Email address
                                     </label>
                                     <Input
                                         {...register("email")}
                                         type="email"
-                                        className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mt-0.5 text-xs"
-                                        placeholder="Enter your email"
+                                        className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-black dark:text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
+                                        placeholder="you@example.com"
                                     />
                                     {errors.email && (
                                         <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
@@ -136,15 +136,15 @@ export default function SignInClient() {
                                 <div>
                                     <label
                                         htmlFor="password"
-                                        className="block text-xs font-medium text-gray-700 dark:text-gray-300"
+                                        className="block text-sm/6 font-medium text-white"
                                     >
                                         Password
                                     </label>
                                     <Input
                                         {...register("password")}
                                         type="password"
-                                        className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mt-0.5 text-xs"
-                                        placeholder="Enter your password"
+                                        className="block w-full rounded-md bg-white/5 px-3 py-1.5 text-base text-black dark:text-white outline outline-1 -outline-offset-1 outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
+                                        placeholder="Your password"
                                     />
                                     {errors.password && (
                                         <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
@@ -178,10 +178,10 @@ export default function SignInClient() {
                                     </div>
                                 </div>
 
-                                <button
+                                <Button
                                     type="submit"
                                     disabled={isLoading}
-                                    className="w-full flex justify-center text-xs py-2 px-4 border border-transparent rounded-md shadow-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-500 transition-colors duration-200"
+                                    className="w-full flex justify-center text-xs py-2 px-4 bg-white text-white"
                                 >
                                     {isLoading ? (
                                         <>
@@ -191,7 +191,7 @@ export default function SignInClient() {
                                     ) : (
                                         "Sign in"
                                     )}
-                                </button>
+                                </Button>
                             </form>
 
                             <div className="mt-3">
@@ -211,7 +211,7 @@ export default function SignInClient() {
                                         onClick={handleGoogleSignIn}
                                         disabled={isLoading}
                                         variant="outline"
-                                        className="w-full text-xs py-2"
+                                        className="w-full text-xs py-2 bg-white text-black border border-gray-300 hover:bg-gray-100 dark:bg-gray-900 dark:text-white dark:border-gray-700 dark:hover:bg-gray-800"
                                     >
                                         <svg
                                             className="w-5 h-5 mr-2"

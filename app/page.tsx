@@ -31,18 +31,23 @@ export default function Home() {
                         Sign in to access all features, or create an account if
                         you haven't registered yet.
                     </p>
-                    <div className="flex flex-col gap-4 w-full">
+                    <div
+                        className="inline-flex rounded-md shadow-sm"
+                        role="group"
+                    >
                         <Button
-                            className="w-full bg-black text-white hover:bg-gray-900 border-none text-lg font-bold py-3 rounded-lg shadow-md transition-all duration-150"
-                            style={{ minHeight: 48 }}
+                            type="button"
+                            className="rounded-l-md"
+                            variant="default"
                             onClick={() => signIn()}
                         >
                             Sign In
                         </Button>
-                        <Link href="/auth/signup" className="w-full">
+                        <Link href="/auth/signup" passHref>
                             <Button
-                                className="w-full bg-black text-white hover:bg-gray-900 border-none text-lg font-bold py-3 rounded-lg shadow-md transition-all duration-150"
-                                style={{ minHeight: 48 }}
+                                type="button"
+                                className="-ml-px rounded-r-md"
+                                variant="default"
                             >
                                 Sign Up
                             </Button>

@@ -1,4 +1,5 @@
 "use client";
+import { Button } from "@/components/ui/button";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -56,22 +57,22 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="min-h-screen w-full flex flex-col bg-gradient-to-br from-blue-50 via-white to-emerald-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-200">
+        <div className="min-h-screen w-full flex flex-col bg-white text-black dark:bg-neutral-900 dark:text-white transition-colors duration-200">
             <main className="flex-1 flex items-center justify-center w-full">
                 <div className="w-full max-w-md space-y-4 p-1 sm:p-2 md:p-3 lg:p-4 mt-[-7vh]">
                     <div className="flex flex-col items-center mb-6">
-                        <h2 className="mt-1 text-center text-lg font-extrabold bg-gradient-to-r from-teal-600 via-emerald-500 to-orange-400 bg-clip-text text-transparent drop-shadow">
+                        <h2 className="mt-1 text-center text-lg font-extrabold text-black dark:text-black">
                             Create your account
                         </h2>
-                        <p className="mt-1 text-center text-xs text-gray-700 dark:text-gray-300 font-medium">
-                            <span className="font-black bg-gradient-to-r from-teal-600 via-emerald-500 to-orange-400 bg-clip-text text-transparent drop-shadow">
+                        <p className="mt-1 text-center text-xs font-medium text-black dark:text-black">
+                            <span className="font-black text-black dark:text-black">
                                 IP Toolkit App
                             </span>{" "}
                             and start managing your network configurations
                         </p>
                     </div>
 
-                    <div className="w-full h-full bg-white/90 dark:bg-gray-800/90 shadow-2xl border-2 border-emerald-200 dark:border-emerald-700 transition-colors duration-200 p-2 sm:p-3 md:p-4 flex flex-col justify-center">
+                    <div className="w-full h-full bg-white dark:bg-neutral-800 shadow-2xl border-2 border-emerald-200 dark:border-emerald-700 transition-colors duration-200 p-2 sm:p-3 md:p-4 flex flex-col justify-center text-black dark:text-white">
                         {error && (
                             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
                                 <p className="text-sm text-red-600 dark:text-red-400">
@@ -95,15 +96,15 @@ export default function SignUpPage() {
                             <div>
                                 <label
                                     htmlFor="name"
-                                    className="block text-xs font-medium text-gray-700 dark:text-gray-300"
+                                    className="block text-sm/6 font-medium text-gray-900 dark:text-white"
                                 >
                                     Full Name
                                 </label>
                                 <input
                                     {...register("name")}
                                     type="text"
-                                    className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mt-0.5 text-xs"
-                                    placeholder="Enter your full name"
+                                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 dark:bg-white/5 dark:text-white outline outline-1 -outline-offset-1 outline-gray-200 dark:outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
+                                    placeholder="Your full name"
                                 />
                                 {errors.name && (
                                     <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
@@ -115,15 +116,15 @@ export default function SignUpPage() {
                             <div>
                                 <label
                                     htmlFor="email"
-                                    className="block text-xs font-medium text-gray-700 dark:text-gray-300"
+                                    className="block text-sm/6 font-medium text-gray-900 dark:text-white"
                                 >
                                     Email address
                                 </label>
                                 <input
                                     {...register("email")}
                                     type="email"
-                                    className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mt-0.5 text-xs"
-                                    placeholder="Enter your email"
+                                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 dark:bg-white/5 dark:text-white outline outline-1 -outline-offset-1 outline-gray-200 dark:outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
+                                    placeholder="you@example.com"
                                 />
                                 {errors.email && (
                                     <p className="mt-0.5 text-xs text-red-600 dark:text-red-400">
@@ -135,14 +136,14 @@ export default function SignUpPage() {
                             <div>
                                 <label
                                     htmlFor="password"
-                                    className="block text-xs font-medium text-gray-700 dark:text-gray-300"
+                                    className="block text-sm/6 font-medium text-gray-900 dark:text-white"
                                 >
                                     Password
                                 </label>
                                 <input
                                     {...register("password")}
                                     type="password"
-                                    className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mt-0.5 text-xs"
+                                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 dark:bg-white/5 dark:text-white outline outline-1 -outline-offset-1 outline-gray-200 dark:outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
                                     placeholder="Create a password"
                                 />
                                 {errors.password && (
@@ -155,14 +156,14 @@ export default function SignUpPage() {
                             <div>
                                 <label
                                     htmlFor="confirmPassword"
-                                    className="block text-xs font-medium text-gray-700 dark:text-gray-300"
+                                    className="block text-sm/6 font-medium text-gray-900 dark:text-white"
                                 >
                                     Confirm Password
                                 </label>
                                 <input
                                     {...register("confirmPassword")}
                                     type="password"
-                                    className="w-full border border-gray-300 rounded-xl px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400 mt-0.5 text-xs"
+                                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 dark:bg-white/5 dark:text-white outline outline-1 -outline-offset-1 outline-gray-200 dark:outline-white/10 placeholder:text-gray-500 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-500 sm:text-sm/6"
                                     placeholder="Confirm your password"
                                 />
                                 {errors.confirmPassword && (
@@ -176,11 +177,11 @@ export default function SignUpPage() {
                                 <input
                                     {...register("terms")}
                                     type="checkbox"
-                                    className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
+                                    className="h-3 w-3 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-500 rounded bg-white dark:bg-gray-800"
                                 />
                                 <label
                                     htmlFor="terms"
-                                    className="ml-1 block text-xs text-gray-900 dark:text-gray-200"
+                                    className="ml-1 block text-xs text-black dark:text-white"
                                 >
                                     I agree to the{" "}
                                     <Link
@@ -204,10 +205,10 @@ export default function SignUpPage() {
                                 </p>
                             )}
 
-                            <button
+                            <Button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full flex justify-center text-xs py-2 px-4 border border-transparent rounded-md shadow-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-500 transition-colors duration-200"
+                                className="w-full flex justify-center text-xs py-2 px-4"
                             >
                                 {isLoading ? (
                                     <>
@@ -217,7 +218,7 @@ export default function SignUpPage() {
                                 ) : (
                                     "Create Account"
                                 )}
-                            </button>
+                            </Button>
                         </form>
 
                         <div className="mt-3 text-center">
