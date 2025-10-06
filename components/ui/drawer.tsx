@@ -55,6 +55,11 @@ const DrawerContent = React.forwardRef<
                     className={cn(sideClasses[side], className)}
                     {...props}
                 >
+                    {/* Hidden DialogTitle for accessibility */}
+                    <DialogPrimitive.Title className="sr-only">
+                        Drawer
+                    </DialogPrimitive.Title>
+
                     {showCloseIcon && (
                         <button
                             aria-label="Close"

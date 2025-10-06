@@ -1,215 +1,226 @@
 "use client";
+
 import React from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-    Disclosure,
-    DisclosureButton,
-    DisclosurePanel,
-    Menu,
-    MenuButton,
-    MenuItem,
-    MenuItems,
-} from "@headlessui/react";
-import { Bars3Icon, BellIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Disclosure, Menu } from "@headlessui/react";
+import { Bars3Icon, XMarkIcon, BellIcon } from "@heroicons/react/24/outline";
 
 export default function NavBar() {
     const { data: session } = useSession();
-    // Helper to get first name initial for avatar
-    const getFirstNameInitial = (
-        user: { id: string; role: string; password?: string } & {
-            name?: string | null;
-            email?: string | null;
-            image?: string | null;
-        }
-    ) => {
-        if (!user?.name) return null;
-        const firstName = user.name.split(" ")[0];
-        return firstName.charAt(0).toUpperCase();
-    };
     const pathname = usePathname();
+
     const navLinks = [
         { href: "/tools/wan-ip-analyzer", label: "WAN IP Analyzer" },
         { href: "/tools/modem-tutorials", label: "Tutorials" },
-        { href: "/dashboard", label: "View Dashboard" },
+        { href: "/dashboard", label: "Dashboard" },
     ];
+
+    const getFirstNameInitial = (user: any) => {
+        if (!user?.name) return null;
+        return user.name.split(" ")[0][0].toUpperCase();
+    };
+
     return (
         <Disclosure
             as="nav"
-            className="relative bg-white text-black dark:bg-gray-900 dark:text-white after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-px after:bg-black/10 dark:after:bg-white/10"
+            className="relative bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))] shadow-sm"
         >
-            <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8 ml-8 sm:ml-12">
-                {/* ...existing code... */}
-            </div>
-            <div className="flex h-16 items-center justify-between gap-2 sm:gap-0 w-full">
-                <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
-                    {/* Mobile menu button */}
-                    <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
-                        <span className="absolute -inset-0.5" />
-                        <span className="sr-only">Open main menu</span>
-                        <Bars3Icon
-                            aria-hidden="true"
-                            className="block size-6 group-data-[open]:hidden"
-                        />
-                        <XMarkIcon
-                            aria-hidden="true"
-                            className="hidden size-6 group-data-[open]:block"
-                        />
-                    </DisclosureButton>
-                </div>
-                <div className="flex flex-1 items-center justify-center gap-4 sm:gap-0 sm:items-stretch sm:justify-start">
-                    <Link
-                        href="/"
-                        className="flex shrink-0 items-center group cursor-pointer ml-8 sm:ml-8"
-                    >
-                        <span className="bg-white dark:bg-white dark:rounded-lg dark:p-1 rounded-lg p-1">
-                            <img
-                                src="/ethio-img-logo.png"
-                                alt="Ethio Telecom Logo"
-                                className="h-8 w-auto"
-                            />
-                        </span>
-                        <span className="font-extrabold tracking-tight whitespace-nowrap text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl ml-2 font-serif text-black dark:text-white drop-shadow group-hover:underline">
-                            IP TOOLKit <span className="font-black">App</span>
-                        </span>
-                    </Link>
-                    <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
-                        {navLinks.map((link) => (
+            {({ open }) => (
+                <>
+                    <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
+                        <div className="flex h-14 sm:h-16 items-center justify-between">
+                            {/* Logo */}
                             <Link
-                                key={link.href}
-                                href={link.href}
-                                className={
-                                    "inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium transition-colors " +
-                                    (pathname === link.href
-                                        ? "border-indigo-500 text-black dark:text-white"
-                                        : "border-transparent text-gray-500 dark:text-gray-300 hover:border-black/20 dark:hover:border-white/20 hover:text-black dark:hover:text-white")
-                                }
+                                href="/"
+                                className="flex items-center gap-2 flex-shrink-0"
                             >
-                                {link.label}
-                            </Link>
-                        ))}
-                    </div>
-                </div>
-                <div className="flex items-center pr-2 gap-2 sm:ml-auto sm:pr-0">
-                    <div className="flex items-center gap-4">
-                        <span className="hidden sm:inline-block">
-                            <ThemeToggle />
-                        </span>
-                        <span className="hidden sm:inline-block">
-                            <button
-                                type="button"
-                                className="relative rounded-full p-1 text-gray-400 hover:text-white focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500 ml-2"
-                            >
-                                <span className="absolute -inset-1.5" />
-                                <span className="sr-only">
-                                    View notifications
-                                </span>
-                                <BellIcon
-                                    aria-hidden="true"
-                                    className="size-6"
-                                />
-                            </button>
-                        </span>
-                        {/* Profile dropdown */}
-                        {session && (
-                            <Menu as="div" className="relative sm:mr-0">
-                                <MenuButton className="relative flex rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500">
-                                    <span className="absolute -inset-1.5" />
-                                    <span className="sr-only">
-                                        Open user menu
-                                    </span>
-                                    {getFirstNameInitial(session.user) ? (
-                                        <span className="size-8 flex items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-lg outline outline-1 -outline-offset-1 outline-white/10">
-                                            {getFirstNameInitial(session.user)}
-                                        </span>
-                                    ) : (
-                                        <img
-                                            alt=""
-                                            src="/ethio-img-logo.png"
-                                            className="size-8 rounded-full bg-gray-800 outline outline-1 -outline-offset-1 outline-white/10"
-                                        />
-                                    )}
-                                </MenuButton>
-                                <MenuItems
-                                    transition
-                                    className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-gray-800 py-1 outline outline-1 -outline-offset-1 outline-white/10 transition data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-200 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in mr-auto"
-                                >
-                                    <MenuItem>
-                                        <Link
-                                            href="/profile"
-                                            className="block px-4 py-2 text-sm text-gray-300 data-[focus]:bg-white/5 data-[focus]:outline-none"
-                                        >
-                                            Your profile
-                                        </Link>
-                                    </MenuItem>
-                                    <MenuItem>
-                                        <Link
-                                            href="/settings"
-                                            className="block px-4 py-2 text-sm text-gray-300 data-[focus]:bg-white/5 data-[focus]:outline-none"
-                                        >
-                                            Settings
-                                        </Link>
-                                    </MenuItem>
-                                    <MenuItem>
-                                        <button
-                                            onClick={() => signOut()}
-                                            className="block w-full text-left px-4 py-2 text-sm text-gray-300 data-[focus]:bg-white/5 data-[focus]:outline-none"
-                                        >
-                                            Sign out
-                                        </button>
-                                    </MenuItem>
-                                </MenuItems>
-                            </Menu>
-                        )}
-                    </div>
-                </div>
-            </div>
-            <DisclosurePanel className="sm:hidden">
-                <div className="fixed inset-0 z-40 bg-white dark:bg-gray-900/95 backdrop-blur-md flex flex-col w-full h-full">
-                    <div className="flex items-center justify-between px-4 py-4 border-b border-white/10">
-                        <Link href="/" className="flex items-center gap-2">
-                            <span className="dark:bg-white dark:rounded-lg dark:p-1">
                                 <img
                                     src="/ethio-img-logo.png"
-                                    alt="Ethio Telecom Logo"
-                                    className="h-8 w-auto"
+                                    alt="Logo"
+                                    className="h-6 sm:h-8 w-auto"
                                 />
-                            </span>
-                            <span className="font-extrabold tracking-tight whitespace-nowrap text-base font-serif text-white drop-shadow">
-                                IP TOOLKit{" "}
-                                <span className="font-black">App</span>
-                            </span>
-                        </Link>
-                        <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
-                            <span className="absolute -inset-0.5" />
-                            <span className="sr-only">Close menu</span>
-                            <XMarkIcon aria-hidden="true" className="size-6" />
-                        </DisclosureButton>
-                    </div>
-                    <div className="flex-1 flex flex-col justify-center space-y-2 px-6 py-8">
-                        {navLinks.map((link) => (
-                            <DisclosureButton
-                                key={link.href}
-                                as={Link}
-                                href={link.href}
-                                className={[
-                                    "block rounded-lg px-4 py-3 text-lg font-medium transition-colors text-left border-l-4",
-                                    pathname === link.href
-                                        ? "bg-indigo-100 dark:bg-indigo-600/30 text-indigo-700 dark:text-indigo-300 border-indigo-500"
-                                        : "bg-white dark:bg-transparent text-black dark:text-gray-200 border-transparent hover:bg-gray-100 dark:hover:bg-white/10 hover:text-black dark:hover:text-white",
-                                ].join(" ")}
-                            >
-                                {link.label}
-                            </DisclosureButton>
-                        ))}
-                        <div className="mt-8 flex justify-center">
-                            <ThemeToggle />
+                                <span className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl whitespace-nowrap">
+                                    IP TOOLKit
+                                </span>
+                            </Link>
+
+                            {/* Desktop Links - Hidden on mobile */}
+                            <div className="hidden md:flex md:space-x-4 lg:space-x-6">
+                                {navLinks.map((link) => (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        className={`inline-flex items-center px-2 lg:px-3 py-1 border-b-2 text-sm font-medium transition-colors whitespace-nowrap ${
+                                            pathname === link.href
+                                                ? "border-blue-600 text-blue-600 dark:text-blue-400"
+                                                : "border-transparent text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-900 dark:hover:text-white"
+                                        }`}
+                                    >
+                                        {link.label}
+                                    </Link>
+                                ))}
+                            </div>
+
+                            {/* Right Actions */}
+                            <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+                                {/* Theme Toggle - Hidden on mobile, shown on desktop */}
+                                <div className="hidden md:flex">
+                                    <ThemeToggle />
+                                </div>
+
+                                {/* Notification Bell - Hidden on small mobile */}
+                                <button className="hidden xs:flex relative p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                    <BellIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                                </button>
+
+                                {session ? (
+                                    <Menu as="div" className="relative">
+                                        <Menu.Button className="flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors text-sm sm:text-base">
+                                            {getFirstNameInitial(session.user)}
+                                        </Menu.Button>
+                                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1 z-50">
+                                            <Menu.Item>
+                                                {({ active }) => (
+                                                    <Link
+                                                        href="/profile"
+                                                        className={`block px-4 py-2 text-sm ${
+                                                            active
+                                                                ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                                                                : "text-gray-900 dark:text-white"
+                                                        }`}
+                                                    >
+                                                        Profile
+                                                    </Link>
+                                                )}
+                                            </Menu.Item>
+                                            <Menu.Item>
+                                                {({ active }) => (
+                                                    <Link
+                                                        href="/settings"
+                                                        className={`block px-4 py-2 text-sm ${
+                                                            active
+                                                                ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                                                                : "text-gray-900 dark:text-white"
+                                                        }`}
+                                                    >
+                                                        Settings
+                                                    </Link>
+                                                )}
+                                            </Menu.Item>
+                                            <Menu.Item>
+                                                {({ active }) => (
+                                                    <button
+                                                        onClick={() =>
+                                                            signOut()
+                                                        }
+                                                        className={`w-full text-left px-4 py-2 text-sm ${
+                                                            active
+                                                                ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
+                                                                : "text-gray-900 dark:text-white"
+                                                        }`}
+                                                    >
+                                                        Sign Out
+                                                    </button>
+                                                )}
+                                            </Menu.Item>
+                                        </Menu.Items>
+                                    </Menu>
+                                ) : (
+                                    <Link
+                                        href="/auth/signin"
+                                        className="text-sm font-medium hover:underline text-gray-700 dark:text-gray-300 whitespace-nowrap"
+                                    >
+                                        Sign In
+                                    </Link>
+                                )}
+
+                                {/* Mobile menu button */}
+                                <Disclosure.Button className="md:hidden inline-flex items-center justify-center p-1.5 sm:p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                    {open ? (
+                                        <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                                    ) : (
+                                        <Bars3Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                                    )}
+                                </Disclosure.Button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </DisclosurePanel>
+
+                    {/* Mobile Menu */}
+                    <Disclosure.Panel className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                        <div className="px-2 pt-2 pb-3 space-y-1">
+                            {/* Navigation Links */}
+                            {navLinks.map((link) => (
+                                <Disclosure.Button
+                                    key={link.href}
+                                    as={Link}
+                                    href={link.href}
+                                    className={`block px-3 py-3 rounded-md text-base font-medium transition-colors ${
+                                        pathname === link.href
+                                            ? "bg-blue-600 text-white"
+                                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                    }`}
+                                >
+                                    {link.label}
+                                </Disclosure.Button>
+                            ))}
+
+                            {/* Theme Toggle in Mobile Menu */}
+                            <div className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-base font-medium text-gray-700 dark:text-gray-300">
+                                        Theme
+                                    </span>
+                                    <ThemeToggle />
+                                </div>
+                            </div>
+
+                            {/* Mobile notification and profile for signed-in users */}
+                            {session && (
+                                <>
+                                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                                        <Disclosure.Button
+                                            as="button"
+                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                        >
+                                            <BellIcon className="h-5 w-5 mr-3" />
+                                            Notifications
+                                        </Disclosure.Button>
+                                    </div>
+
+                                    {/* Mobile Profile Links */}
+                                    <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
+                                        <Disclosure.Button
+                                            as={Link}
+                                            href="/profile"
+                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                        >
+                                            👤 Profile
+                                        </Disclosure.Button>
+                                        <Disclosure.Button
+                                            as={Link}
+                                            href="/settings"
+                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                        >
+                                            ⚙️ Settings
+                                        </Disclosure.Button>
+                                        <Disclosure.Button
+                                            as="button"
+                                            onClick={() => signOut()}
+                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                        >
+                                            🚪 Sign Out
+                                        </Disclosure.Button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </Disclosure.Panel>
+                </>
+            )}
         </Disclosure>
     );
 }

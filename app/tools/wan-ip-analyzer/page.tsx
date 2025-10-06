@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
-import { DialogTitle } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
 
 type AnalysisResult = {
@@ -25,24 +24,17 @@ type AnalysisResult = {
         name?: string;
         subnetMask?: string;
     };
-    region?: {
-        name?: string;
-        defaultGateway?: string;
-    };
-    [key: string]: any;
+    region?: { name?: string };
+    historyId?: string;
 };
 
 type CustomerLookupResult = {
     customerId?: string;
     name?: string;
     phone?: string;
-    [key: string]: any;
 };
 
 const WanIpAnalyzerPage = () => {
-    // Store the latest history entry id for the Detail button
-    // Track the latest WAN IP analyzer history ID for the logged-in user
-    const [latestHistoryId, setLatestHistoryId] = useState<string | null>(null);
     const { data: session, status } = useSession();
     const [searchType, setSearchType] = useState<
         "wanIp" | "accountNumber" | "accessNumber"
@@ -58,74 +50,101 @@ const WanIpAnalyzerPage = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [latestHistoryId, setLatestHistoryId] = useState<string | null>(null);
 
-    // When searchType changes, clear other fields
+    // Custom dropdown state
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const options = [
+        { value: "wanIp", label: "WAN IP" },
+        { value: "accountNumber", label: "Account Number" },
+        { value: "accessNumber", label: "Access Number" },
+    ];
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
     const handleSearchTypeChange = (
-        e: React.ChangeEvent<HTMLSelectElement>
+        value: "wanIp" | "accountNumber" | "accessNumber"
     ) => {
-        const value = e.target.value as
-            | "wanIp"
-            | "accountNumber"
-            | "accessNumber";
         setSearchType(value);
         setError(null);
         setAnalysis(null);
         setCustomerLookup(null);
         setDrawerOpen(false);
-        if (value === "wanIp") {
-            setIpAddress("");
-        } else if (value === "accountNumber") {
-            setAssignmentForm({ accountNumber: "", accessNumber: "" });
-        } else if (value === "accessNumber") {
-            setAssignmentForm({ accountNumber: "", accessNumber: "" });
+        // Clear all input fields when changing search type
+        setIpAddress("");
+        setAssignmentForm({ accountNumber: "", accessNumber: "" });
+        setIsDropdownOpen(false);
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { value } = e.target;
+
+        if (searchType === "wanIp") {
+            setIpAddress(value);
+        } else if (searchType === "accountNumber") {
+            setAssignmentForm((prev) => ({ ...prev, accountNumber: value }));
+        } else if (searchType === "accessNumber") {
+            setAssignmentForm((prev) => ({ ...prev, accessNumber: value }));
         }
     };
-    if (status === "loading") {
-        return (
-            <div className="flex items-center justify-center min-h-[60vh] text-lg font-semibold">
-                Loading authentication...
-            </div>
-        );
-    }
-    if (!session) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh]">
-                <div className="text-2xl font-bold mb-4 text-yellow-500">
-                    WAN IP Analyzer
-                </div>
-                <div className="mb-4 text-lg text-gray-700 dark:text-gray-200">
-                    You must be signed in to use this tool.
-                </div>
-                <button
-                    onClick={() => signIn(undefined, { callbackUrl: "/" })}
-                    className="px-6 py-2 rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow"
-                >
-                    Sign In / Sign Up
-                </button>
-            </div>
-        );
-    }
 
-    /**
-     * handleSubmit - Handles WAN IP Analyzer form submission.
-     *
-     * Backend GET /api/wan-ip/analyze?ip=... returns:
-     *   {
-     *     ipAddress: string,
-     *     networkInfo: { ... },
-     *     interface: { ... },
-     *     region: { ... },
-     *     recommendations: { ... },
-     *     status: { ... },
-     *     ...
-     *   }
-     *
-     * Backend POST /api/wan-ip/analyze expects:
-     *   { wanIp: string, accountNumber: string, ... }
-     *   and returns assignment info or error.
-     *
-     * Frontend expects to use the response object directly for WAN IP analysis.
-     */
+    const getInputPlaceholder = () => {
+        switch (searchType) {
+            case "wanIp":
+                return "Enter WAN IP";
+            case "accountNumber":
+                return "Enter Account Number";
+            case "accessNumber":
+                return "Enter Access Number";
+            default:
+                return "Enter WAN IP";
+        }
+    };
+
+    const getInputValue = () => {
+        switch (searchType) {
+            case "wanIp":
+                return ipAddress;
+            case "accountNumber":
+                return assignmentForm.accountNumber;
+            case "accessNumber":
+                return assignmentForm.accessNumber;
+            default:
+                return ipAddress;
+        }
+    };
+
+    const getCurrentOptionLabel = () => {
+        const option = options.find((opt) => opt.value === searchType);
+        return option ? option.label : "WAN IP";
+    };
+
+    const handleClear = () => {
+        setIpAddress("");
+        setAssignmentForm({ accountNumber: "", accessNumber: "" });
+        setAnalysis(null);
+        setCustomerLookup(null);
+        setError(null);
+        setDrawerOpen(false);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
@@ -133,70 +152,52 @@ const WanIpAnalyzerPage = () => {
         setCustomerLookup(null);
         setLoading(true);
 
-        // Validation
-        if (searchType === "wanIp") {
-            // Simple IPv4 validation
-            const ipRegex =
-                /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
-            if (!ipAddress.trim()) {
-                setError("WAN IP address is required.");
-                setLoading(false);
-                return;
-            }
-            if (!ipRegex.test(ipAddress.trim())) {
-                setError("Invalid WAN IP address format.");
-                setLoading(false);
-                return;
-            }
-        } else if (searchType === "accountNumber") {
-            if (!assignmentForm.accountNumber.trim()) {
-                setError("Account Number is required.");
-                setLoading(false);
-                return;
-            }
-        } else if (searchType === "accessNumber") {
-            if (!assignmentForm.accessNumber.trim()) {
-                setError("Access Number is required.");
-                setLoading(false);
-                return;
-            }
+        // Validate based on current search type
+        if (searchType === "wanIp" && !ipAddress.trim()) {
+            setError("WAN IP address is required.");
+            setLoading(false);
+            return;
+        }
+        if (
+            searchType === "accountNumber" &&
+            !assignmentForm.accountNumber.trim()
+        ) {
+            setError("Account Number is required.");
+            setLoading(false);
+            return;
+        }
+        if (
+            searchType === "accessNumber" &&
+            !assignmentForm.accessNumber.trim()
+        ) {
+            setError("Access Number is required.");
+            setLoading(false);
+            return;
         }
 
         try {
             let response;
             if (searchType === "wanIp") {
-                // Use GET for WAN IP analysis
                 response = await fetch(
                     `/api/wan-ip/analyze?ip=${encodeURIComponent(ipAddress)}`
                 );
-            } else if (searchType === "accountNumber") {
-                // Use POST for assignment (must include wanIp and accountNumber)
+            } else {
                 response = await fetch("/api/wan-ip/analyze", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                         wanIp: ipAddress,
-                        accountNumber: assignmentForm.accountNumber,
+                        ...assignmentForm,
                     }),
                 });
-            } else if (searchType === "accessNumber") {
-                // If you have a separate endpoint for accessNumber, update here. Otherwise, fallback to GET or POST as needed.
-                response = await fetch(
-                    `/api/wan-ip/analyze?ip=${encodeURIComponent(
-                        assignmentForm.accessNumber
-                    )}`
-                );
             }
 
-            if (!response || !response.ok) {
+            if (!response?.ok)
                 throw new Error("Failed to fetch data. Please try again.");
-            }
             const data = await response.json();
 
-            // Use the response object directly for WAN IP analysis
-            if (searchType === "wanIp" && data && data.ipAddress) {
+            if (data.ipAddress) {
                 setAnalysis(data);
-                // Always use the returned historyId for the Detail button
                 setLatestHistoryId(data.historyId || null);
             } else if (data.customerLookup) {
                 setCustomerLookup(data.customerLookup);
@@ -211,174 +212,176 @@ const WanIpAnalyzerPage = () => {
         }
     };
 
-    // Clear form handler
-    const handleClear = () => {
-        setIpAddress("");
-        setAssignmentForm({ accountNumber: "", accessNumber: "" });
-        setAnalysis(null);
-        setCustomerLookup(null);
-        setError(null);
-        setDrawerOpen(false);
-    };
+    if (status === "loading")
+        return (
+            <div className="min-h-[60vh] flex items-center justify-center text-lg font-semibold">
+                Loading authentication...
+            </div>
+        );
+
+    if (!session)
+        return (
+            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+                <h1 className="text-center text-lg font-bold mb-6">
+                    WAN IP Analyzer
+                </h1>
+                <p>You must be signed in to use this tool.</p>
+                <Button onClick={() => signIn(undefined, { callbackUrl: "/" })}>
+                    Sign In / Sign Up
+                </Button>
+            </div>
+        );
 
     return (
-        <div className="max-w-2xl mx-auto py-10">
-            <div className="mt-10 px-4 py-2">
-                {/* Main card for WAN IP Analyzer form. Theme-aware: white bg/black text in light, black bg/yellow text in dark. */}
-                <Card className="p-8 shadow-lg bg-white text-black border border-yellow-400 ">
-                    {/*
-                        WAN IP Analyzer Title:
-                        - Light mode: white background, black text for maximum contrast.
-                        - Dark mode: black background, yellow-400 text for maximum contrast.
-                        - No border radius, full width, bold, and centered.
-                    */}
-                    <h1 className="text-md font-bold mb-6 w-full text-center px-0">
-                        <span className="block w-full py-3 px-2 bg-white text-black dark:bg-black dark:text-yellow-400 font-bold shadow border-b-0 dark:border-b dark:border-yellow-400">
-                            WAN IP Analyzer
-                        </span>
-                    </h1>
-                    <form onSubmit={handleSubmit}>
-                        <div className="flex flex-col md:flex-row gap-4">
-                            <select
-                                className="border border-gray-400 rounded px-2 py-1 bg-gray-200 dark:bg-gray-700 text-black dark:text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                                value={searchType}
-                                onChange={handleSearchTypeChange}
-                            >
-                                <option
-                                    className="text-black dark:text-white"
-                                    value="wanIp"
-                                >
-                                    WAN IP
-                                </option>
-                                <option
-                                    className="text-black dark:text-white"
-                                    value="accountNumber"
-                                >
-                                    Account Number
-                                </option>
-                                <option
-                                    className="text-black dark:text-white"
-                                    value="accessNumber"
-                                >
-                                    Access Number
-                                </option>
-                            </select>
-                            {searchType === "wanIp" && (
-                                <Input
-                                    placeholder="Enter WAN IP address"
-                                    value={ipAddress}
-                                    onChange={(e) =>
-                                        setIpAddress(e.target.value)
-                                    }
-                                    className="flex-1 border border-gray-400 bg-gray-200 dark:bg-gray-700 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                                />
-                            )}
-                            {searchType === "accountNumber" && (
-                                <Input
-                                    placeholder="Enter Account Number"
-                                    value={assignmentForm.accountNumber}
-                                    onChange={(e) =>
-                                        setAssignmentForm({
-                                            accountNumber: e.target.value,
-                                            accessNumber: "",
-                                        })
-                                    }
-                                    className="flex-1 border border-gray-400 bg-gray-200 dark:bg-gray-700 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                                />
-                            )}
-                            {searchType === "accessNumber" && (
-                                <Input
-                                    placeholder="Enter Access Number"
-                                    value={assignmentForm.accessNumber}
-                                    onChange={(e) =>
-                                        setAssignmentForm({
-                                            accountNumber: "",
-                                            accessNumber: e.target.value,
-                                        })
-                                    }
-                                    className="flex-1 border border-gray-400 bg-gray-200 dark:bg-gray-700 text-black dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                                />
-                            )}
-                        </div>
-                        <div className="flex gap-2 justify-center mb-4 py-6 w-full">
-                            <Button
-                                type="submit"
-                                disabled={loading}
-                                className="bg-gray-700 hover:bg-gray-800 text-white"
-                            >
-                                {loading ? "Analyzing..." : "Analyze"}
-                            </Button>
-                            <Button
-                                type="button"
-                                onClick={handleClear}
-                                className="bg-gray-700 hover:bg-gray-800 text-white"
-                            >
-                                Clear
-                            </Button>
-                        </div>
-                        {error && (
-                            <div className="text-red-500 text-sm">{error}</div>
-                        )}
-                    </form>
-                </Card>
-            </div>
-            <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-                <DrawerContent
-                    className="bg-black border-none max-w-2xl mx-auto"
-                    showCloseIcon={false}
-                >
-                    <DialogTitle asChild>
-                        <div className="flex justify-between  mb-4">
-                            <span className="text-lg font-bold ml-6 px-2 py-2 text-yellow-400">
-                                Important Information for You
-                            </span>
+        <div className="max-w-2xl mx-auto py-10 px-4">
+            {/* Analyzer Form */}
+            <Card className="p-6 shadow-lg card border-border">
+                <h1 className="text-center text-lg font-bold mb-6">
+                    WAN IP Analyzer
+                </h1>
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                        {/* Custom Dropdown */}
+                        <div
+                            className="relative flex-shrink-0"
+                            ref={dropdownRef}
+                        >
                             <button
                                 type="button"
-                                className="font-bold px-2 py-1 rounded text-xl"
-                                aria-label="Close"
-                                onClick={() => setDrawerOpen(false)}
-                                style={{ color: "#facc15" }}
+                                onClick={() =>
+                                    setIsDropdownOpen(!isDropdownOpen)
+                                }
+                                className="w-full md:w-auto min-w-[140px] border border-border rounded px-3 py-2 bg-card text-foreground flex items-center justify-between focus:ring-2 focus:ring-ring focus:border-ring"
                             >
-                                &#10005;
+                                <span>{getCurrentOptionLabel()}</span>
+                                <svg
+                                    className={`w-4 h-4 transition-transform ${
+                                        isDropdownOpen ? "rotate-180" : ""
+                                    }`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M19 9l-7 7-7-7"
+                                    />
+                                </svg>
                             </button>
+
+                            {isDropdownOpen && (
+                                <div className="absolute top-full left-0 right-0 z-50 mt-1 border border-border rounded shadow-lg bg-card">
+                                    {options.map((option) => (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            onClick={() =>
+                                                handleSearchTypeChange(
+                                                    option.value as any
+                                                )
+                                            }
+                                            className={`w-full text-left px-3 py-2 hover:bg-secondary/20 transition-colors ${
+                                                searchType === option.value
+                                                    ? "bg-primary text-secondary"
+                                                    : "text-foreground"
+                                            }`}
+                                        >
+                                            {option.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
                         </div>
-                    </DialogTitle>
-                    <Card className="bg-zinc-900 border border-yellow-400 shadow-lg p-6 w-full">
-                        {analysis && (
-                            <div className="space-y-2 text-white">
-                                {/* Top: WAN IP, Subnet Mask, Default Gateway */}
-                                <div className="mb-4 flex flex-col gap-1">
+
+                        <Input
+                            placeholder={getInputPlaceholder()}
+                            value={getInputValue()}
+                            onChange={handleInputChange}
+                            className="bg-card placeholder-muted-foreground text-black dark:text-white"
+                        />
+                    </div>
+
+                    <div className="flex gap-2 justify-center py-4 flex-wrap">
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium px-6 py-2 rounded-md"
+                        >
+                            {loading ? "Analyzing..." : "Analyze"}
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={handleClear}
+                            variant="outline"
+                            className="border-border text-foreground hover:bg-secondary/20 px-6 py-2 rounded-md"
+                        >
+                            Clear
+                        </Button>
+                    </div>
+
+                    {error && (
+                        <p className="text-destructive text-sm text-center">
+                            {error}
+                        </p>
+                    )}
+                </form>
+            </Card>
+
+            {/* Drawer for results */}
+            <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+                <DrawerContent
+                    side="right"
+                    showCloseIcon
+                    onClose={() => setDrawerOpen(false)}
+                    className="max-w-2xl mx-auto p-4 bg-background"
+                >
+                    {analysis && (
+                        <div className="space-y-4">
+                            {/* Interface Info */}
+                            <Card className="p-4 shadow-lg card border-border">
+                                <h2 className="font-bold mb-2">
+                                    Interface Info
+                                </h2>
+                                <div className="space-y-1">
                                     <div>
-                                        <span className="font-semibold text-yellow-400">
+                                        <span className="font-semibold">
                                             WAN IP:
                                         </span>{" "}
                                         {analysis.ipAddress}
                                     </div>
                                     <div>
-                                        <span className="font-semibold text-yellow-400">
+                                        <span className="font-semibold">
                                             Subnet Mask:
                                         </span>{" "}
                                         {analysis.networkInfo?.subnetMask ||
                                             analysis.interface?.subnetMask}
                                     </div>
                                     <div>
-                                        <span className="font-semibold text-yellow-400">
+                                        <span className="font-semibold">
                                             Default Gateway:
                                         </span>{" "}
                                         {analysis.interface?.defaultGateway}
                                     </div>
                                 </div>
-                                {/* Other details */}
-                                {analysis.networkInfo && (
-                                    <>
+                            </Card>
+
+                            {/* Network Info */}
+                            {analysis.networkInfo && (
+                                <Card className="p-4 shadow-lg card border-border">
+                                    <h2 className="font-bold mb-2">
+                                        Network Info
+                                    </h2>
+                                    <div className="space-y-1">
                                         <div>
-                                            <span className="font-semibold text-yellow-400">
+                                            <span className="font-semibold">
                                                 CIDR:
                                             </span>{" "}
                                             {analysis.networkInfo.cidr}
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-yellow-400">
+                                            <span className="font-semibold">
                                                 Network Address:
                                             </span>{" "}
                                             {
@@ -387,7 +390,7 @@ const WanIpAnalyzerPage = () => {
                                             }
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-yellow-400">
+                                            <span className="font-semibold">
                                                 Broadcast Address:
                                             </span>{" "}
                                             {
@@ -396,113 +399,94 @@ const WanIpAnalyzerPage = () => {
                                             }
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-yellow-400">
+                                            <span className="font-semibold">
                                                 First Usable IP:
                                             </span>{" "}
                                             {analysis.networkInfo.firstUsableIp}
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-yellow-400">
+                                            <span className="font-semibold">
                                                 Last Usable IP:
                                             </span>{" "}
                                             {analysis.networkInfo.lastUsableIp}
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-yellow-400">
+                                            <span className="font-semibold">
                                                 Total Hosts:
                                             </span>{" "}
                                             {analysis.networkInfo.totalHosts}
                                         </div>
                                         <div>
-                                            <span className="font-semibold text-yellow-400">
+                                            <span className="font-semibold">
                                                 Usable Hosts:
                                             </span>{" "}
                                             {analysis.networkInfo.usableHosts}
                                         </div>
-                                    </>
-                                )}
-                                {analysis.interface &&
-                                    analysis.interface.name && (
-                                        <div>
-                                            <span className="font-semibold text-yellow-400">
-                                                Interface Name:
-                                            </span>{" "}
-                                            {analysis.interface.name}
-                                        </div>
-                                    )}
-                                {analysis.region && (
-                                    <div>
-                                        <span className="font-semibold text-yellow-400">
-                                            Region:
-                                        </span>{" "}
-                                        {analysis.region.name}
                                     </div>
-                                )}
-                                {/* Always show Detail Button for WAN IP */}
-                                <div className="mt-6 flex justify-end">
-                                    {latestHistoryId ? (
-                                        <a
-                                            href={`/dashboard/history/detail?id=${encodeURIComponent(
-                                                latestHistoryId
-                                            )}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-6 py-2 rounded-xl shadow transition-all duration-200">
-                                                Detail
-                                            </Button>
-                                        </a>
-                                    ) : (
-                                        <Button
-                                            className="bg-gray-400 text-white font-bold px-6 py-2 rounded-xl shadow transition-all duration-200 cursor-not-allowed"
-                                            disabled
-                                            title="No detail available yet"
-                                        >
+                                </Card>
+                            )}
+
+                            {/* Detail Button */}
+                            <div className="flex justify-end">
+                                {latestHistoryId ? (
+                                    <a
+                                        href={`/dashboard/history/detail?id=${latestHistoryId}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium px-6 py-2 rounded-md">
                                             Detail
                                         </Button>
-                                    )}
-                                </div>
+                                    </a>
+                                ) : (
+                                    <Button
+                                        disabled
+                                        className="bg-muted text-muted-foreground px-6 py-2 rounded-md cursor-not-allowed"
+                                    >
+                                        Detail
+                                    </Button>
+                                )}
                             </div>
-                        )}
-                        {customerLookup && (
-                            <div>
-                                <div className="mb-2 text-white">
-                                    <span className="font-semibold text-yellow-400">
+                        </div>
+                    )}
+
+                    {/* Customer Lookup */}
+                    {customerLookup && (
+                        <Card className="p-4 shadow-lg card border-border mt-4">
+                            <h2 className="font-bold mb-2">Customer Info</h2>
+                            <div className="space-y-1">
+                                <div>
+                                    <span className="font-semibold">
                                         Customer ID:
                                     </span>{" "}
                                     {customerLookup.customerId}
                                 </div>
-                                <div className="mb-2 text-white">
-                                    <span className="font-semibold text-yellow-400">
-                                        Name:
-                                    </span>{" "}
+                                <div>
+                                    <span className="font-semibold">Name:</span>{" "}
                                     {customerLookup.name}
                                 </div>
-                                <div className="mb-2 text-white">
-                                    <span className="font-semibold text-yellow-400">
+                                <div>
+                                    <span className="font-semibold">
                                         Phone:
                                     </span>{" "}
                                     {customerLookup.phone}
                                 </div>
-                                {/* Detail Button for Customer Lookup */}
-                                {customerLookup.customerId && (
-                                    <div className="mt-6 flex justify-end">
-                                        <a
-                                            href={`/dashboard/history/detail?id=${encodeURIComponent(
-                                                customerLookup.customerId
-                                            )}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            <Button className="bg-yellow-400 hover:bg-yellow-500 text-black font-bold px-6 py-2 rounded-xl shadow transition-all duration-200">
-                                                Detail
-                                            </Button>
-                                        </a>
-                                    </div>
-                                )}
                             </div>
-                        )}
-                    </Card>
+                            {customerLookup.customerId && (
+                                <div className="mt-4 flex justify-end">
+                                    <a
+                                        href={`/dashboard/history/detail?id=${customerLookup.customerId}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium px-6 py-2 rounded-md">
+                                            Detail
+                                        </Button>
+                                    </a>
+                                </div>
+                            )}
+                        </Card>
+                    )}
                 </DrawerContent>
             </Drawer>
         </div>

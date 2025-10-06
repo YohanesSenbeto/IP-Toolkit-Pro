@@ -45,38 +45,49 @@ const tools = [
 
 export default function ToolsPage() {
     return (
-        <div className="w-full max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-10">
-            <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-2">Network Tools</h1>
-                <p className="text-muted-foreground">
+        <div className="w-full max-w-screen-xl mx-auto px-4 py-10">
+            {/* Page header */}
+            <div className="mb-10 text-center">
+                <h1 className="text-4xl md:text-5xl font-bold mb-2">
+                    Network Tools
+                </h1>
+                <p className="text-gray-600 dark:text-gray-300 text-lg md:text-xl">
                     Comprehensive tools for Ethio Telecom network configuration
                     and management
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+            {/* Tools grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {tools.map((tool) => {
                     const Icon = tool.icon;
                     return (
-                        <Link key={tool.title} href={tool.link}>
-                            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+                        <Link
+                            key={tool.title}
+                            href={tool.link}
+                            className="group"
+                        >
+                            <Card className="h-full flex flex-col justify-between p-6 transition-transform transform hover:-translate-y-1 hover:shadow-lg cursor-pointer border border-gray-200 dark:border-gray-700">
                                 <CardHeader>
-                                    <div className="flex items-center gap-3">
-                                        <Icon className="w-8 h-8 text-primary" />
-                                        <CardTitle>{tool.title}</CardTitle>
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <Icon className="w-8 h-8 text-indigo-600 group-hover:text-indigo-500" />
+                                        <CardTitle className="text-lg font-semibold">
+                                            {tool.title}
+                                        </CardTitle>
                                     </div>
-                                    <CardDescription>
+                                    <CardDescription className="text-gray-600 dark:text-gray-300 text-sm">
                                         {tool.description}
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent>
+
+                                <CardContent className="mt-4 flex-1">
                                     <ul className="space-y-1">
                                         {tool.features.map((feature, index) => (
                                             <li
                                                 key={index}
-                                                className="text-sm text-muted-foreground flex items-center gap-2"
+                                                className="flex items-center gap-2 text-gray-700 dark:text-gray-400 text-sm"
                                             >
-                                                <div className="w-1 h-1 bg-primary rounded-full"></div>
+                                                <span className="w-2 h-2 bg-indigo-600 rounded-full flex-shrink-0"></span>
                                                 {feature}
                                             </li>
                                         ))}

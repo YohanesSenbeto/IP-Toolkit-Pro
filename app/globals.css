@@ -1,138 +1,85 @@
-
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Root variables for light mode */
 :root {
   --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 255, 255, 255;
-  --background-end-rgb: 255, 255, 255;
+  --background-rgb: 255, 255, 255;
+  --card-rgb: 255, 255, 255;
+  --border-rgb: 209, 213, 219; /* gray-300 */
+  --muted-foreground-rgb: 107, 114, 128; /* gray-500 */
+  --primary-rgb: 0, 0, 0;
+  --secondary-rgb: 255, 255, 255;
+  --destructive-rgb: 239, 68, 68; /* red-500 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    /* Ethio Telecom brand colors for dark mode */
-    --foreground-rgb: 246, 255, 247; /* light greenish for text */
-    --background-start-rgb: 11, 31, 23; /* deep green-black */
-    --background-end-rgb: 17, 41, 31;   /* slightly lighter deep green */
-    --primary-rgb: 255, 214, 0;         /* Ethio Telecom yellow */
-    --secondary-rgb: 0, 128, 96;        /* Ethio Telecom green */
-    --card-rgb: 17, 41, 31;             /* card background in dark */
-    --card-foreground-rgb: 255, 214, 0; /* card text in dark */
-  }
+/* Dark mode variables */
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 0, 0, 0;
+  --card-rgb: 17, 17, 17; /* slightly lighter black for cards */
+  --border-rgb: 75, 85, 99; /* gray-700 */
+  --muted-foreground-rgb: 156, 163, 175; /* gray-400 */
+  --primary-rgb: 255, 255, 255;
+  --secondary-rgb: 0, 0, 0;
+  --destructive-rgb: 252, 165, 165; /* red-300 */
 }
 
-/* Smooth theme transitions */
+/* Smooth transitions */
 * {
   transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 @layer base {
+  html, body {
+    background-color: rgb(var(--background-rgb));
+    color: rgb(var(--foreground-rgb));
+    min-height: 100vh;
+  }
+
   h1 {
     font-weight: 800;
     font-size: 1.5rem;
     margin-bottom: 0.75rem;
     line-height: 2rem;
   }
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 0%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 0%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 0 0% 0%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 90%;
-    --secondary-foreground: 0 0% 0%;
-    --muted: 0 0% 95%;
-    --muted-foreground: 0 0% 40%;
-    --accent: 0 0% 95%;
-    --accent-foreground: 0 0% 0%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 0%;
-    --chart-1: 0 0% 0%;
-    --chart-2: 0 0% 40%;
-    --chart-3: 0 0% 60%;
-    --chart-4: 0 0% 80%;
-    --chart-5: 0 0% 90%;
-    --radius: 0.5rem;
-  }
-  .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+
+  /* Card defaults */
+  .card {
+    background-color: rgb(var(--card-rgb));
+    color: rgb(var(--foreground-rgb));
+    border-color: rgb(var(--border-rgb));
   }
 }
 
-
-
-@layer base {
-  html, body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    min-height: 100vh;
-  }
-}
-
+/* Utility overrides for Tailwind classes */
 @layer utilities {
   .border-border {
-    border-color: hsl(var(--border));
+    border-color: rgb(var(--border-rgb));
   }
-}
 
-
-/* Dark mode overrides for legacy utility classes across the app */
-@layer utilities {
   /* Text colors */
   .dark .text-gray-900,
-  .dark .text-gray-800 { color: hsl(var(--foreground)) !important; }
+  .dark .text-gray-800 { color: rgb(var(--foreground-rgb)) !important; }
   .dark .text-gray-700,
   .dark .text-gray-600,
-  .dark .text-gray-500 { color: hsl(var(--muted-foreground)) !important; }
+  .dark .text-gray-500 { color: rgb(var(--muted-foreground-rgb)) !important; }
 
   /* Background colors */
   .dark .bg-white,
   .dark .bg-gray-50,
-  .dark .bg-gray-100 { background-color: hsl(var(--card)) !important; }
+  .dark .bg-gray-100 { background-color: rgb(var(--card-rgb)) !important; }
 
   /* Borders */
   .dark .border-gray-200,
-  .dark .border-gray-300 { border-color: hsl(var(--border)) !important; }
+  .dark .border-gray-300 { border-color: rgb(var(--border-rgb)) !important; }
 
-  /* Brand/links */
-  .dark .text-blue-600 { color: hsl(var(--primary)) !important; }
-  .dark .hover\:bg-blue-50:hover { background-color: hsl(var(--accent)) !important; }
+  /* Links and buttons */
+  .dark .text-blue-600 { color: rgb(var(--primary-rgb)) !important; }
+  .dark .hover\:bg-blue-50:hover { background-color: rgb(var(--secondary-rgb)) !important; }
 
-  /* Muted card sections often use gray backgrounds */
-  .dark .bg-blue-50 { background-color: hsl(var(--accent)) !important; }
-
-  /* Neutralize light-only gradients in dark mode */
+  /* Neutralize gradients in dark mode */
   .dark .bg-gradient-to-t,
   .dark .bg-gradient-to-tr,
   .dark .bg-gradient-to-r,
@@ -142,6 +89,6 @@
   .dark .bg-gradient-to-l,
   .dark .bg-gradient-to-tl {
     background-image: none !important;
-    background-color: hsl(var(--background)) !important;
+    background-color: rgb(var(--background-rgb)) !important;
   }
 }
