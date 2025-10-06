@@ -42,8 +42,9 @@ const DrawerContent = React.forwardRef<
     ) => {
         // Drawer slides in from the side
         const sideClasses = {
-            right: "fixed top-0 right-0 h-full w-full max-w-md border-l border-border bg-background shadow-lg z-50 animate-in slide-in-from-right duration-200",
-            left: "fixed top-0 left-0 h-full w-full max-w-md border-r border-border bg-background shadow-lg z-50 animate-in slide-in-from-left duration-200",
+            // Mobile: take full screen width; scale up with breakpoints for better use of space on larger devices
+            right: "fixed top-0 right-0 h-full w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-3xl border-l border-border bg-background shadow-lg z-50 animate-in slide-in-from-right duration-200",
+            left: "fixed top-0 left-0 h-full w-full max-w-full sm:max-w-sm md:max-w-md lg:max-w-2xl xl:max-w-3xl border-r border-border bg-background shadow-lg z-50 animate-in slide-in-from-left duration-200",
             top: "fixed top-0 left-0 w-full max-h-[90vh] border-b border-border bg-background shadow-lg z-50 animate-in slide-in-from-top duration-200",
             bottom: "fixed bottom-0 left-0 w-full max-h-[90vh] border-t border-border bg-background shadow-lg z-50 animate-in slide-in-from-bottom duration-200",
         };
@@ -63,11 +64,11 @@ const DrawerContent = React.forwardRef<
                     {showCloseIcon && (
                         <button
                             aria-label="Close"
-                            className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-accent focus:outline-none"
+                            className="absolute top-3 right-3 z-10 p-2 rounded-full hover:bg-accent focus:outline-none backdrop-blur-sm bg-background/60 border border-border/60"
                             onClick={onClose}
                             type="button"
                         >
-                            <X className="h-5 w-5 text-gray-500" />
+                            <X className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                         </button>
                     )}
                     <div className="h-full w-full overflow-y-auto">

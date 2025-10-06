@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -32,17 +33,26 @@ export default function NavBar() {
                 <>
                     <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
                         <div className="flex h-14 sm:h-16 items-center justify-between">
-                            {/* Logo */}
+                            {/* Logo with larger size */}
                             <Link
                                 href="/"
-                                className="flex items-center gap-2 flex-shrink-0"
+                                className="flex items-center gap-3 flex-shrink-0"
                             >
-                                <img
-                                    src="/ethio-img-logo.png"
-                                    alt="Logo"
-                                    className="h-6 sm:h-8 w-auto"
-                                />
-                                <span className="font-bold text-base sm:text-lg md:text-xl lg:text-2xl whitespace-nowrap">
+                                {/* Wrapper applies dark-mode filter from CSS variable */}
+                                <span
+                                    className="inline-flex items-center justify-center h-12 w-12 sm:h-16 sm:w-16 lg:h-20 lg:w-20 select-none"
+                                    style={{ filter: "var(--logo-filter)" }}
+                                >
+                                    <Image
+                                        src="/ethio-img-logo.png"
+                                        alt="Logo"
+                                        width={80}
+                                        height={80}
+                                        priority
+                                        className="h-full w-auto object-contain"
+                                    />
+                                </span>
+                                <span className="font-medium text-lg sm:text-xl md:text-2xl lg:text-2xl whitespace-nowrap">
                                     IP TOOLKit
                                 </span>
                             </Link>

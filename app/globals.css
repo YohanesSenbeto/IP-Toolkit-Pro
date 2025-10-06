@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Responsive table helpers for WAN IP analyzer */
+.responsive-table, .responsive-table-lg {
+  width: 100%;
+  border-collapse: collapse;
+}
+/* Strong table lines (light mode emphasis) */
+.table-strong-lines th,
+.table-strong-lines td {
+  border-width: 1.2px !important;
+  border-color: rgb(var(--border-rgb)) !important;
+}
+.table-strong-lines tr + tr td,
+.table-strong-lines tr + tr th {
+  border-top-width: 1.4px !important;
+}
+.dark .table-strong-lines th,
+.dark .table-strong-lines td {
+  border-color: rgb(var(--border-rgb)); /* keep consistent in dark, no extra thickness */
+}
+/* Previously: stacked mobile view. Disabled to keep identical row/column layout on all breakpoints.
+   If you want to re-enable stacking, restore the removed media query. */
+
 /* Root variables for light mode */
 :root {
   --foreground-rgb: 0, 0, 0;
@@ -12,6 +34,7 @@
   --primary-rgb: 0, 0, 0;
   --secondary-rgb: 255, 255, 255;
   --destructive-rgb: 239, 68, 68; /* red-500 */
+  --logo-filter: none;
 }
 
 /* Dark mode variables */
@@ -24,6 +47,7 @@
   --primary-rgb: 255, 255, 255;
   --secondary-rgb: 0, 0, 0;
   --destructive-rgb: 252, 165, 165; /* red-300 */
+  --logo-filter: invert(1) brightness(2) contrast(1.5);
 }
 
 /* Smooth transitions */

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Card } from "@/components/ui/card";
+import Link from "next/link";
 
 type AnalysisResult = {
     ipAddress: string;
@@ -51,6 +52,12 @@ const WanIpAnalyzerPage = () => {
     const [error, setError] = useState<string | null>(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [latestHistoryId, setLatestHistoryId] = useState<string | null>(null);
+    // Inline detail view state
+    const [detailEntry, setDetailEntry] = useState<any>(null);
+    const [detailLoading, setDetailLoading] = useState(false);
+    const [detailError, setDetailError] = useState<string | null>(null);
+    // Inline detail expand/collapse
+    const [detailExpanded, setDetailExpanded] = useState(true);
 
     // Custom dropdown state
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -143,6 +150,8 @@ const WanIpAnalyzerPage = () => {
         setCustomerLookup(null);
         setError(null);
         setDrawerOpen(false);
+        setDetailEntry(null);
+        setDetailError(null);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -212,113 +221,190 @@ const WanIpAnalyzerPage = () => {
         }
     };
 
+    const handleViewDetails = async () => {
+        if (!latestHistoryId) return;
+        setDetailLoading(true);
+        setDetailError(null);
+        const hadExisting = Boolean(detailEntry);
+        try {
+            const res = await fetch(
+                `/api/wan-ip/history/detail?id=${encodeURIComponent(
+                    latestHistoryId
+                )}`
+            );
+            if (!res.ok) throw new Error("Failed to load detail");
+            const data = await res.json();
+            setDetailEntry(data.entry || data);
+            if (!hadExisting) setDetailExpanded(true);
+        } catch (e: any) {
+            setDetailError(e.message || "Error loading detail");
+            setDetailEntry(null);
+        } finally {
+            setDetailLoading(false);
+        }
+    };
+
     if (status === "loading")
         return (
-            <div className="min-h-[60vh] flex items-center justify-center text-lg font-semibold">
+            <div className="min-h-[60vh] flex items-center justify-center text-lg font-semibold text-gray-900 dark:text-white">
                 Loading authentication...
             </div>
         );
 
     if (!session)
         return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-                <h1 className="text-center text-lg font-bold mb-6">
+            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-gray-900 dark:text-white">
+                <h1 className="text-center text-lg font-bold mb-6 text-gray-900 dark:text-white">
                     WAN IP Analyzer
                 </h1>
-                <p>You must be signed in to use this tool.</p>
-                <Button onClick={() => signIn(undefined, { callbackUrl: "/" })}>
-                    Sign In / Sign Up
+                <p className="text-gray-700 dark:text-gray-300">
+                    You must be signed in to use this tool.
+                </p>
+
+                <Button
+                    type="button"
+                    className="rounded-l-md"
+                    variant="default"
+                    onClick={() => signIn()}
+                >
+                    Sign In
                 </Button>
+                <Link href="/auth/signup">
+                    <Button
+                        type="button"
+                        className="-ml-px rounded-r-md"
+                        variant="default"
+                    >
+                        Sign Up
+                    </Button>
+                </Link>
             </div>
         );
 
     return (
-        <div className="max-w-2xl mx-auto py-10 px-4">
+        <div className="max-w-2xl mx-auto p-10 my-20 px-4">
             {/* Analyzer Form */}
             <Card className="p-6 shadow-lg card border-border">
-                <h1 className="text-center text-lg font-bold mb-6">
+                <h1 className="text-center text-lg font-bold mb-6 text-gray-900 dark:text-white">
                     WAN IP Analyzer
                 </h1>
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    <div className="flex flex-col md:flex-row gap-4">
-                        {/* Custom Dropdown */}
-                        <div
-                            className="relative flex-shrink-0"
-                            ref={dropdownRef}
-                        >
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setIsDropdownOpen(!isDropdownOpen)
-                                }
-                                className="w-full md:w-auto min-w-[140px] border border-border rounded px-3 py-2 bg-card text-foreground flex items-center justify-between focus:ring-2 focus:ring-ring focus:border-ring"
+                    {/* Unified control group */}
+                    <div className="flex flex-col gap-2">
+                        <div className="flex w-full flex-col sm:flex-row gap-2 sm:gap-0">
+                            {/* Dropdown trigger */}
+                            <div
+                                className="sm:relative sm:z-10 w-full sm:w-auto"
+                                ref={dropdownRef}
                             >
-                                <span>{getCurrentOptionLabel()}</span>
-                                <svg
-                                    className={`w-4 h-4 transition-transform ${
-                                        isDropdownOpen ? "rotate-180" : ""
-                                    }`}
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setIsDropdownOpen(!isDropdownOpen)
+                                    }
+                                    className="sm:rounded-l-md sm:rounded-r-none rounded-md sm:border-r-0 border border-border bg-card text-foreground px-3 py-2 min-w-[150px] flex items-center justify-between text-sm focus-visible:outline-none focus:ring-2 focus:ring-ring transition-colors dark:bg-neutral-900 dark:hover:bg-neutral-800 hover:bg-accent/40"
                                 >
-                                    <path
+                                    <span className="truncate text-left">
+                                        {(() => {
+                                            const option = options.find(
+                                                (o) => o.value === searchType
+                                            );
+                                            return option
+                                                ? option.label
+                                                : "WAN IP";
+                                        })()}
+                                    </span>
+                                    <svg
+                                        className={`ml-2 w-4 h-4 shrink-0 transition-transform ${
+                                            isDropdownOpen ? "rotate-180" : ""
+                                        }`}
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 9l-7 7-7-7"
-                                    />
-                                </svg>
-                            </button>
-
-                            {isDropdownOpen && (
-                                <div className="absolute top-full left-0 right-0 z-50 mt-1 border border-border rounded shadow-lg bg-card">
-                                    {options.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            onClick={() =>
-                                                handleSearchTypeChange(
-                                                    option.value as any
-                                                )
-                                            }
-                                            className={`w-full text-left px-3 py-2 hover:bg-secondary/20 transition-colors ${
-                                                searchType === option.value
-                                                    ? "bg-primary text-secondary"
-                                                    : "text-foreground"
-                                            }`}
-                                        >
-                                            {option.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
+                                    >
+                                        <path d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                                {isDropdownOpen && (
+                                    <div className="mt-1 sm:absolute sm:top-full sm:left-0 sm:right-0 z-50 rounded-md border border-border bg-card dark:bg-neutral-900 shadow-lg overflow-hidden w-full">
+                                        {options.map((option) => (
+                                            <button
+                                                key={option.value}
+                                                type="button"
+                                                onClick={() =>
+                                                    handleSearchTypeChange(
+                                                        option.value as any
+                                                    )
+                                                }
+                                                className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between ${
+                                                    searchType === option.value
+                                                        ? "bg-primary text-secondary dark:bg-blue-600 dark:text-white"
+                                                        : "hover:bg-accent/40 text-foreground dark:hover:bg-neutral-800"
+                                                }`}
+                                            >
+                                                <span>{option.label}</span>
+                                                {searchType ===
+                                                    option.value && (
+                                                    <span className="ml-2 text-[10px] uppercase tracking-wide opacity-80">
+                                                        Selected
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            {/* Input */}
+                            <Input
+                                placeholder={(() => {
+                                    switch (searchType) {
+                                        case "wanIp":
+                                            return "Enter WAN IP";
+                                        case "accountNumber":
+                                            return "Enter Account Number";
+                                        case "accessNumber":
+                                            return "Enter Access Number";
+                                        default:
+                                            return "Enter WAN IP";
+                                    }
+                                })()}
+                                value={(() => {
+                                    switch (searchType) {
+                                        case "wanIp":
+                                            return ipAddress;
+                                        case "accountNumber":
+                                            return assignmentForm.accountNumber;
+                                        case "accessNumber":
+                                            return assignmentForm.accessNumber;
+                                        default:
+                                            return ipAddress;
+                                    }
+                                })()}
+                                onChange={handleInputChange}
+                                className="sm:rounded-none sm:border-l-0 sm:border-r-0 bg-card dark:bg-neutral-900 placeholder-muted-foreground text-black dark:text-white flex-1"
+                            />
+                            {/* Action buttons */}
+                            <div className="flex items-stretch mt-2 sm:mt-0 gap-2 sm:gap-0 sm:ml-0">
+                                <Button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="sm:rounded-none font-medium px-5 py-2 text-sm"
+                                >
+                                    {loading ? "Analyzing..." : "Analyze"}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={handleClear}
+                                    className="sm:rounded-r-md sm:rounded-l-none font-medium px-5 py-2 text-sm"
+                                >
+                                    Clear
+                                </Button>
+                            </div>
                         </div>
-
-                        <Input
-                            placeholder={getInputPlaceholder()}
-                            value={getInputValue()}
-                            onChange={handleInputChange}
-                            className="bg-card placeholder-muted-foreground text-black dark:text-white"
-                        />
-                    </div>
-
-                    <div className="flex gap-2 justify-center py-4 flex-wrap">
-                        <Button
-                            type="submit"
-                            disabled={loading}
-                            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium px-6 py-2 rounded-md"
-                        >
-                            {loading ? "Analyzing..." : "Analyze"}
-                        </Button>
-                        <Button
-                            type="button"
-                            onClick={handleClear}
-                            variant="outline"
-                            className="border-border text-foreground hover:bg-secondary/20 px-6 py-2 rounded-md"
-                        >
-                            Clear
-                        </Button>
+                        {/* Removed separate Clear row; now grouped with Analyze */}
                     </div>
 
                     {error && (
@@ -333,147 +419,618 @@ const WanIpAnalyzerPage = () => {
             <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
                 <DrawerContent
                     side="right"
-                    showCloseIcon
+                    showCloseIcon={true}
                     onClose={() => setDrawerOpen(false)}
-                    className="max-w-2xl mx-auto p-4 bg-background"
+                    className="max-w-2xl mx-auto p-2 md:p-4 bg-background flex flex-col h-full text-[12px] md:text-[13px]"
                 >
                     {analysis && (
-                        <div className="space-y-4">
+                        <div className="space-y-4 flex-1 pb-8">
                             {/* Interface Info */}
-                            <Card className="p-4 shadow-lg card border-border">
-                                <h2 className="font-bold mb-2">
-                                    Important Info for Modem Configuration
-                                </h2>
-                                <div className="space-y-1">
-                                    <div>
-                                        <span className="font-semibold">
-                                            WAN IP:
-                                        </span>{" "}
-                                        {analysis.ipAddress}
-                                    </div>
-                                    <div>
-                                        <span className="font-semibold">
-                                            Subnet Mask:
-                                        </span>{" "}
-                                        {analysis.networkInfo?.subnetMask ||
-                                            analysis.interface?.subnetMask}
-                                    </div>
-                                    <div>
-                                        <span className="font-semibold">
-                                            Default Gateway:
-                                        </span>{" "}
-                                        {analysis.interface?.defaultGateway}
-                                    </div>
-                                </div>
-                            </Card>
-
-                            {/* Network Info */}
-                            {analysis.networkInfo && (
-                                <Card className="p-4 shadow-lg card border-border">
-                                    <h2 className="font-bold mb-2">
-                                        Network Info
+                            <div className="grid gap-4 md:grid-cols-2">
+                                <Card className="p-2.5 md:p-3 shadow-sm md:shadow-md card border-border relative">
+                                    <h2 className="font-semibold mb-2 text-gray-900 dark:text-white leading-tight text-[13px] md:text-sm">
+                                        Important Info for Modem Configuration
                                     </h2>
-                                    <div className="space-y-1">
-                                        <div>
-                                            <span className="font-semibold">
-                                                CIDR:
-                                            </span>{" "}
-                                            {analysis.networkInfo.cidr}
-                                        </div>
-                                        <div>
-                                            <span className="font-semibold">
-                                                Network Address:
-                                            </span>{" "}
-                                            {
-                                                analysis.networkInfo
-                                                    .networkAddress
-                                            }
-                                        </div>
-                                        <div>
-                                            <span className="font-semibold">
-                                                Broadcast Address:
-                                            </span>{" "}
-                                            {
-                                                analysis.networkInfo
-                                                    .broadcastAddress
-                                            }
-                                        </div>
-                                        <div>
-                                            <span className="font-semibold">
-                                                First Usable IP:
-                                            </span>{" "}
-                                            {analysis.networkInfo.firstUsableIp}
-                                        </div>
-                                        <div>
-                                            <span className="font-semibold">
-                                                Last Usable IP:
-                                            </span>{" "}
-                                            {analysis.networkInfo.lastUsableIp}
-                                        </div>
-                                        <div>
-                                            <span className="font-semibold">
-                                                Total Hosts:
-                                            </span>{" "}
-                                            {analysis.networkInfo.totalHosts}
-                                        </div>
-                                        <div>
-                                            <span className="font-semibold">
-                                                Usable Hosts:
-                                            </span>{" "}
-                                            {analysis.networkInfo.usableHosts}
-                                        </div>
+                                    <div className="overflow-x-auto -mx-1 md:mx-0">
+                                        <table className="w-full text-xs md:text-sm border responsive-table table-strong-lines">
+                                            <thead className="bg-muted/60 hidden sm:table-header-group">
+                                                <tr>
+                                                    <th className="text-left font-semibold px-3 py-2 border w-40">
+                                                        Field
+                                                    </th>
+                                                    <th className="text-left font-semibold px-3 py-2 border">
+                                                        Value
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr className="bg-muted/50">
+                                                    <td
+                                                        colSpan={2}
+                                                        className="px-3 py-2 font-semibold text-xs uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Essentials
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="font-semibold px-3 py-2 border w-40">
+                                                        WAN IP
+                                                    </td>
+                                                    <td className="font-mono px-3 py-2 border break-all">
+                                                        {analysis.ipAddress ||
+                                                            "—"}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="font-semibold px-3 py-2 border">
+                                                        Subnet Mask
+                                                    </td>
+                                                    <td className="font-mono px-3 py-2 border break-all">
+                                                        {analysis.networkInfo
+                                                            ?.subnetMask ||
+                                                            analysis.interface
+                                                                ?.subnetMask ||
+                                                            "—"}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td className="font-semibold px-3 py-2 border">
+                                                        Default Gateway
+                                                    </td>
+                                                    <td className="font-mono px-3 py-2 border break-all">
+                                                        {analysis.interface
+                                                            ?.defaultGateway ||
+                                                            "—"}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </Card>
-                            )}
 
-                            {/* Detail Button */}
-                            <div className="flex justify-end">
-                                {latestHistoryId ? (
-                                    <a
-                                        href={`/dashboard/history/detail?id=${latestHistoryId}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium px-6 py-2 rounded-md">
-                                            Detail
-                                        </Button>
-                                    </a>
-                                ) : (
-                                    <Button
-                                        disabled
-                                        className="bg-muted text-muted-foreground px-6 py-2 rounded-md cursor-not-allowed"
-                                    >
-                                        Detail
-                                    </Button>
+                                {/* Network Info */}
+                                {analysis.networkInfo && (
+                                    <Card className="p-2.5 md:p-3 shadow-sm md:shadow-md card border-border">
+                                        <h2 className="font-semibold mb-2 text-gray-900 dark:text-white leading-tight text-[13px] md:text-sm">
+                                            Network Info
+                                        </h2>
+                                        <div className="overflow-x-auto -mx-1 md:mx-0">
+                                            <table className="w-full text-xs md:text-sm border responsive-table table-strong-lines">
+                                                <thead className="bg-muted/60 hidden sm:table-header-group">
+                                                    <tr>
+                                                        <th className="text-left font-semibold px-3 py-2 border w-40">
+                                                            Field
+                                                        </th>
+                                                        <th className="text-left font-semibold px-3 py-2 border">
+                                                            Value
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr className="bg-muted/50">
+                                                        <td
+                                                            colSpan={2}
+                                                            className="px-3 py-2 font-semibold text-xs uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Range & Capacity
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border w-40">
+                                                            CIDR
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border">
+                                                            {analysis
+                                                                .networkInfo
+                                                                .cidr
+                                                                ? `/${analysis.networkInfo.cidr}`
+                                                                : "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Network Address
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {analysis
+                                                                .networkInfo
+                                                                .networkAddress ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Broadcast Address
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {analysis
+                                                                .networkInfo
+                                                                .broadcastAddress ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            First Usable IP
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {analysis
+                                                                .networkInfo
+                                                                .firstUsableIp ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Last Usable IP
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {analysis
+                                                                .networkInfo
+                                                                .lastUsableIp ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Total Hosts
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {analysis.networkInfo.totalHosts?.toLocaleString?.() ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Usable Hosts
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {analysis.networkInfo.usableHosts?.toLocaleString?.() ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </Card>
                                 )}
                             </div>
+
+                            {/* Detail Button + Inline Detail */}
+                            <div className="flex flex-col gap-3">
+                                <div className="flex justify-end flex-wrap">
+                                    {latestHistoryId ? (
+                                        <>
+                                            <div className="inline-flex items-stretch rounded border border-border/70 overflow-hidden shadow-sm dark:border-border/60">
+                                                <Button
+                                                    type="button"
+                                                    onClick={handleViewDetails}
+                                                    disabled={detailLoading}
+                                                    className="relative rounded-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-none transition-colors font-medium px-4 py-1.5 h-8 text-[11px]"
+                                                >
+                                                    {detailLoading
+                                                        ? "Loading..."
+                                                        : detailEntry
+                                                        ? "Refresh Detail"
+                                                        : "Show Detail"}
+                                                </Button>
+                                                {detailEntry && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        onClick={() =>
+                                                            setDetailExpanded(
+                                                                (p) => !p
+                                                            )
+                                                        }
+                                                        aria-expanded={
+                                                            detailExpanded
+                                                        }
+                                                        className="relative rounded-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-none transition-colors font-medium px-4 py-1.5 h-8 text-[11px]"
+                                                    >
+                                                        {detailExpanded
+                                                            ? "Collapse"
+                                                            : "Expand"}
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            {/* Removed "Open Full Page" per user request */}
+                                        </>
+                                    ) : (
+                                        <Button
+                                            disabled
+                                            className="bg-muted text-muted-foreground px-6 py-2 rounded-md cursor-not-allowed"
+                                        >
+                                            Detail
+                                        </Button>
+                                    )}
+                                </div>
+                                {detailError && (
+                                    <p className="text-destructive text-sm text-right">
+                                        {detailError}
+                                    </p>
+                                )}
+                            </div>
+
+                            {detailEntry && (
+                                <Card className="p-2 md:p-2.5 shadow-sm md:shadow-md card border-border">
+                                    <div className="flex items-center justify-between mb-1">
+                                        <h2 className="font-semibold text-gray-900 dark:text-white m-0 leading-tight text-[12px] md:text-[13px]">
+                                            Detailed Record
+                                        </h2>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() =>
+                                                setDetailExpanded((p) => !p)
+                                            }
+                                            aria-expanded={detailExpanded}
+                                            className="h-6 px-2 text-[11px] rounded border-border dark:border-border/70 dark:text-gray-200 dark:hover:text-white"
+                                        >
+                                            {detailExpanded
+                                                ? "Collapse"
+                                                : "Expand"}
+                                        </Button>
+                                    </div>
+                                    {detailExpanded && (
+                                        <div className="overflow-x-auto -mx-1 md:mx-0">
+                                            <table className="w-full text-xs md:text-sm border responsive-table-lg table-strong-lines">
+                                                <thead className="bg-muted/60 hidden sm:table-header-group">
+                                                    <tr>
+                                                        <th className="text-left font-semibold px-3 py-2 border w-40">
+                                                            Field
+                                                        </th>
+                                                        <th className="text-left font-semibold px-3 py-2 border">
+                                                            Value
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr className="bg-muted/50">
+                                                        <td
+                                                            colSpan={2}
+                                                            className="px-3 py-2 font-semibold text-xs uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Core
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            WAN IP
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {detailEntry.wanIp ||
+                                                                detailEntry.ipAddress ||
+                                                                analysis?.ipAddress ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Subnet Mask
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {detailEntry.subnetMask ||
+                                                                detailEntry
+                                                                    .networkInfo
+                                                                    ?.subnetMask ||
+                                                                analysis
+                                                                    ?.networkInfo
+                                                                    ?.subnetMask ||
+                                                                analysis
+                                                                    ?.interface
+                                                                    ?.subnetMask ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Default Gateway
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {detailEntry.defaultGateway ||
+                                                                detailEntry.gateway ||
+                                                                analysis
+                                                                    ?.interface
+                                                                    ?.defaultGateway ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            CIDR
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {detailEntry.cidr
+                                                                ? `/${detailEntry.cidr}`
+                                                                : detailEntry
+                                                                      .networkInfo
+                                                                      ?.cidr
+                                                                ? `/${detailEntry.networkInfo.cidr}`
+                                                                : analysis
+                                                                      ?.networkInfo
+                                                                      ?.cidr
+                                                                ? `/${analysis.networkInfo.cidr}`
+                                                                : "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Analyzed At
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {detailEntry.createdAt
+                                                                ? new Date(
+                                                                      detailEntry.createdAt
+                                                                  ).toLocaleString()
+                                                                : "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Router
+                                                            Recommendation
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {detailEntry.routerRecommendation ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr className="bg-muted/50">
+                                                        <td
+                                                            colSpan={2}
+                                                            className="px-3 py-2 font-semibold text-xs uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Network Range
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Network Address
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {detailEntry.networkAddress ||
+                                                                detailEntry
+                                                                    .network_info
+                                                                    ?.networkAddress ||
+                                                                detailEntry
+                                                                    .networkInfo
+                                                                    ?.networkAddress ||
+                                                                analysis
+                                                                    ?.networkInfo
+                                                                    ?.networkAddress ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Broadcast Address
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {detailEntry.broadcastAddress ||
+                                                                detailEntry
+                                                                    .networkInfo
+                                                                    ?.broadcastAddress ||
+                                                                analysis
+                                                                    ?.networkInfo
+                                                                    ?.broadcastAddress ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            First IP
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {detailEntry.firstIp ||
+                                                                detailEntry.firstUsableIp ||
+                                                                detailEntry
+                                                                    .networkInfo
+                                                                    ?.firstUsableIp ||
+                                                                analysis
+                                                                    ?.networkInfo
+                                                                    ?.firstUsableIp ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Last IP
+                                                        </td>
+                                                        <td className="font-mono px-3 py-2 border break-all">
+                                                            {detailEntry.lastIp ||
+                                                                detailEntry.lastUsableIp ||
+                                                                detailEntry
+                                                                    .networkInfo
+                                                                    ?.lastUsableIp ||
+                                                                analysis
+                                                                    ?.networkInfo
+                                                                    ?.lastUsableIp ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Total Hosts
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {(
+                                                                detailEntry.totalHosts ??
+                                                                detailEntry
+                                                                    .networkInfo
+                                                                    ?.totalHosts ??
+                                                                analysis
+                                                                    ?.networkInfo
+                                                                    ?.totalHosts
+                                                            )?.toLocaleString?.() ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Usable Hosts
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {(
+                                                                detailEntry.usableHosts ??
+                                                                detailEntry
+                                                                    .networkInfo
+                                                                    ?.usableHosts ??
+                                                                analysis
+                                                                    ?.networkInfo
+                                                                    ?.usableHosts
+                                                            )?.toLocaleString?.() ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr className="bg-muted/50">
+                                                        <td
+                                                            colSpan={2}
+                                                            className="px-3 py-2 font-semibold text-xs uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Region & Interface
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Region
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {detailEntry.regionName ||
+                                                                detailEntry.region ||
+                                                                detailEntry.region_name ||
+                                                                analysis?.region
+                                                                    ?.name ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Interface
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {detailEntry.interfaceName ||
+                                                                detailEntry.interface ||
+                                                                detailEntry.interfaceType ||
+                                                                analysis
+                                                                    ?.interface
+                                                                    ?.name ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr className="bg-muted/50">
+                                                        <td
+                                                            colSpan={2}
+                                                            className="px-3 py-2 font-semibold text-xs uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Assignment
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Status
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {detailEntry.assignmentStatus ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Customer
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {detailEntry.customerName ||
+                                                                detailEntry.customer ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Account #
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {detailEntry.accountNumber ||
+                                                                detailEntry.account ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td className="font-semibold px-3 py-2 border">
+                                                            Location
+                                                        </td>
+                                                        <td className="px-3 py-2 border">
+                                                            {detailEntry.location ||
+                                                                "—"}
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+                                </Card>
+                            )}
                         </div>
                     )}
 
                     {/* Customer Lookup */}
                     {customerLookup && (
                         <Card className="p-4 shadow-lg card border-border mt-4">
-                            <h2 className="font-bold mb-2">Customer Info</h2>
-                            <div className="space-y-1">
-                                <div>
-                                    <span className="font-semibold">
-                                        Customer ID:
-                                    </span>{" "}
-                                    {customerLookup.customerId}
-                                </div>
-                                <div>
-                                    <span className="font-semibold">Name:</span>{" "}
-                                    {customerLookup.name}
-                                </div>
-                                <div>
-                                    <span className="font-semibold">
-                                        Phone:
-                                    </span>{" "}
-                                    {customerLookup.phone}
-                                </div>
+                            <h2 className="font-bold mb-2 text-gray-900 dark:text-white">
+                                Customer Info
+                            </h2>
+                            <div className="overflow-x-auto -mx-1 md:mx-0">
+                                <table className="w-full text-xs md:text-sm border responsive-table table-strong-lines">
+                                    <thead className="bg-muted/60 hidden sm:table-header-group">
+                                        <tr>
+                                            <th className="text-left font-semibold px-3 py-2 border w-40">
+                                                Field
+                                            </th>
+                                            <th className="text-left font-semibold px-3 py-2 border">
+                                                Value
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr className="bg-muted/50">
+                                            <td
+                                                colSpan={2}
+                                                className="px-3 py-2 font-semibold text-xs uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Customer
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="font-semibold px-3 py-2 border">
+                                                Customer ID
+                                            </td>
+                                            <td className="px-3 py-2 border break-all">
+                                                {customerLookup.customerId ||
+                                                    "—"}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="font-semibold px-3 py-2 border">
+                                                Name
+                                            </td>
+                                            <td className="px-3 py-2 border break-all">
+                                                {customerLookup.name || "—"}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td className="font-semibold px-3 py-2 border">
+                                                Phone
+                                            </td>
+                                            <td className="px-3 py-2 border break-all">
+                                                {customerLookup.phone || "—"}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                             {customerLookup.customerId && (
-                                <div className="mt-4 flex justify-end">
+                                <div className="mt-3 flex justify-end">
                                     <a
                                         href={`/dashboard/history/detail?id=${customerLookup.customerId}`}
                                         target="_blank"
