@@ -342,7 +342,7 @@ const WanIpAnalyzerPage = () => {
                             {/* Interface Info */}
                             <Card className="p-4 shadow-lg card border-border">
                                 <h2 className="font-bold mb-2">
-                                    Interface Info
+                                    Important Info for Modem Configuration
                                 </h2>
                                 <div className="space-y-1">
                                     <div>
