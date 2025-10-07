@@ -1,6 +1,15 @@
 import TelegramBot from "node-telegram-bot-api";
 import { PrismaClient } from "@prisma/client";
 import axios from "axios";
+import https from 'https';
+import fs from 'fs';
+
+// Security guard: ensure insecure TLS override isn't silently active.
+if (process.env.NODE_TLS_REJECT_UNAUTHORIZED === '0') {
+  // eslint-disable-next-line no-console
+  console.warn('[bot] NODE_TLS_REJECT_UNAUTHORIZED=0 detected. Removing for security.');
+  delete process.env.NODE_TLS_REJECT_UNAUTHORIZED; // restore default secure behavior
+}
 
 const prisma = new PrismaClient();
 const TOKEN = process.env.TELEGRAM_BOT_TOKEN!;
@@ -10,7 +19,53 @@ const YOUTUBE_CHANNEL_ID = "UC20UnSFgW5KadIRHbo-Rbkg";
 if (!TOKEN) throw new Error("❌ Missing TELEGRAM_BOT_TOKEN in .env");
 if (!YOUTUBE_API_KEY) throw new Error("❌ Missing YOUTUBE_API_KEY in .env");
 
+// Optional: allow trusting an internal/self-signed CA without disabling verification globally.
+// Provide path via CUSTOM_CA_BUNDLE_PATH or NODE_EXTRA_CA_CERTS.
+let httpsAgent: https.Agent | undefined;
+const caPath = process.env.CUSTOM_CA_BUNDLE_PATH || process.env.NODE_EXTRA_CA_CERTS;
+if (caPath) {
+  try {
+    const ca = fs.readFileSync(caPath, 'utf8');
+    httpsAgent = new https.Agent({ ca });
+    console.log(`[bot] Loaded custom CA bundle from ${caPath}`);
+  } catch (e) {
+    console.warn('[bot] Failed to load custom CA bundle:', (e as any)?.message || e);
+  }
+}
+
+// node-telegram-bot-api does not expose a simple https.Agent override in polling options; instead, rely on
+// environment trust store for Telegram endpoints. We still apply custom CA to axios (YouTube) calls below.
 const bot = new TelegramBot(TOKEN, { polling: true });
+
+// Polling resilience state
+let pollingRetry = 0;
+const MAX_BACKOFF_MS = 30_000;
+const BASE_BACKOFF_MS = 1_000;
+let restarting = false;
+
+function schedulePollingRestart(reason: string) {
+  if (restarting) return; // prevent overlapping restarts
+  pollingRetry++;
+  const delay = Math.min(BASE_BACKOFF_MS * 2 ** (pollingRetry - 1), MAX_BACKOFF_MS);
+  restarting = true;
+  console.warn(`[bot] Scheduling polling restart in ${delay}ms (attempt #${pollingRetry}) – reason: ${reason}`);
+  setTimeout(async () => {
+    try {
+      await bot.stopPolling();
+    } catch (_) {
+      /* ignore */
+    }
+    try {
+      await bot.startPolling();
+      console.log('[bot] Polling restarted successfully');
+      restarting = false;
+    } catch (err) {
+      console.error('[bot] Polling restart failed:', (err as any)?.message || err);
+      restarting = false; // allow another schedule
+      schedulePollingRestart('restart-failed');
+    }
+  }, delay);
+}
 
 // Basic startup diagnostics
 (async () => {
@@ -22,12 +77,75 @@ const bot = new TelegramBot(TOKEN, { polling: true });
   }
 })();
 
-bot.on('polling_error', (err) => {
-  console.error('🔴 Polling error:', err);
+// Throttle identical error messages to avoid log spam
+const errorCounts: Record<string, { count: number; first: number; last: number }> = {};
+const ERROR_LOG_WINDOW_MS = 60_000; // compress counts per minute
+const SELF_SIGNED_MAX_RETRIES = 5;
+let selfSignedErrorCount = 0;
+let selfSignedHalted = false;
+
+function logThrottled(key: string, printer: () => void) {
+  const now = Date.now();
+  const bucket = errorCounts[key] || { count: 0, first: now, last: now };
+  bucket.count++;
+  bucket.last = now;
+  errorCounts[key] = bucket;
+  if (bucket.count === 1) {
+    printer();
+  } else if (now - bucket.first > ERROR_LOG_WINDOW_MS) {
+    console.warn(`[bot] Repeated error '${key}' occurred ${bucket.count} times in ${(now - bucket.first)/1000}s`);
+    delete errorCounts[key];
+  }
+}
+
+bot.on('polling_error', (err: any) => {
+  const msg = String(err?.message || err);
+  const code = (err && (err.code || err.response?.status)) || 'UNKNOWN';
+  const unauthorized = /401|403/.test(String(code)) || /ETELEGRAM: 401/i.test(msg);
+  const selfSigned = /self-signed certificate/i.test(msg) || /SELF_SIGNED_CERT_IN_CHAIN/i.test(msg);
+  const isTransient = /ECONNRESET|ETIMEDOUT|ECONNREFUSED|ENOTFOUND|EAI_AGAIN|ECONNABORTED/i.test(msg) || selfSigned;
+
+  if (unauthorized) {
+    logThrottled('auth-error', () => console.error('🔴 Polling auth error (check TELEGRAM_BOT_TOKEN):', msg));
+    return;
+  }
+
+  const key = selfSigned ? 'self-signed-chain' : code + ':' + (msg.split('\n')[0]);
+  logThrottled(key, () => {
+    console.error(`🔴 Polling error (code=${code}) transient=${isTransient}:`, msg);
+    if (selfSigned) {
+      selfSignedErrorCount++;
+      console.warn(`[bot] Detected self-signed certificate (occurrence ${selfSignedErrorCount}/${SELF_SIGNED_MAX_RETRIES}).`);
+      if (selfSignedErrorCount >= SELF_SIGNED_MAX_RETRIES && !selfSignedHalted) {
+        selfSignedHalted = true;
+        console.error('[bot] Halting polling restarts due to repeated self-signed TLS failures.');
+        console.error('[bot] Remediation steps:\n' +
+          '  1. Export the intercepting root CA certificate (PEM).\n' +
+          '  2. Save as certs/corporate-root.pem (gitignored).\n' +
+          '  3. Set environment: CUSTOM_CA_BUNDLE_PATH=absolute_path_to_pem (or NODE_EXTRA_CA_CERTS).\n' +
+          '  4. Restart bot (npm run bot:dev).\n' +
+          '  5. Verify startup shows: "Loaded custom CA bundle" and polling success.');
+      }
+    }
+  });
+
+  if (selfSignedHalted) return; // do not attempt further restarts until fixed
+
+  if (isTransient && !selfSignedHalted) {
+    schedulePollingRestart(msg);
+  } else if (!selfSigned) {
+    // Only log non-transient if not self-signed (self-signed handled above)
+    logThrottled('non-transient', () => console.error('[bot] Non-transient polling error – manual intervention may be required.'));
+  }
 });
 
 process.on('unhandledRejection', (reason) => {
   console.error('🔴 Unhandled promise rejection in bot:', reason);
+  // Attempt graceful recovery if network-like
+  const r = String(reason);
+  if (/ECONNRESET|ECONNREFUSED|ETIMEDOUT/.test(r)) {
+    schedulePollingRestart('unhandled-rejection');
+  }
 });
 
 // In-memory sessions
@@ -179,6 +297,7 @@ async function handleRouterSelection(chatId: number, routerModel: string) {
           type: "video",
           part: "snippet",
         },
+        httpsAgent
       }
     );
 
@@ -226,7 +345,7 @@ async function handleRouterSelection(chatId: number, routerModel: string) {
     });
 
   } catch (err) {
-    console.error("YouTube API Error:", err);
+  console.error("YouTube API Error:", (err as any)?.message || err);
     const errorMessage = `⚠️ *Oops!* Something went wrong while searching for tutorials\\.\\n\\nPlease try again in a few moments, or visit our channel directly: [YohTech Solutions YouTube](https://www.youtube.com/@Yoh-Tech-Solutions)\\n\\nIf the problem continues, please contact our support team\\. 👥`;
     bot.sendMessage(chatId, errorMessage, { 
       parse_mode: "MarkdownV2",

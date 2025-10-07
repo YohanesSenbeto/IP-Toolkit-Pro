@@ -22,7 +22,6 @@
 
 # misc
 .DS_Store
-*.pem
 
 # debug
 npm-debug.log*
@@ -40,4 +39,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# build outputs (bot)
+dist-bot/
+
+# Local trust bundles / certs (not for commit)
+certs/
+!certs/.keep
