@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 import { calculateIP } from '@/lib/utils';
+import { z } from 'zod';
+import { sanitizePlain, pickAllowed } from '@/lib/sanitize';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,12 +14,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { title, wanIp, cidr, result } = body;
+    const schema = z.object({
+      title: z.string().min(1).max(100).optional(),
+      wanIp: z.string().regex(/^(\d{1,3}\.){3}\d{1,3}$/),
+      cidr: z.union([z.number().int().min(0).max(32), z.string().regex(/^([0-9]|[12][0-9]|3[0-2])$/)]),
+      result: z.object({
+        subnetMask: z.string().optional(),
+        usableHosts: z.number().optional(),
+        networkAddress: z.string().optional(),
+        broadcastAddress: z.string().optional(),
+        firstUsableIp: z.string().optional(),
+        lastUsableIp: z.string().optional()
+      }).partial().optional()
+    });
 
-    if (!wanIp || !cidr || !result) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    let parsed: z.infer<typeof schema>;
+    try {
+      const raw = await request.json();
+      parsed = schema.parse(pickAllowed(raw, ['title','wanIp','cidr','result'] as const));
+    } catch (e: any) {
+      return NextResponse.json({ error: 'Invalid payload', details: e.errors?.slice(0,3) }, { status: 400 });
     }
+    const { title, wanIp, cidr, result } = parsed;
 
     // Get user from database
     const user = await prisma.user.findUnique({
@@ -36,51 +54,29 @@ export async function POST(request: NextRequest) {
     // 5. No sensitive data exposure
 
     // Validate and sanitize title
-    const safeTitle =
-      typeof title === "string" && title.trim().length > 0 && title.length <= 100
-        ? title.trim()
-        : `Calculation for ${wanIp}/${cidr}`;
+    const safeTitle = title ? sanitizePlain(title, { maxLength: 100 }) : `Calculation for ${wanIp}/${cidr}`;
 
     // Validate WAN IP (IPv4 dotted decimal)
-    const safeWanIp =
-      typeof wanIp === "string" && /^(\d{1,3}\.){3}\d{1,3}$/.test(wanIp.trim())
-        ? wanIp.trim()
-        : (() => {
-            throw new Error("Invalid WAN IP address format");
-          })();
+    const safeWanIp = wanIp.trim();
 
     // Validate CIDR
-    const safeCidr = (() => {
-      const cidrNum = typeof cidr === "number" ? cidr : parseInt(cidr, 10);
-      if (Number.isInteger(cidrNum) && cidrNum >= 0 && cidrNum <= 32) {
-        return cidrNum;
-      }
-      throw new Error("Invalid CIDR value");
-    })();
+    const safeCidr = typeof cidr === 'number' ? cidr : parseInt(cidr, 10);
 
 
     // Compute and save all calculation details (including default gateway, etc.)
-    let safeResult: any = {};
-    try {
-      // If result already has all fields, use them; otherwise, compute
-      if (
-        typeof result === "object" &&
-        result !== null &&
-        typeof result.subnetMask === "string" &&
-        typeof result.usableHosts === "number"
-      ) {
-        // Compute missing fields if needed
-        const computed = calculateIP(safeWanIp, safeCidr);
-        safeResult = {
-          ...computed,
-          ...result,
-        };
-      } else {
-        safeResult = calculateIP(safeWanIp, safeCidr);
+    // Always recompute server-side to avoid trusting client result values
+    const computed = calculateIP(safeWanIp, safeCidr);
+    // If client sent partial overrides (allowed keys only), merge strictly
+    const allowedResultKeys = ['subnetMask','usableHosts','networkAddress','broadcastAddress','firstUsableIp','lastUsableIp'] as const;
+    const overrides: Record<string, any> = {};
+    if (result && typeof result === 'object') {
+      for (const k of allowedResultKeys) {
+        if (Object.prototype.hasOwnProperty.call(result, k)) {
+          overrides[k] = (result as any)[k];
+        }
       }
-    } catch (e) {
-      throw new Error("Invalid result object or calculation error");
     }
+    const safeResult = { ...computed, ...overrides };
 
     const calculation = await prisma.calculation.create({
       data: {

@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { ethioTelecomCRM, validateAccountNumber, validateAccessNumber } from '@/lib/crm-integration';
+import { z } from 'zod';
+import { sanitizePlain } from '@/lib/sanitize';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { ipPoolManager } from '@/lib/ip-pool-manager';
 import prisma from '@/lib/prisma';
 
@@ -260,50 +263,46 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication and authorization
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== 'ETHIO_TELECOM_TECHNICIAN') {
-      return NextResponse.json(
-        { error: 'Unauthorized - Technician access required' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized - Technician access required' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { accountNumber, networkConfig } = body;
-
-    if (!accountNumber || !networkConfig) {
-      return NextResponse.json(
-        { error: 'Account number and network configuration are required' },
-        { status: 400 }
-      );
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rl = checkRateLimit(`crm:network-config:${ip}`, true);
+    if (rl.limited) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
-    if (!validateAccountNumber(accountNumber)) {
-      return NextResponse.json(
-        { error: 'Invalid account number format' },
-        { status: 400 }
-      );
+    const schema = z.object({
+      accountNumber: z.string().regex(/^\d{9}$/),
+      networkConfig: z.object({
+        wanIp: z.string().regex(/^(\d{1,3}\.){3}\d{1,3}$/).optional(),
+        defaultGateway: z.string().optional(),
+        subnetMask: z.string().optional(),
+        notes: z.string().max(500).optional()
+      })
+    });
+
+    let parsed: z.infer<typeof schema>;
+    try {
+      parsed = schema.parse(await request.json());
+    } catch (e: any) {
+      return NextResponse.json({ error: 'Invalid payload', details: e.errors?.slice(0,3) }, { status: 400 });
     }
 
-    // Update CRM
-    const crmResponse = await ethioTelecomCRM.updateNetworkConfiguration(
-      accountNumber,
-      networkConfig
-    );
+    const networkConfig = { ...parsed.networkConfig };
+    if (networkConfig.notes) networkConfig.notes = sanitizePlain(networkConfig.notes, { maxLength: 500 });
 
+    const crmResponse = await ethioTelecomCRM.updateNetworkConfiguration(parsed.accountNumber, networkConfig);
     if (!crmResponse.success) {
-      return NextResponse.json(
-        { error: crmResponse.error || 'Failed to update CRM' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: crmResponse.error || 'Failed to update CRM' }, { status: 500 });
     }
 
-    // Also update local database if WAN IP is provided
     if (networkConfig.wanIp) {
       try {
         await prisma.customerWanIp.upsert({
-          where: { accountNumber },
+          where: { accountNumber: parsed.accountNumber },
           update: {
             wanIp: networkConfig.wanIp,
             customerName: crmResponse.customer?.customerName,
@@ -311,7 +310,7 @@ export async function POST(request: NextRequest) {
             updatedAt: new Date()
           },
           create: {
-            accountNumber,
+            accountNumber: parsed.accountNumber,
             wanIp: networkConfig.wanIp,
             customerName: crmResponse.customer?.customerName || '',
             location: crmResponse.customer?.location || '',
@@ -320,21 +319,12 @@ export async function POST(request: NextRequest) {
         });
       } catch (dbError) {
         console.error('Failed to update local database:', dbError);
-        // Don't fail the request if local DB update fails
       }
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Network configuration updated successfully',
-      customer: crmResponse.customer
-    });
-
+    return NextResponse.json({ success: true, message: 'Network configuration updated successfully', customer: crmResponse.customer });
   } catch (error) {
     console.error('CRM network config update error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

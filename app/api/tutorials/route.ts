@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
+import { sanitizePlain, sanitizeHTML, pickAllowed } from '@/lib/sanitize';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * Tutorial Videos API
@@ -139,41 +142,53 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const {
-      title,
-      content,
-      videoUrl,
-      category,
-      routerModels,
-      published = true
-    } = body;
-
-    // Validate required fields
-    if (!title || !videoUrl) {
-      return NextResponse.json(
-        { error: 'Title and video URL are required' },
-        { status: 400 }
-      );
+    // Basic rate limiting (placeholder key by IP)
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rl = checkRateLimit(`tutorials:create:${ip}`, false);
+    if (rl.limited) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
-    // Generate slug from title
-    const slug = title
+    const schema = z.object({
+      title: z.string().min(3).max(120),
+      content: z.string().max(8000).optional().nullable(),
+      videoUrl: z.string().url().max(500),
+      category: z.string().min(2).max(50).optional(),
+      routerModels: z.array(z.string().min(1).max(50)).max(20).optional(),
+      published: z.boolean().optional()
+    });
+
+    const raw = await request.json();
+    let parsed: any;
+    try {
+      parsed = schema.parse(pickAllowed(raw, ['title','content','videoUrl','category','routerModels','published'] as const));
+    } catch (e: any) {
+      return NextResponse.json({ error: 'Invalid payload', details: e.errors?.slice(0,3) }, { status: 400 });
+    }
+
+    // Sanitize textual fields
+    const cleanTitle = sanitizePlain(parsed.title, { maxLength: 120 });
+    const cleanContent = parsed.content ? sanitizeHTML(parsed.content) : null;
+    const cleanCategory = parsed.category ? sanitizePlain(parsed.category, { maxLength: 50 }) : 'Tutorial';
+  const cleanRouterModels = (parsed.routerModels || []).map((r: string) => sanitizePlain(r, { maxLength: 50 })).filter(Boolean);
+    const published = parsed.published !== undefined ? parsed.published : true;
+
+    // Generate slug from sanitized title
+    const slug = cleanTitle
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
 
-    // Create tutorial
-  const tutorial = await prisma.tutorialVideos.create({
+    const tutorial = await prisma.tutorialVideos.create({
       data: {
-        title,
+        title: cleanTitle,
         slug,
-        content,
-        videoUrl,
-        category: category || 'Tutorial',
-        routerModels: routerModels || [],
+        content: cleanContent,
+        videoUrl: parsed.videoUrl,
+        category: cleanCategory,
+        routerModels: cleanRouterModels,
         published,
-        authorId: 'system' // You might want to get this from session
+        authorId: 'system'
       }
     });
 
@@ -187,7 +202,7 @@ export async function POST(request: NextRequest) {
         category: tutorial.category,
         routerModels: tutorial.routerModels
       }
-    });
+    }, { status: 201 });
 
   } catch (error) {
     console.error('Create tutorial error:', error);

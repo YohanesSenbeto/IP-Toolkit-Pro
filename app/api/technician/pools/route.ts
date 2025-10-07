@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { checkRateLimit } from '@/lib/rate-limit';
+import { sanitizePlain } from '@/lib/sanitize';
 import { z } from "zod";
 
 // Schema for creating a new IP assignment
@@ -65,8 +67,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rl = checkRateLimit(`technician:pools:create:${ip}`, true);
+    if (rl.limited) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
     const body = await request.json();
     const validatedData = createIpSchema.parse(body);
+    validatedData.customerName = sanitizePlain(validatedData.customerName, { maxLength: 80 });
+    validatedData.customerId = sanitizePlain(validatedData.customerId, { maxLength: 30 });
 
     // Check if IP is already assigned
     const existingIp = await prisma.customerWanIp.findFirst({

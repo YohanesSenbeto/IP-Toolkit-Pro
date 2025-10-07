@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { z } from 'zod';
+import { sanitizePlain } from '@/lib/sanitize';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * VPN/Data Only Customer Lookup API
@@ -120,69 +123,63 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication and authorization
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== 'ETHIO_TELECOM_TECHNICIAN') {
-      return NextResponse.json(
-        { error: 'Unauthorized - Technician access required' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized - Technician access required' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const {
-      accountNumber,
-      accessNumber,
-      customerName,
-      location,
-      customerType,
-      wanIp,
-      subnetMask,
-      defaultGateway,
-      vlanId,
-      networkElement
-    } = body;
-
-    if (!accountNumber) {
-      return NextResponse.json(
-        { error: 'Account number is required' },
-        { status: 400 }
-      );
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rl = checkRateLimit(`vpn-data-customers:create:${ip}`, true);
+    if (rl.limited) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
-    if (!/^\d{9}$/.test(accountNumber)) {
-      return NextResponse.json(
-        { error: 'Account number must be exactly 9 digits' },
-        { status: 400 }
-      );
+    const schema = z.object({
+      accountNumber: z.string().regex(/^\d{9}$/),
+      accessNumber: z.string().regex(/^\d{11}$/).optional().nullable(),
+      customerName: z.string().min(2).max(80).optional(),
+      location: z.string().min(2).max(120).optional(),
+      customerType: z.enum(['RESIDENTIAL','BUSINESS']).optional(),
+      wanIp: z.string().regex(/^(\d{1,3}\.){3}\d{1,3}$/).optional(),
+      // Additional network details optional
+      subnetMask: z.string().optional(),
+      defaultGateway: z.string().optional(),
+      vlanId: z.string().optional(),
+      networkElement: z.string().optional()
+    });
+
+    let parsed;
+    try {
+      parsed = schema.parse(await request.json());
+    } catch (e: any) {
+      return NextResponse.json({ error: 'Invalid payload', details: e.errors?.slice(0,3) }, { status: 400 });
     }
 
-    if (accessNumber && !/^\d{11}$/.test(accessNumber)) {
-      return NextResponse.json(
-        { error: 'Access number must be exactly 11 digits' },
-        { status: 400 }
-      );
-    }
+    const customerName = parsed.customerName ? sanitizePlain(parsed.customerName, { maxLength: 80 }) : 'Unknown Customer';
+    const location = parsed.location ? sanitizePlain(parsed.location, { maxLength: 120 }) : 'Unknown Location';
+    // Cast customerType to Prisma enum
+    const customerType = (parsed.customerType || 'RESIDENTIAL') as import('@prisma/client').CustomerType;
+    // Ensure wanIp is always a string
+    const wanIp = parsed.wanIp ?? '';
 
-    // Create or update VPN/Data customer
     const vpnCustomer = await prisma.customerWanIp.upsert({
-      where: { accountNumber },
+      where: { accountNumber: parsed.accountNumber },
       update: {
-        accessNumber,
+        accessNumber: parsed.accessNumber || undefined,
         customerName,
         location,
-        customerType: customerType || 'RESIDENTIAL',
+        customerType,
         wanIp,
         serviceType: 'VPN_DATA_ONLY' as const,
         isActive: true,
         updatedAt: new Date()
       },
       create: {
-        accountNumber,
-        accessNumber,
-        customerName: customerName || 'Unknown Customer',
-        location: location || 'Unknown Location',
-        customerType: customerType || 'RESIDENTIAL',
+        accountNumber: parsed.accountNumber,
+        accessNumber: parsed.accessNumber || undefined,
+        customerName,
+        location,
+        customerType,
         serviceType: 'VPN_DATA_ONLY' as const,
         wanIp,
         isActive: true
@@ -201,13 +198,9 @@ export async function POST(request: NextRequest) {
         serviceType: vpnCustomer.serviceType,
         wanIp: vpnCustomer.wanIp
       }
-    });
-
+    }, { status: 201 });
   } catch (error) {
     console.error('VPN/Data customer creation error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

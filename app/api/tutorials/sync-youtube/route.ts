@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * Sync YouTube router/modem/configuration videos into TutorialVideos table.
@@ -9,6 +10,11 @@ import prisma from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || 'unknown';
+    const rl = checkRateLimit(`tutorials:sync-youtube:${ip}`, true);
+    if (rl.limited) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
     // Fetch filtered videos from your YouTube API route
     const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/youtube/videos`);
     if (!res.ok) {

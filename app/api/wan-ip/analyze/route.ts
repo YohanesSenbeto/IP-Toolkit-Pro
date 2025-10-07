@@ -3,7 +3,26 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { DefaultSession } from 'next-auth';
 import prisma from '@/lib/prisma';
-import { calculateIpInfo, findRegionForIp, getRouterRecommendation, getTutorialUrls, isValidIp } from '@/lib/cidr-utils';
+import { calculateIpInfo, getRouterRecommendation, getTutorialUrls, isValidIp, findRegionForIp } from '@/lib/cidr-utils';
+import { logger } from '@/lib/logger';
+import { getRequestId } from '@/lib/request-id';
+import { getPrivilegedEmails, isPrivileged as isPrivilegedEmail } from '@/lib/env';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { z } from 'zod';
+
+// Zod schemas
+const querySchema = z.object({
+  ip: z.string().ip({ message: 'Invalid IP address format' }).optional(),
+  unmetered: z.enum(['0','1']).optional()
+});
+
+const postSchema = z.object({
+  accountNumber: z.string().regex(/^\d{9}$/,'Account number must be exactly 9 digits'),
+  accessNumber: z.string().regex(/^\d{11}$/,'Access number must be exactly 11 digits').optional().or(z.literal('').optional()),
+  wanIp: z.string().refine(v => isValidIp(v), 'Invalid IP address format'),
+  customerName: z.string().min(1).optional(),
+  location: z.string().min(1).optional()
+});
 
 // Helper function to check if an IP is within a range
 function isIpInRange(ip: string, startIp: string, endIp: string): boolean {
@@ -50,6 +69,8 @@ function getCidrFromSubnetMask(subnetMask: string): number {
 }
 
 export async function GET(request: NextRequest) {
+  const requestId = getRequestId(request.headers);
+  const log = logger.child(`wan-ip-analyze:${requestId}`);
   try {
     // Server-side gating: guests 1 try; logged-in 2 tries unless social verified
     const session: DefaultSession | null = await getServerSession(authOptions);
@@ -60,12 +81,39 @@ export async function GET(request: NextRequest) {
       return m ? decodeURIComponent(m[1]) : '';
     };
     const verified = readCookie(`social_verified_${userKey}`) === '1';
-    const isPrivileged = (session?.user?.email || '').toLowerCase() === 'josen@gmail.com';
+    const privilegedEmails = getPrivilegedEmails();
+    const isPrivileged = isPrivilegedEmail(session?.user?.email || undefined);
     const usesKey = session ? `uses_analyzer_${userKey}` : 'trial_used';
     const usedVal = readCookie(usesKey);
     const used = parseInt(usedVal || '0', 10) || (usedVal === '1' ? 1 : 0);
     const { searchParams } = new URL(request.url);
-    const unmetered = searchParams.get('unmetered') === '1';
+    const rawQuery = Object.fromEntries(searchParams.entries());
+    const parsedQuery = querySchema.safeParse(rawQuery);
+    if (!parsedQuery.success) {
+      return NextResponse.json({ error: 'Invalid query parameters', details: parsedQuery.error.flatten() }, { status: 400 });
+    }
+    const unmetered = parsedQuery.data.unmetered === '1';
+
+    // Rate limiting (server-side) independent of cookie gating; privileged users bypass.
+    if (!isPrivileged) {
+      const identifier = session?.user?.email ? `auth:${session.user.email}` : `ip:${request.headers.get('x-forwarded-for') || 'guest'}`;
+      const rl = checkRateLimit(identifier, !!session);
+      if (rl.limited) {
+        return NextResponse.json({
+          error: 'Rate limit exceeded',
+          message: 'Too many requests. Please wait before retrying.',
+          retryAfterMs: rl.resetAt - Date.now()
+        }, {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((rl.resetAt - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': rl.limit.toString(),
+            'X-RateLimit-Remaining': rl.remaining.toString(),
+            'X-RateLimit-Reset': Math.floor(rl.resetAt / 1000).toString()
+          }
+        });
+      }
+    }
     if (!unmetered && !session && used >= 1) {
       return NextResponse.json({
         error: 'Trial limit reached',
@@ -115,8 +163,15 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    console.log('Found regions:', regions.length);
-    console.log('Sample region data:', regions[0]);
+  if (!Array.isArray(regions)) {
+    log.warn('Regions query returned non-array');
+    return NextResponse.json({ error: 'Region data unavailable' }, { status: 503 });
+  }
+  log.debug('Regions fetched', { count: regions.length });
+  if (Array.isArray(regions) && regions.length > 0) {
+    const first = regions[0];
+    log.trace('First region sample', { region: first?.name, interfaces: Array.isArray(first?.interfaces) ? first.interfaces.length : 0 });
+  }
 
     // Format regions data for CIDR utils
     const regionData = regions.map(region => ({
@@ -190,24 +245,29 @@ export async function GET(request: NextRequest) {
     });
 
     // Get related tutorial videos for this region
-    const tutorialVideos = await prisma.tutorialVideos.findMany({
-      where: {
-        published: true,
-        OR: [
-          { title: { contains: matchedRegion.name, mode: 'insensitive' } },
-          { content: { contains: matchedInterface.name, mode: 'insensitive' } },
-          { category: { contains: 'WAN', mode: 'insensitive' } }
-        ]
-      },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        category: true,
-        videoUrl: true
-      },
-      take: 5
-    });
+    let tutorialVideos: any[] = [];
+    try {
+      tutorialVideos = await prisma.tutorialVideos.findMany({
+        where: {
+          published: true,
+          OR: [
+            { title: { contains: matchedRegion.name, mode: 'insensitive' } },
+            { content: { contains: matchedInterface.name, mode: 'insensitive' } },
+            { category: { contains: 'WAN', mode: 'insensitive' } }
+          ]
+        },
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          category: true,
+          videoUrl: true
+        },
+        take: 5
+      });
+    } catch (tvErr) {
+      log.warn('Tutorial video query failed', { error: (tvErr as any)?.message });
+    }
 
     const response = {
       ipAddress: ipInfo.ipAddress,
@@ -310,7 +370,7 @@ export async function GET(request: NextRequest) {
         latestHistoryId = latestEntry?.id || null;
       }
     } catch (historyError) {
-      console.error('Failed to log WAN IP analyzer history:', historyError);
+  logger.error('History logging failed', { error: (historyError as any)?.message });
     }
 
     const res = NextResponse.json({ ...response, historyId: latestHistoryId });
@@ -324,7 +384,7 @@ export async function GET(request: NextRequest) {
     return res;
 
   } catch (error) {
-    console.error('WAN IP analysis error:', error);
+  log.error('WAN IP analysis error', { error: (error as any)?.message, stack: (error as any)?.stack });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -334,47 +394,15 @@ export async function GET(request: NextRequest) {
 
 // POST endpoint to register a new WAN IP assignment
 export async function POST(request: NextRequest) {
+  const requestId = getRequestId(request.headers);
+  const log = logger.child(`wan-ip-assign:${requestId}`);
   try {
-    const body = await request.json();
-    const { 
-      accountNumber, 
-      accessNumber, 
-      wanIp, 
-      customerName, 
-      location 
-    } = body;
-
-    // Validate required fields
-    if (!accountNumber || !wanIp) {
-      return NextResponse.json(
-        { error: 'Account number and WAN IP are required' },
-        { status: 400 }
-      );
+    const rawBody = await request.json();
+    const parsedBody = postSchema.safeParse(rawBody);
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: 'Invalid body', details: parsedBody.error.flatten() }, { status: 400 });
     }
-
-    // Validate account number format (9 digits)
-    if (!/^\d{9}$/.test(accountNumber)) {
-      return NextResponse.json(
-        { error: 'Account number must be exactly 9 digits' },
-        { status: 400 }
-      );
-    }
-
-    // Validate access number format (11 digits)
-    if (accessNumber && !/^\d{11}$/.test(accessNumber)) {
-      return NextResponse.json(
-        { error: 'Access number must be exactly 11 digits' },
-        { status: 400 }
-      );
-    }
-
-    // Validate IP address format
-    if (!isValidIp(wanIp)) {
-      return NextResponse.json(
-        { error: 'Invalid IP address format' },
-        { status: 400 }
-      );
-    }
+    const { accountNumber, accessNumber, wanIp, customerName, location } = parsedBody.data;
 
     // Check if IP is already assigned
     const existingAssignment = await prisma.customerWanIp.findFirst({
@@ -479,7 +507,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('WAN IP assignment error:', error);
+    log.error('WAN IP assignment error', { error: (error as any)?.message, stack: (error as any)?.stack });
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
