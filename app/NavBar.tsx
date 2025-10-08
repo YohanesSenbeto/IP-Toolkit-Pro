@@ -138,14 +138,7 @@ export default function NavBar() {
                                             </Menu.Item>
                                         </Menu.Items>
                                     </Menu>
-                                ) : (
-                                    <Link
-                                        href="/auth/signin"
-                                        className="text-sm font-medium hover:underline text-gray-700 dark:text-gray-300 whitespace-nowrap"
-                                    >
-                                        Sign In
-                                    </Link>
-                                )}
+                                ) : null}
 
                                 {/* Mobile menu button */}
                                 <Disclosure.Button className="md:hidden inline-flex items-center justify-center p-1.5 sm:p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">

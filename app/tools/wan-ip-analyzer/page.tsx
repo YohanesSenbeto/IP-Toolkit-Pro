@@ -324,31 +324,33 @@ const WanIpAnalyzerPage = () => {
 
     if (!session)
         return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4 text-gray-900 dark:text-white">
-                <h1 className="text-center text-lg font-bold mb-6 text-gray-900 dark:text-white">
+            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 text-gray-900 dark:text-white px-4 text-center">
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
                     WAN IP Analyzer
                 </h1>
-                <p className="text-gray-700 dark:text-gray-300">
-                    You must be signed in to use this tool.
+                <p className="text-gray-700 dark:text-gray-300 max-w-md">
+                    You must be signed in to use this tool. Please sign in or
+                    create an account to continue.
                 </p>
-
-                <Button
-                    type="button"
-                    className="rounded-l-md"
-                    variant="default"
-                    onClick={() => signIn()}
-                >
-                    Sign In
-                </Button>
-                <Link href="/auth/signup">
+                <div className="inline-flex rounded-md shadow-sm" role="group">
                     <Button
                         type="button"
-                        className="-ml-px rounded-r-md"
+                        className="rounded-l-md"
                         variant="default"
+                        onClick={() => signIn()}
                     >
-                        Sign Up
+                        Sign In
                     </Button>
-                </Link>
+                    <Link href="/auth/signup" passHref>
+                        <Button
+                            type="button"
+                            className="-ml-px rounded-r-md"
+                            variant="default"
+                        >
+                            Sign Up
+                        </Button>
+                    </Link>
+                </div>
             </div>
         );
 
