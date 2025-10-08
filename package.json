@@ -8,7 +8,7 @@
     "web:dev": "next dev --turbopack",
     "dev": "concurrently \"npm run web:dev\" \"npm run bot:dev\"",
     "web:build": "next build",
-    "build": "concurrently \"npm run web:build\" \"npm run bot:build\"",
+  "build": "node scripts/select-build.mjs",
     "start": "next start",
     "dev:all": "concurrently \"npm run dev\" \"npm run bot:dev\"",
     "build:all": "concurrently \"npm run build\" \"npm run bot:build\"",

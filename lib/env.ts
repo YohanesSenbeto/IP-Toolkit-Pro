@@ -19,7 +19,14 @@ if (!isProd) {
 const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   NEXTAUTH_URL: z.string().url().optional(),
-  NEXTAUTH_SECRET: z.string().min(16, 'NEXTAUTH_SECRET should be reasonably long'),
+  // Enforce >=32 chars in production for session crypto strength. Allow >=16 in non-prod.
+  // Use a single conditional .min() to avoid ZodEffects chaining issues seen previously.
+  NEXTAUTH_SECRET: z.string().min(
+    isProd ? 32 : 16,
+    isProd
+      ? 'NEXTAUTH_SECRET must be >=32 characters in production. Generate with: node -e "crypto.randomBytes(48).toString(\'hex\')"'
+      : 'NEXTAUTH_SECRET should be reasonably long'
+  ),
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   HF_API_TOKEN: z.string().optional(),
   HF_MODEL: z.string().default('gpt2'),
