@@ -57,35 +57,25 @@ export default function Home() {
     }
 
     return (
-        <div className="min-h-screen w-full bg-background text-foreground px-2 pt-10 flex flex-col items-center">
-            {/* Hero Section */}
-            <section className="w-full max-w-screen-xl mx-auto my-8 py-20 text-center">
-                <div className="max-w-2xl mx-auto flex flex-col items-center w-full">
-                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16 w-full max-w-full">
-                        <Link
-                            href="/tools/wan-ip-analyzer"
-                            className="w-full sm:w-auto"
-                        >
-                            <Button className="sm:rounded-r-md sm:rounded-l-none font-medium px-5 py-2 text-sm">
-                                Start Analyzing
-                            </Button>
-                        </Link>
-                        <Link href="/dashboard" className="w-full sm:w-auto">
-                            <Button className="sm:rounded-r-md sm:rounded-l-none font-medium px-5 py-2 text-sm">
-                                View Dashboard
-                            </Button>
-                        </Link>
-                    </div>
+        <div className="min-h-screen w-full bg-background text-foreground px-2 pt-12 sm:pt-14 flex flex-col items-center">
+            <section className="w-full max-w-3xl mx-auto text-center flex flex-col items-center">
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full max-w-full mb-16 sm:mb-20">
+                    <Link href="/tools/wan-ip-analyzer" className="sm:w-auto">
+                        <Button className="font-medium px-5 py-2 text-sm min-w-[160px]">
+                            Start Analyzing
+                        </Button>
+                    </Link>
+                    <Link href="/dashboard" className="sm:w-auto">
+                        <Button className="font-medium px-5 py-2 text-sm min-w-[160px]">
+                            View Dashboard
+                        </Button>
+                    </Link>
                 </div>
-            </section>
-
-            {/* Description Section */}
-            <section className="w-full max-w-4xl mx-auto text-center">
-                <div className="mb-8">
-                    <h3 className="text-2xl sm:text-3xl font-medium mb-6 leading-tight text-gray-700 dark:text-white">
+                <div className="w-full flex flex-col items-center px-2">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-3 sm:mb-4 leading-snug text-gray-700 dark:text-white">
                         Everything You Need for Network Configuration
                     </h3>
-                    <p className="text-xl font-semibold max-w-3xl mx-auto leading-relaxed text-gray-600 dark:text-gray-300">
+                    <p className="text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed text-gray-600 dark:text-gray-300">
                         Powerful tools and comprehensive resources designed
                         specifically for Ethio Telecom's network environment
                     </p>
