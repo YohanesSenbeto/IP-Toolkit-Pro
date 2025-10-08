@@ -2,10 +2,15 @@ import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== 'production';
 
+// Temporary relaxation note:
+// The initial strict production CSP blocked essential Next.js bootstrap inline scripts/styles.
+// We add 'unsafe-inline' for now to restore functionality. Plan: replace with nonce & hashes.
+// Set RELAX_CSP=false (default) to use this relaxed policy until nonce implementation lands.
+// When nonce-based CSP is ready, remove 'unsafe-inline' below.
 const prodCSP = [
   "default-src 'self'",
-  "script-src 'self'",
-  "style-src 'self'",
+  "script-src 'self' 'unsafe-inline'", // TODO: implement nonce/hashes then drop 'unsafe-inline'
+  "style-src 'self' 'unsafe-inline'",  // TODO: move critical inline to CSS files or hash them
   "img-src 'self' data: https:",
   "font-src 'self' data:",
   "connect-src 'self' https:",
