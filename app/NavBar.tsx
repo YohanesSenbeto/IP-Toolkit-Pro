@@ -27,7 +27,7 @@ export default function NavBar() {
     return (
         <Disclosure
             as="nav"
-            className="relative bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))] shadow-sm"
+            className="relative bg-background text-foreground shadow-sm"
         >
             {({ open }) => (
                 <>
@@ -65,8 +65,8 @@ export default function NavBar() {
                                         href={link.href}
                                         className={`inline-flex items-center px-2 lg:px-3 py-1 border-b-2 text-sm font-medium transition-colors whitespace-nowrap ${
                                             pathname === link.href
-                                                ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                                                : "border-transparent text-gray-600 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-900 dark:hover:text-white"
+                                                ? "border-primary text-primary"
+                                                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
                                         }`}
                                     >
                                         {link.label}
@@ -82,24 +82,24 @@ export default function NavBar() {
                                 </div>
 
                                 {/* Notification Bell - Hidden on small mobile */}
-                                <button className="hidden xs:flex relative p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                <button className="hidden xs:flex relative p-1.5 rounded-full hover:bg-muted transition-colors">
                                     <BellIcon className="h-5 w-5 sm:h-6 sm:w-6" />
                                 </button>
 
                                 {session ? (
                                     <Menu as="div" className="relative">
-                                        <Menu.Button className="flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors text-sm sm:text-base">
+                                        <Menu.Button className="flex items-center justify-center h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-primary text-primary-foreground font-bold hover:bg-primary/80 transition-colors text-sm sm:text-base">
                                             {getFirstNameInitial(session.user)}
                                         </Menu.Button>
-                                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg py-1 z-50">
+                                        <Menu.Items className="absolute right-0 mt-2 w-48 bg-card text-card-foreground border border-border rounded-md shadow-lg py-1 z-50">
                                             <Menu.Item>
                                                 {({ active }) => (
                                                     <Link
                                                         href="/profile"
                                                         className={`block px-4 py-2 text-sm ${
                                                             active
-                                                                ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                                : "text-gray-900 dark:text-white"
+                                                                ? "bg-muted text-foreground"
+                                                                : "text-foreground"
                                                         }`}
                                                     >
                                                         Profile
@@ -112,8 +112,8 @@ export default function NavBar() {
                                                         href="/settings"
                                                         className={`block px-4 py-2 text-sm ${
                                                             active
-                                                                ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                                : "text-gray-900 dark:text-white"
+                                                                ? "bg-muted text-foreground"
+                                                                : "text-foreground"
                                                         }`}
                                                     >
                                                         Settings
@@ -128,8 +128,8 @@ export default function NavBar() {
                                                         }
                                                         className={`w-full text-left px-4 py-2 text-sm ${
                                                             active
-                                                                ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
-                                                                : "text-gray-900 dark:text-white"
+                                                                ? "bg-muted text-foreground"
+                                                                : "text-foreground"
                                                         }`}
                                                     >
                                                         Sign Out
@@ -153,7 +153,7 @@ export default function NavBar() {
                     </div>
 
                     {/* Mobile Menu */}
-                    <Disclosure.Panel className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                    <Disclosure.Panel className="md:hidden bg-card text-card-foreground border-t border-border">
                         <div className="px-2 pt-2 pb-3 space-y-1">
                             {/* Navigation Links */}
                             {navLinks.map((link) => (
@@ -163,8 +163,8 @@ export default function NavBar() {
                                     href={link.href}
                                     className={`block px-3 py-3 rounded-md text-base font-medium transition-colors ${
                                         pathname === link.href
-                                            ? "bg-blue-600 text-white"
-                                            : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                                            ? "bg-primary text-primary-foreground"
+                                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                     }`}
                                 >
                                     {link.label}
@@ -174,7 +174,7 @@ export default function NavBar() {
                             {/* Theme Toggle in Mobile Menu */}
                             <div className="px-3 py-3 border-t border-gray-200 dark:border-gray-700">
                                 <div className="flex items-center justify-between">
-                                    <span className="text-base font-medium text-gray-700 dark:text-gray-300">
+                                    <span className="text-base font-medium text-muted-foreground">
                                         Theme
                                     </span>
                                     <ThemeToggle />
@@ -187,7 +187,7 @@ export default function NavBar() {
                                     <div className="border-t border-gray-200 dark:border-gray-700 pt-3">
                                         <Disclosure.Button
                                             as="button"
-                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                                         >
                                             <BellIcon className="h-5 w-5 mr-3" />
                                             Notifications
@@ -199,21 +199,21 @@ export default function NavBar() {
                                         <Disclosure.Button
                                             as={Link}
                                             href="/profile"
-                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                                         >
                                             👤 Profile
                                         </Disclosure.Button>
                                         <Disclosure.Button
                                             as={Link}
                                             href="/settings"
-                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                                         >
                                             ⚙️ Settings
                                         </Disclosure.Button>
                                         <Disclosure.Button
                                             as="button"
                                             onClick={() => signOut()}
-                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                            className="flex items-center w-full px-3 py-3 rounded-md text-base font-medium text-destructive hover:bg-destructive-foreground/10 transition-colors"
                                         >
                                             🚪 Sign Out
                                         </Disclosure.Button>

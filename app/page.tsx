@@ -19,13 +19,13 @@ export default function Home() {
         return (
             <div className="min-h-screen w-full flex flex-col items-center justify-center px-4 bg-background text-foreground">
                 <div className="max-w-md w-full flex flex-col items-center gap-6 py-16">
-                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-2 text-gray-900 dark:text-white">
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-2 text-foreground">
                         Welcome to
-                        <span className="block font-bold text-2xl sm:text-3xl md:text-4xl mt-1 text-gray-900 dark:text-white">
+                        <span className="block font-bold text-2xl sm:text-3xl md:text-4xl mt-1 text-primary">
                             IP TOOLKit App
                         </span>
                     </h1>
-                    <p className="text-center text-base mb-4 text-gray-600 dark:text-gray-400">
+                    <p className="text-center text-base mb-4 text-muted-foreground">
                         Sign in to access all features, or create an account if
                         you haven't registered yet.
                     </p>
@@ -35,7 +35,7 @@ export default function Home() {
                     >
                         <Button
                             type="button"
-                            className="rounded-l-md"
+                            className="rounded-l-md bg-primary text-primary-foreground hover:bg-primary/80"
                             variant="default"
                             onClick={() => signIn()}
                         >
@@ -44,7 +44,7 @@ export default function Home() {
                         <Link href="/auth/signup" passHref>
                             <Button
                                 type="button"
-                                className="-ml-px rounded-r-md"
+                                className="-ml-px rounded-r-md bg-primary text-primary-foreground hover:bg-primary/80"
                                 variant="default"
                             >
                                 Sign Up
@@ -61,21 +61,21 @@ export default function Home() {
             <section className="w-full max-w-3xl mx-auto text-center flex flex-col items-center">
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full max-w-full mb-16 sm:mb-20">
                     <Link href="/tools/wan-ip-analyzer" className="sm:w-auto">
-                        <Button className="font-medium px-5 py-2 text-sm min-w-[160px]">
+                        <Button className="font-medium px-5 py-2 text-sm min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/80">
                             Start Analyzing
                         </Button>
                     </Link>
                     <Link href="/dashboard" className="sm:w-auto">
-                        <Button className="font-medium px-5 py-2 text-sm min-w-[160px]">
+                        <Button className="font-medium px-5 py-2 text-sm min-w-[160px] bg-primary text-primary-foreground hover:bg-primary/80">
                             View Dashboard
                         </Button>
                     </Link>
                 </div>
                 <div className="w-full flex flex-col items-center px-2">
-                    <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-3 sm:mb-4 leading-snug text-gray-700 dark:text-white">
+                    <h3 className="text-xl sm:text-2xl md:text-3xl font-semibold mb-3 sm:mb-4 leading-snug text-foreground">
                         Everything You Need for Network Configuration
                     </h3>
-                    <p className="text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed text-gray-600 dark:text-gray-300">
+                    <p className="text-base sm:text-lg md:text-xl font-medium max-w-2xl mx-auto leading-relaxed text-muted-foreground">
                         Powerful tools and comprehensive resources designed
                         specifically for Ethio Telecom's network environment
                     </p>

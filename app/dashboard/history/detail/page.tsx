@@ -547,10 +547,12 @@ function CalculationDetailContent() {
 
 export default function CalculationDetailPage() {
     return (
-        <Suspense
-            fallback={<div className="p-8 text-center text-lg">Loading...</div>}
-        >
-            <CalculationDetailContent />
-        </Suspense>
+        <div className="min-h-screen w-full bg-background text-foreground">
+            <Suspense
+                fallback={<div className="p-8 text-center text-lg text-foreground">Loading...</div>}
+            >
+                <CalculationDetailContent />
+            </Suspense>
+        </div>
     );
 }

@@ -41,8 +41,6 @@ interface YouTubeVideo {
     relevanceScore?: number;
 }
 
-interface ModemTutorialPageProps {}
-
 export default function ModemTutorialPage() {
     const [videos, setVideos] = useState<YouTubeVideo[]>([]);
     const [loading, setLoading] = useState(true);
@@ -91,14 +89,12 @@ export default function ModemTutorialPage() {
         const matchesLineType =
             selectedLineType === "All" ||
             (video.connectionType &&
-                video.connectionType.toLowerCase() ===
-                    selectedLineType.toLowerCase());
+                video.connectionType.toUpperCase() === selectedLineType);
 
         const matchesDifficulty =
             selectedDifficulty === "All" ||
             (video.difficulty &&
-                video.difficulty.toLowerCase() ===
-                    selectedDifficulty.toLowerCase());
+                video.difficulty.toUpperCase() === selectedDifficulty);
 
         const matchesSearch =
             searchQuery === "" ||
@@ -236,299 +232,314 @@ export default function ModemTutorialPage() {
     }
 
     return (
-        <div className="w-full max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-10">
-            {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-2 text-blue-800">
-                    Modem Configuration Tutorials
-                </h1>
-                <p className="text-lg text-gray-600">
-                    Learn how to configure your modem/router for optimal
-                    internet connection. All tutorials are from Yoh-Tech
-                    Solutions YouTube channel.
-                </p>
-                <div className="flex items-center gap-2 mt-4">
-                    <Badge
-                        variant="outline"
-                        className="bg-red-100 text-red-800 border-red-300"
-                    >
-                        <ExternalLink className="h-3 w-3 mr-1" />
-                        YouTube Channel
-                    </Badge>
-                    <Badge
-                        variant="outline"
-                        className="bg-blue-100 text-blue-800 border-blue-300"
-                    >
-                        {videos.length} Videos
-                    </Badge>
+        <div className="min-h-screen w-full bg-background text-foreground">
+            <div className="w-full max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-10">
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-4xl font-bold mb-2 text-blue-800">
+                        Modem Configuration Tutorials
+                    </h1>
+                    <p className="text-lg text-gray-600">
+                        Learn how to configure your modem/router for optimal
+                        internet connection. All tutorials are from Yoh-Tech
+                        Solutions YouTube channel.
+                    </p>
+                    <div className="flex items-center gap-2 mt-4">
+                        <Badge
+                            variant="outline"
+                            className="bg-red-100 text-red-800 border-red-300"
+                        >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            YouTube Channel
+                        </Badge>
+                        <Badge
+                            variant="outline"
+                            className="bg-blue-100 text-blue-800 border-blue-300"
+                        >
+                            {videos.length} Videos
+                        </Badge>
+                    </div>
                 </div>
-            </div>
 
-            {/* Search and Filters */}
-            <Card className="mb-8">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="flex items-center gap-2">
-                            <Search className="h-5 w-5" />
-                            Search & Filter Tutorials
-                        </CardTitle>
-                        <Button
-                            className="bg-primary flex items-center gap-2"
-                            size="sm"
-                            onClick={() => setShowFilters(!showFilters)}
-                        >
-                            <Filter className="h-4 w-4" />
-                            Filters
-                            {showFilters ? (
-                                <ChevronUp className="h-4 w-4" />
-                            ) : (
-                                <ChevronDown className="h-4 w-4" />
-                            )}
-                        </Button>
-                    </div>
-                </CardHeader>
-
-                <CardContent>
-                    {/* Search Bar */}
-                    <div className="mb-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                            <input
-                                type="text"
-                                placeholder="Search tutorials by title, description, or tags..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
-                            />
+                {/* Search and Filters */}
+                <Card className="mb-8">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-2">
+                                <Search className="h-5 w-5" />
+                                Search & Filter Tutorials
+                            </CardTitle>
+                            <Button
+                                className="bg-primary flex items-center gap-2"
+                                size="sm"
+                                onClick={() => setShowFilters(!showFilters)}
+                            >
+                                <Filter className="h-4 w-4" />
+                                Filters
+                                {showFilters ? (
+                                    <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                )}
+                            </Button>
                         </div>
-                    </div>
+                    </CardHeader>
 
-                    {/* Filters */}
-                    {showFilters && (
-                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div className="grid md:grid-cols-3 gap-4">
-                                {/* Modem Model Filter */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Modem Brand
-                                    </label>
-                                    <select
-                                        value={selectedModemModel}
-                                        onChange={(e) =>
-                                            setSelectedModemModel(
-                                                e.target.value
-                                            )
-                                        }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        <option value="All">All Brands</option>
-                                        {modemModels.map((model) => (
-                                            <option key={model} value={model}>
-                                                {model}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Line Type Filter */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Connection Type
-                                    </label>
-                                    <select
-                                        value={selectedLineType}
-                                        onChange={(e) =>
-                                            setSelectedLineType(e.target.value)
-                                        }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        <option value="All">All Types</option>
-                                        {lineTypes.map((type) => (
-                                            <option
-                                                key={type}
-                                                value={type.toLowerCase()}
-                                            >
-                                                {type === "FIBER"
-                                                    ? "Fiber"
-                                                    : "Copper"}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                {/* Difficulty Filter */}
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Difficulty Level
-                                    </label>
-                                    <select
-                                        value={selectedDifficulty}
-                                        onChange={(e) =>
-                                            setSelectedDifficulty(
-                                                e.target.value
-                                            )
-                                        }
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                    >
-                                        <option value="All">All Levels</option>
-                                        {difficultyLevels.map((level) => (
-                                            <option
-                                                key={level}
-                                                value={level.toLowerCase()}
-                                            >
-                                                {level}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Results Count */}
-                    <div className="mt-4">
-                        <p className="text-sm text-gray-600">
-                            Showing {filteredVideos.length} of {videos.length}{" "}
-                            tutorial{filteredVideos.length !== 1 ? "s" : ""}
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* Video Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                {filteredVideos.map((video) => {
-                    const difficulty = getDifficultyFromTitle(video);
-                    const lineType = getLineTypeFromTitle(video);
-
-                    return (
-                        <Card
-                            key={video.id}
-                            className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer"
-                            onClick={() => handleVideoPlay(video)}
-                        >
+                    <CardContent>
+                        {/* Search Bar */}
+                        <div className="mb-4">
                             <div className="relative">
-                                <img
-                                    src={video.thumbnail}
-                                    alt={video.title}
-                                    className="w-full aspect-video object-cover rounded-t-lg"
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search tutorials by title, description, or tags..."
+                                    value={searchQuery}
+                                    onChange={(e) =>
+                                        setSearchQuery(e.target.value)
+                                    }
+                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
                                 />
-                                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                                    <Play className="h-16 w-16 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100" />
-                                </div>
-                                <div className="absolute top-3 right-3">
-                                    <Badge
-                                        variant="secondary"
-                                        className="bg-black bg-opacity-70 text-white"
-                                    >
-                                        {formatDuration(video.duration)}
-                                    </Badge>
-                                </div>
                             </div>
+                        </div>
 
-                            <CardContent className="p-4">
-                                <div className="space-y-3">
-                                    {/* Title and Line Type */}
+                        {/* Filters */}
+                        {showFilters && (
+                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    {/* Modem Model Filter */}
                                     <div>
-                                        <h3 className="font-semibold text-base line-clamp-2 group-hover:text-blue-600 transition-colors">
-                                            {video.title}
-                                        </h3>
-                                        <div className="flex items-center gap-2 mt-1">
-                                            {getLineTypeIcon(lineType)}
-                                            <span className="text-xs text-gray-500">
-                                                {lineType}
-                                            </span>
-                                        </div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Modem Brand
+                                        </label>
+                                        <select
+                                            value={selectedModemModel}
+                                            onChange={(e) =>
+                                                setSelectedModemModel(
+                                                    e.target.value
+                                                )
+                                            }
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="All">
+                                                All Brands
+                                            </option>
+                                            {modemModels.map((model) => (
+                                                <option
+                                                    key={model}
+                                                    value={model}
+                                                >
+                                                    {model}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
 
-                                    {/* Description */}
-                                    <p className="text-sm text-gray-600 line-clamp-3">
-                                        {video.description}
-                                    </p>
+                                    {/* Line Type Filter */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Connection Type
+                                        </label>
+                                        <select
+                                            value={selectedLineType}
+                                            onChange={(e) =>
+                                                setSelectedLineType(
+                                                    e.target.value.toUpperCase()
+                                                )
+                                            }
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="All">
+                                                All Types
+                                            </option>
+                                            {lineTypes.map((type) => (
+                                                <option key={type} value={type}>
+                                                    {type === "FIBER"
+                                                        ? "Fiber"
+                                                        : "Copper"}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
 
-                                    {/* Modem Model */}
-                                    {video.modemModel &&
-                                        video.modemModel !== "Unknown" && (
-                                            <div className="flex items-center gap-2">
-                                                <Router className="h-3 w-3 text-gray-400" />
-                                                <span className="text-xs font-medium text-gray-700">
-                                                    {video.modemModel}
+                                    {/* Difficulty Filter */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Difficulty Level
+                                        </label>
+                                        <select
+                                            value={selectedDifficulty}
+                                            onChange={(e) =>
+                                                setSelectedDifficulty(
+                                                    e.target.value.toUpperCase()
+                                                )
+                                            }
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        >
+                                            <option value="All">
+                                                All Levels
+                                            </option>
+                                            {difficultyLevels.map((level) => (
+                                                <option
+                                                    key={level}
+                                                    value={level}
+                                                >
+                                                    {level}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Results Count */}
+                        <div className="mt-4">
+                            <p className="text-sm text-gray-600">
+                                Showing {filteredVideos.length} of{" "}
+                                {videos.length} tutorial
+                                {filteredVideos.length !== 1 ? "s" : ""}
+                            </p>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Video Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    {filteredVideos.map((video) => {
+                        const difficulty = getDifficultyFromTitle(video);
+                        const lineType = getLineTypeFromTitle(video);
+
+                        return (
+                            <Card
+                                key={video.id}
+                                className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-2 cursor-pointer"
+                                onClick={() => handleVideoPlay(video)}
+                            >
+                                <div className="relative">
+                                    <img
+                                        src={video.thumbnail}
+                                        alt={video.title}
+                                        className="w-full aspect-video object-cover rounded-t-lg"
+                                    />
+                                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                                        <Play className="h-16 w-16 text-white opacity-0 group-hover:opacity-100 transition-all duration-300 transform scale-75 group-hover:scale-100" />
+                                    </div>
+                                    <div className="absolute top-3 right-3">
+                                        <Badge
+                                            variant="secondary"
+                                            className="bg-black bg-opacity-70 text-white"
+                                        >
+                                            {formatDuration(video.duration)}
+                                        </Badge>
+                                    </div>
+                                </div>
+
+                                <CardContent className="p-4">
+                                    <div className="space-y-3">
+                                        {/* Title and Line Type */}
+                                        <div>
+                                            <h3 className="font-semibold text-base line-clamp-2 group-hover:text-blue-600 transition-colors">
+                                                {video.title}
+                                            </h3>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                {getLineTypeIcon(lineType)}
+                                                <span className="text-xs text-gray-500">
+                                                    {lineType}
                                                 </span>
                                             </div>
-                                        )}
+                                        </div>
 
-                                    {/* Stats */}
-                                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                                        <div className="flex items-center gap-1">
-                                            <Eye className="h-3 w-3" />
-                                            {formatViewCount(video.viewCount)}
+                                        {/* Description */}
+                                        <p className="text-sm text-gray-600 line-clamp-3">
+                                            {video.description}
+                                        </p>
+
+                                        {/* Modem Model */}
+                                        {video.modemModel &&
+                                            video.modemModel !== "Unknown" && (
+                                                <div className="flex items-center gap-2">
+                                                    <Router className="h-3 w-3 text-gray-400" />
+                                                    <span className="text-xs font-medium text-gray-700">
+                                                        {video.modemModel}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                        {/* Stats */}
+                                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                                            <div className="flex items-center gap-1">
+                                                <Eye className="h-3 w-3" />
+                                                {formatViewCount(
+                                                    video.viewCount
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Calendar className="h-3 w-3" />
+                                                {formatDate(video.publishedAt)}
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                                                {video.likeCount > 0
+                                                    ? formatViewCount(
+                                                          video.likeCount
+                                                      )
+                                                    : "N/A"}
+                                            </div>
                                         </div>
-                                        <div className="flex items-center gap-1">
-                                            <Calendar className="h-3 w-3" />
-                                            {formatDate(video.publishedAt)}
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                                            {video.likeCount > 0
-                                                ? formatViewCount(
-                                                      video.likeCount
-                                                  )
-                                                : "N/A"}
+
+                                        {/* Difficulty Badge */}
+                                        <div className="flex justify-between items-center">
+                                            <Badge
+                                                className={`text-xs px-2 py-1 ${getDifficultyColor(
+                                                    difficulty
+                                                )}`}
+                                            >
+                                                {difficulty}
+                                            </Badge>
+                                            <Button
+                                                size="sm"
+                                                className="bg-primary text-xs"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleVideoPlay(video);
+                                                }}
+                                            >
+                                                <ExternalLink className="h-3 w-3 mr-1" />
+                                                Watch
+                                            </Button>
                                         </div>
                                     </div>
-
-                                    {/* Difficulty Badge */}
-                                    <div className="flex justify-between items-center">
-                                        <Badge
-                                            className={`text-xs px-2 py-1 ${getDifficultyColor(
-                                                difficulty
-                                            )}`}
-                                        >
-                                            {difficulty}
-                                        </Badge>
-                                        <Button
-                                            size="sm"
-                                            className="bg-primary text-xs"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleVideoPlay(video);
-                                            }}
-                                        >
-                                            <ExternalLink className="h-3 w-3 mr-1" />
-                                            Watch
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    );
-                })}
-            </div>
-
-            {/* No Results */}
-            {filteredVideos.length === 0 && !loading && (
-                <div className="text-center py-12">
-                    <Router className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-600 mb-2">
-                        No tutorials found
-                    </h3>
-                    <p className="text-gray-500 mb-4">
-                        Try adjusting your filters or search terms to find
-                        relevant tutorials.
-                    </p>
-                    <Button
-                        className="bg-primary"
-                        onClick={() => {
-                            setSearchQuery("");
-                            setSelectedModemModel("All");
-                            setSelectedLineType("All");
-                            setSelectedDifficulty("All");
-                        }}
-                    >
-                        Clear Filters
-                    </Button>
+                                </CardContent>
+                            </Card>
+                        );
+                    })}
                 </div>
-            )}
+
+                {/* No Results */}
+                {filteredVideos.length === 0 && !loading && (
+                    <div className="text-center py-12">
+                        <Router className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                            No tutorials found
+                        </h3>
+                        <p className="text-gray-500 mb-4">
+                            Try adjusting your filters or search terms to find
+                            relevant tutorials.
+                        </p>
+                        <Button
+                            className="bg-primary"
+                            onClick={() => {
+                                setSearchQuery("");
+                                setSelectedModemModel("All");
+                                setSelectedLineType("All");
+                                setSelectedDifficulty("All");
+                            }}
+                        >
+                            Clear Filters
+                        </Button>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

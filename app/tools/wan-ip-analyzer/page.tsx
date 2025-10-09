@@ -317,25 +317,25 @@ const WanIpAnalyzerPage = () => {
 
     if (status === "loading")
         return (
-            <div className="min-h-[60vh] flex items-center justify-center text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="min-h-[60vh] flex items-center justify-center text-lg font-semibold text-foreground">
                 Loading authentication...
             </div>
         );
 
     if (!session)
         return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 text-gray-900 dark:text-white px-4 text-center">
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 text-foreground px-4 text-center">
+                <h1 className="text-lg sm:text-xl font-bold text-foreground">
                     WAN IP Analyzer
                 </h1>
-                <p className="text-gray-700 dark:text-gray-300 max-w-md">
+                <p className="text-muted-foreground max-w-md">
                     You must be signed in to use this tool. Please sign in or
                     create an account to continue.
                 </p>
                 <div className="inline-flex rounded-md shadow-sm" role="group">
                     <Button
                         type="button"
-                        className="rounded-l-md"
+                        className="rounded-l-md bg-primary text-primary-foreground hover:bg-primary/80"
                         variant="default"
                         onClick={() => signIn()}
                     >
@@ -344,7 +344,7 @@ const WanIpAnalyzerPage = () => {
                     <Link href="/auth/signup" passHref>
                         <Button
                             type="button"
-                            className="-ml-px rounded-r-md"
+                            className="-ml-px rounded-r-md bg-primary text-primary-foreground hover:bg-primary/80"
                             variant="default"
                         >
                             Sign Up
@@ -355,275 +355,292 @@ const WanIpAnalyzerPage = () => {
         );
 
     return (
-        <div className="max-w-2xl mx-auto p-10 my-20 px-4">
-            {/* Analyzer Form */}
-            <Card className="p-6 shadow-lg card border-border">
-                <h1 className="text-center text-lg font-bold mb-6 text-gray-900 dark:text-white">
-                    WAN IP Analyzer
-                </h1>
-                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                    {/* Unified control group */}
-                    <div className="flex flex-col gap-2">
-                        <div className="flex w-full flex-col sm:flex-row gap-2 sm:gap-0">
-                            {/* Dropdown trigger */}
-                            <div
-                                className="sm:relative sm:z-10 w-full sm:w-auto"
-                                ref={dropdownRef}
-                            >
-                                <button
-                                    ref={triggerButtonRef}
-                                    type="button"
-                                    aria-haspopup="listbox"
-                                    aria-expanded={isDropdownOpen}
-                                    aria-controls="search-type-listbox"
-                                    onClick={() => {
-                                        setIsDropdownOpen((o) => !o);
-                                        setActiveIndex(
-                                            options.findIndex(
-                                                (o) => o.value === searchType
-                                            )
-                                        );
-                                    }}
-                                    onKeyDown={handleDropdownKeyDown}
-                                    className="sm:rounded-l-md sm:rounded-r-none rounded-md sm:border-r-0 border border-border bg-card text-foreground px-3 py-2 min-w-[150px] flex items-center justify-between text-sm focus-visible:outline-none focus:ring-2 focus:ring-ring transition-colors dark:bg-neutral-900 dark:hover:bg-neutral-800 hover:bg-accent/40"
+        <div className="min-h-screen w-full bg-background">
+            <div className="max-w-2xl mx-auto p-10  px-4">
+                {/* Analyzer Form */}
+                <Card className="p-6 my-8 shadow-lg card border-border">
+                    <h1 className="text-center text-lg font-bold mb-6 text-foreground">
+                        WAN IP Analyzer
+                    </h1>
+                    <form
+                        onSubmit={handleSubmit}
+                        className="flex flex-col gap-4"
+                    >
+                        {/* Unified control group */}
+                        <div className="flex flex-col gap-2">
+                            <div className="flex w-full flex-col sm:flex-row gap-2 sm:gap-0">
+                                {/* Dropdown trigger */}
+                                <div
+                                    className="sm:relative sm:z-10 w-full sm:w-auto"
+                                    ref={dropdownRef}
                                 >
-                                    <span className="truncate text-left">
-                                        {(() => {
-                                            const option = options.find(
-                                                (o) => o.value === searchType
+                                    <button
+                                        ref={triggerButtonRef}
+                                        type="button"
+                                        aria-haspopup="listbox"
+                                        aria-expanded={isDropdownOpen}
+                                        aria-controls="search-type-listbox"
+                                        onClick={() => {
+                                            setIsDropdownOpen((o) => !o);
+                                            setActiveIndex(
+                                                options.findIndex(
+                                                    (o) =>
+                                                        o.value === searchType
+                                                )
                                             );
-                                            return option
-                                                ? option.label
-                                                : "WAN IP";
-                                        })()}
-                                    </span>
-                                    <svg
-                                        className={`ml-2 w-4 h-4 shrink-0 transition-transform ${
-                                            isDropdownOpen ? "rotate-180" : ""
-                                        }`}
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </button>
-                                {isDropdownOpen && (
-                                    <div
-                                        id="search-type-listbox"
-                                        role="listbox"
-                                        aria-activedescendant={`search-type-option-${options[activeIndex]?.value}`}
-                                        className="mt-1 sm:absolute sm:top-full sm:left-0 sm:right-0 z-50 rounded-md border border-border bg-card dark:bg-neutral-900 shadow-lg overflow-hidden w-full"
+                                        }}
                                         onKeyDown={handleDropdownKeyDown}
-                                        tabIndex={-1}
+                                        className="sm:rounded-l-md sm:rounded-r-none rounded-md sm:border-r-0 border border-border bg-card text-foreground px-3 py-2 min-w-[150px] flex items-center justify-between text-sm focus-visible:outline-none focus:ring-2 focus:ring-ring transition-colors dark:bg-neutral-900 dark:hover:bg-neutral-800 hover:bg-accent/40"
                                     >
-                                        {options.map((option, idx) => (
-                                            <button
-                                                id={`search-type-option-${option.value}`}
-                                                key={option.value}
-                                                type="button"
-                                                role="option"
-                                                aria-selected={
-                                                    searchType === option.value
-                                                }
-                                                ref={(el) => {
-                                                    optionRefs.current[idx] =
-                                                        el;
-                                                }}
-                                                tabIndex={-1}
-                                                onClick={() =>
-                                                    handleSearchTypeChange(
-                                                        option.value as any
-                                                    )
-                                                }
-                                                onKeyDown={
-                                                    handleDropdownKeyDown
-                                                }
-                                                className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between focus:outline-none ${
-                                                    searchType === option.value
-                                                        ? "bg-primary text-secondary dark:bg-blue-600 dark:text-white"
-                                                        : idx === activeIndex
-                                                        ? "bg-accent/40 dark:bg-neutral-800"
-                                                        : "hover:bg-accent/40 text-foreground dark:hover:bg-neutral-800"
-                                                }`}
-                                            >
-                                                <span>{option.label}</span>
-                                                {searchType ===
-                                                    option.value && (
-                                                    <span className="ml-2 text-[10px] uppercase tracking-wide opacity-80">
-                                                        Selected
-                                                    </span>
-                                                )}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            {/* Input */}
-                            <Input
-                                placeholder={(() => {
-                                    switch (searchType) {
-                                        case "wanIp":
-                                            return "Enter WAN IP";
-                                        case "accountNumber":
-                                            return "Enter Account Number";
-                                        case "accessNumber":
-                                            return "Enter Access Number";
-                                        default:
-                                            return "Enter WAN IP";
-                                    }
-                                })()}
-                                value={(() => {
-                                    switch (searchType) {
-                                        case "wanIp":
-                                            return ipAddress;
-                                        case "accountNumber":
-                                            return assignmentForm.accountNumber;
-                                        case "accessNumber":
-                                            return assignmentForm.accessNumber;
-                                        default:
-                                            return ipAddress;
-                                    }
-                                })()}
-                                onChange={handleInputChange}
-                                className="sm:rounded-none sm:border-l-0 sm:border-r-0 bg-card dark:bg-neutral-900 placeholder-muted-foreground text-black dark:text-white flex-1"
-                            />
-                            {/* Action buttons */}
-                            <div className="flex items-stretch mt-2 sm:mt-0 gap-2 sm:gap-0 sm:ml-0">
-                                <Button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="sm:rounded-none font-bold px-5 py-2 text-sm bg-primary"
-                                >
-                                    {loading ? "Analyzing..." : "Analyze"}
-                                </Button>
-                                <Button
-                                    type="button"
-                                    onClick={handleClear}
-                                    className="sm:rounded-r-md sm:rounded-l-none font-medium px-5 py-2 text-sm"
-                                >
-                                    Clear
-                                </Button>
-                            </div>
-                        </div>
-                        {/* Removed separate Clear row; now grouped with Analyze */}
-                    </div>
-
-                    {error && (
-                        <p className="text-destructive text-sm text-center">
-                            {error}
-                        </p>
-                    )}
-                </form>
-            </Card>
-
-            {/* Drawer for results */}
-            <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
-                <DrawerContent
-                    side="right"
-                    showCloseIcon={true}
-                    onClose={() => setDrawerOpen(false)}
-                    className="max-w-2xl mx-auto p-2 md:p-4 bg-background flex flex-col h-full text-[12px] md:text-[13px]"
-                >
-                    {analysis && (
-                        <div className="space-y-4 flex-1 pb-8">
-                            {/* Interface Info */}
-                            <div className="grid gap-4 md:grid-cols-2">
-                                <ImportantInfoTable
-                                    wanIp={analysis.ipAddress}
-                                    subnetMask={
-                                        analysis.networkInfo?.subnetMask ||
-                                        analysis.interface?.subnetMask
-                                    }
-                                    defaultGateway={
-                                        analysis.interface?.defaultGateway
-                                    }
-                                />
-
-                                {/* Network Info */}
-                                <NetworkInfoTable
-                                    networkInfo={analysis.networkInfo as any}
-                                />
-                            </div>
-
-                            {/* Detail Button + Inline Detail */}
-                            <div className="flex flex-col gap-3">
-                                <div className="flex justify-end flex-wrap">
-                                    {analysis?.ipAddress ? (
-                                        <>
-                                            <div className="inline-flex items-stretch rounded border border-border/70 overflow-hidden shadow-sm dark:border-border/60">
-                                                <Button
-                                                    type="button"
-                                                    onClick={handleViewDetails}
-                                                    disabled={detailLoading}
-                                                    className="relative rounded-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-none transition-colors font-medium px-4 py-1.5 h-8 text-[11px]"
-                                                >
-                                                    {detailLoading
-                                                        ? "Loading..."
-                                                        : detailEntry
-                                                        ? "Refresh Detail"
-                                                        : "Show Detail"}
-                                                </Button>
-                                                {detailEntry && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        onClick={() =>
-                                                            setDetailExpanded(
-                                                                (p) => !p
-                                                            )
-                                                        }
-                                                        aria-expanded={
-                                                            detailExpanded
-                                                        }
-                                                        className="relative rounded-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-none transition-colors font-medium px-4 py-1.5 h-8 text-[11px]"
-                                                    >
-                                                        {detailExpanded
-                                                            ? "Collapse"
-                                                            : "Expand"}
-                                                    </Button>
-                                                )}
-                                            </div>
-                                            {/* Removed "Open Full Page" per user request */}
-                                        </>
-                                    ) : (
-                                        <Button
-                                            disabled
-                                            className="bg-muted text-muted-foreground px-6 py-2 rounded-md cursor-not-allowed"
+                                        <span className="truncate text-left">
+                                            {(() => {
+                                                const option = options.find(
+                                                    (o) =>
+                                                        o.value === searchType
+                                                );
+                                                return option
+                                                    ? option.label
+                                                    : "WAN IP";
+                                            })()}
+                                        </span>
+                                        <svg
+                                            className={`ml-2 w-4 h-4 shrink-0 transition-transform ${
+                                                isDropdownOpen
+                                                    ? "rotate-180"
+                                                    : ""
+                                            }`}
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
                                         >
-                                            Detail
-                                        </Button>
+                                            <path d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    {isDropdownOpen && (
+                                        <div
+                                            id="search-type-listbox"
+                                            role="listbox"
+                                            aria-activedescendant={`search-type-option-${options[activeIndex]?.value}`}
+                                            className="mt-1 sm:absolute sm:top-full sm:left-0 sm:right-0 z-50 rounded-md border border-border bg-card dark:bg-neutral-900 shadow-lg overflow-hidden w-full"
+                                            onKeyDown={handleDropdownKeyDown}
+                                            tabIndex={-1}
+                                        >
+                                            {options.map((option, idx) => (
+                                                <button
+                                                    id={`search-type-option-${option.value}`}
+                                                    key={option.value}
+                                                    type="button"
+                                                    role="option"
+                                                    aria-selected={
+                                                        searchType ===
+                                                        option.value
+                                                    }
+                                                    ref={(el) => {
+                                                        optionRefs.current[
+                                                            idx
+                                                        ] = el;
+                                                    }}
+                                                    tabIndex={-1}
+                                                    onClick={() =>
+                                                        handleSearchTypeChange(
+                                                            option.value as any
+                                                        )
+                                                    }
+                                                    onKeyDown={
+                                                        handleDropdownKeyDown
+                                                    }
+                                                    className={`w-full text-left px-3 py-2 text-sm transition-colors flex items-center justify-between focus:outline-none ${
+                                                        searchType ===
+                                                        option.value
+                                                            ? "bg-primary text-secondary dark:bg-blue-600 dark:text-white"
+                                                            : idx ===
+                                                              activeIndex
+                                                            ? "bg-accent/40 dark:bg-neutral-800"
+                                                            : "hover:bg-accent/40 text-foreground dark:hover:bg-neutral-800"
+                                                    }`}
+                                                >
+                                                    <span>{option.label}</span>
+                                                    {searchType ===
+                                                        option.value && (
+                                                        <span className="ml-2 text-[10px] uppercase tracking-wide opacity-80">
+                                                            Selected
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
                                     )}
                                 </div>
-                                {detailError && (
-                                    <p className="text-destructive text-sm text-right">
-                                        {detailError}
-                                    </p>
+                                {/* Input */}
+                                <Input
+                                    placeholder={(() => {
+                                        switch (searchType) {
+                                            case "wanIp":
+                                                return "Enter WAN IP";
+                                            case "accountNumber":
+                                                return "Enter Account Number";
+                                            case "accessNumber":
+                                                return "Enter Access Number";
+                                            default:
+                                                return "Enter WAN IP";
+                                        }
+                                    })()}
+                                    value={(() => {
+                                        switch (searchType) {
+                                            case "wanIp":
+                                                return ipAddress;
+                                            case "accountNumber":
+                                                return assignmentForm.accountNumber;
+                                            case "accessNumber":
+                                                return assignmentForm.accessNumber;
+                                            default:
+                                                return ipAddress;
+                                        }
+                                    })()}
+                                    onChange={handleInputChange}
+                                    className="sm:rounded-none sm:border-l-0 sm:border-r-0 bg-card placeholder-muted-foreground text-foreground flex-1"
+                                />
+                                {/* Action buttons */}
+                                <div className="flex items-stretch mt-2 sm:mt-0 gap-2 sm:gap-0 sm:ml-0">
+                                    <Button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="sm:rounded-none font-bold px-5 py-2 text-sm bg-primary"
+                                    >
+                                        {loading ? "Analyzing..." : "Analyze"}
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        onClick={handleClear}
+                                        className="sm:rounded-r-md sm:rounded-l-none font-medium px-5 py-2 text-sm"
+                                    >
+                                        Clear
+                                    </Button>
+                                </div>
+                            </div>
+                            {/* Removed separate Clear row; now grouped with Analyze */}
+                        </div>
+
+                        {error && (
+                            <p className="text-destructive text-sm text-center">
+                                {error}
+                            </p>
+                        )}
+                    </form>
+                </Card>
+
+                {/* Drawer for results */}
+                <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+                    <DrawerContent
+                        side="right"
+                        showCloseIcon={true}
+                        onClose={() => setDrawerOpen(false)}
+                        className="max-w-2xl mx-auto p-2 md:p-4 bg-background flex flex-col h-full text-[12px] md:text-[13px]"
+                    >
+                        {analysis && (
+                            <div className="space-y-4 flex-1 pb-8">
+                                {/* Interface Info */}
+                                <div className="grid gap-4 md:grid-cols-2">
+                                    <ImportantInfoTable
+                                        wanIp={analysis.ipAddress}
+                                        subnetMask={
+                                            analysis.networkInfo?.subnetMask ||
+                                            analysis.interface?.subnetMask
+                                        }
+                                        defaultGateway={
+                                            analysis.interface?.defaultGateway
+                                        }
+                                    />
+
+                                    {/* Network Info */}
+                                    <NetworkInfoTable
+                                        networkInfo={
+                                            analysis.networkInfo as any
+                                        }
+                                    />
+                                </div>
+
+                                {/* Detail Button + Inline Detail */}
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex justify-end flex-wrap">
+                                        {analysis?.ipAddress ? (
+                                            <>
+                                                <div className="inline-flex items-stretch rounded border border-border/70 overflow-hidden shadow-sm dark:border-border/60">
+                                                    <Button
+                                                        type="button"
+                                                        onClick={
+                                                            handleViewDetails
+                                                        }
+                                                        disabled={detailLoading}
+                                                        className="relative rounded-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-none transition-colors font-medium px-4 py-1.5 h-8 text-[11px]"
+                                                    >
+                                                        {detailLoading
+                                                            ? "Loading..."
+                                                            : detailEntry
+                                                            ? "Refresh Detail"
+                                                            : "Show Detail"}
+                                                    </Button>
+                                                    {detailEntry && (
+                                                        <Button
+                                                            type="button"
+                                                            variant="ghost"
+                                                            onClick={() =>
+                                                                setDetailExpanded(
+                                                                    (p) => !p
+                                                                )
+                                                            }
+                                                            aria-expanded={
+                                                                detailExpanded
+                                                            }
+                                                            className="relative rounded-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-none transition-colors font-medium px-4 py-1.5 h-8 text-[11px]"
+                                                        >
+                                                            {detailExpanded
+                                                                ? "Collapse"
+                                                                : "Expand"}
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                                {/* Removed "Open Full Page" per user request */}
+                                            </>
+                                        ) : (
+                                            <Button
+                                                disabled
+                                                className="bg-muted text-muted-foreground px-6 py-2 rounded-md cursor-not-allowed"
+                                            >
+                                                Detail
+                                            </Button>
+                                        )}
+                                    </div>
+                                    {detailError && (
+                                        <p className="text-destructive text-sm text-right">
+                                            {detailError}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {detailEntry && (
+                                    <DetailRecordTable
+                                        detailEntry={detailEntry}
+                                        analysis={analysis}
+                                        expanded={detailExpanded}
+                                        onToggle={() =>
+                                            setDetailExpanded((p) => !p)
+                                        }
+                                    />
                                 )}
                             </div>
+                        )}
 
-                            {detailEntry && (
-                                <DetailRecordTable
-                                    detailEntry={detailEntry}
-                                    analysis={analysis}
-                                    expanded={detailExpanded}
-                                    onToggle={() =>
-                                        setDetailExpanded((p) => !p)
-                                    }
-                                />
-                            )}
-                        </div>
-                    )}
-
-                    {/* Customer Lookup */}
-                    {customerLookup && (
-                        <CustomerInfoTable customer={customerLookup} />
-                    )}
-                </DrawerContent>
-            </Drawer>
+                        {/* Customer Lookup */}
+                        {customerLookup && (
+                            <CustomerInfoTable customer={customerLookup} />
+                        )}
+                    </DrawerContent>
+                </Drawer>
+            </div>
         </div>
     );
 };
