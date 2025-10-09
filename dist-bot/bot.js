@@ -183,7 +183,7 @@ If you don't have it or can't find it, simply type "help" and I'll guide you on 
 });
 // Listen for messages
 bot.on("message", async (msg) => {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _j;
     const chatId = msg.chat.id;
     const text = (_a = msg.text) === null || _a === void 0 ? void 0 : _a.trim();
     // Ignore commands and empty messages
@@ -197,52 +197,49 @@ bot.on("message", async (msg) => {
     const lowerText = text.toLowerCase();
     // Handle 'help' command at any point during the WAN IP step
     if (((_b = sessions[chatId]) === null || _b === void 0 ? void 0 : _b.step) === "awaiting_wan_ip" && lowerText === 'help') {
-        const helpMessage = `🛠️ *No problem! Let's find your WAN IP together.*
-
-Your WAN IP is the address assigned to your router by your ISP.
-
-*The easiest way to find your WAN IP:*
-
-1. 📱 Connect to your WiFi network
-2. 🌐 Open any web browser  
-3. 🔗 Visit this site:
-   • *WhatIsMyIP.com* → https://www.whatismyip.com/
-
-4. 🔍 The number shown is your *WAN IP address*
-   Example: \`10.239.139.51\` (starts with 10.)
-
-*💡 Your WAN IP will start with 10.* (like 10.239.139.51) - this is normal!
-
-*Once you see your WAN IP, copy and paste it here!* 📋`;
+        const helpMessage = `🛠️ *Need help with your IP?*\n\nWe accept *either* of these:\n\n1. 🌍 *Public IP* (e.g. \`196.190.194.34\`) – Shown on external lookup sites. We'll classify it as Public.\n2. 🏠 *Private / Routed WAN IP* (e.g. \`10.239.139.51\`) – From your *Customer Acceptance Sheet*. This gives richer internal details (subnet, gateway, region).\n\n✅ *Best to send the 10.x IP* if you have it. If not, you can still send the public IP now.\n\n📄 *Finding the 10.x IP:*\n• Check your Acceptance Sheet: look for *WAN IP* / *Routed IP* / *Customer IP*.\n• Router UI: WAN / Internet Status page.\n\n💡 *Still stuck?* Ask the field team or support desk.\n\n➡️ *Send either IP now* (public or 10.x).`;
         await bot.sendMessage(chatId, helpMessage, { parse_mode: "Markdown" });
-        return; // Stop further processing, keep the session at "awaiting_wan_ip"
+        return; // Keep session at awaiting_wan_ip
     }
-    // Step 1: WAN IP
+    // Step 1: WAN / Public IP capture & classification
     if (sessions[chatId].step === "awaiting_wan_ip") {
-        // Basic validation for IP address format (simple check)
-        const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-        if (!ipRegex.test(text)) {
-            bot.sendMessage(chatId, "⚠️ That doesn't look like a valid IP address format (e.g., 10.239.139.51). Please check and try again, or type 'help' for assistance.");
+        // Full IPv4 validation (0-255 per octet)
+        const ipv4Full = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/;
+        if (!ipv4Full.test(text)) {
+            bot.sendMessage(chatId, "⚠️ That doesn't look like a valid IPv4 address (example: 10.239.139.51 or 196.190.194.34). Please re-check and try again, or type 'help'.");
             return;
         }
-        // Additional validation for 10.x.x.x IP range
-        if (!text.startsWith('10.')) {
-            bot.sendMessage(chatId, "⚠️ Your WAN IP should start with '10.' (like 10.239.139.51). Please check the IP address from WhatIsMyIP.com and try again, or type 'help' for assistance.");
-            return;
-        }
+        // Private ranges we care about (focus 10.x.x.x for internal WAN/Customer sheet scenario)
+        const isPrivate10 = text.startsWith('10.');
+        const isRFC1918 = isPrivate10 || /^192\.168\./.test(text) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(text);
+        const isPublic = !isRFC1918;
+        // Lookup any IP (public or private) in DB
         const customer = await prisma.customerWanIp.findFirst({
             where: { wanIp: text },
             include: { interface: { include: { region: true } } },
         });
         if (!customer) {
-            bot.sendMessage(chatId, "⚠️ WAN IP not found in our database. Please check that you entered the correct IP address from WhatIsMyIP.com, or type 'help' if you need assistance finding your WAN IP.");
+            const notFoundMsg = isPublic
+                ? `⚠️ Public IP *${text}* not found in our records. If this is newly provisioned, wait a few minutes and try again, or provide the 10.x WAN IP from your acceptance sheet.`
+                : `⚠️ WAN IP *${text}* not found in our database. Double-check the acceptance sheet. If you believe this is correct, contact support or type 'help' for guidance.`;
+            bot.sendMessage(chatId, notFoundMsg, { parse_mode: 'Markdown' });
             return;
         }
         sessions[chatId].wanIp = text;
         sessions[chatId].interfaceRecord = customer.interface;
-        const ipInfoMessage = `✅ *Excellent! WAN IP Found!* 🎉\n\n*Here are your network details:*\n┣ 🌐 *WAN IP:* ${text}\n┣ 📡 *Subnet Mask:* ${(_d = (_c = customer.interface) === null || _c === void 0 ? void 0 : _c.subnetMask) !== null && _d !== void 0 ? _d : "N/A"}\n┗ 🚪 *Default Gateway:* ${(_f = (_e = customer.interface) === null || _e === void 0 ? void 0 : _e.defaultGateway) !== null && _f !== void 0 ? _f : "N/A"}\n\n*Next, let's find tutorials for your specific device.*`;
+        let classificationNote;
+        if (isPublic) {
+            classificationNote = '🔎 *Classification:* Public ISP edge IP';
+        }
+        else if (isPrivate10) {
+            classificationNote = '🔎 *Classification:* Private (10.x) routed WAN IP';
+        }
+        else {
+            classificationNote = '🔎 *Classification:* Private RFC1918 IP';
+        }
+        const ipInfoMessage = `✅ *IP Found!* 🎉\n\n*Here are your network details:*\n┣ 🌐 *IP:* ${text}\n┣ 📡 *Subnet Mask:* ${(_d = (_c = customer.interface) === null || _c === void 0 ? void 0 : _c.subnetMask) !== null && _d !== void 0 ? _d : "N/A"}\n┣ 🚪 *Default Gateway:* ${(_f = (_e = customer.interface) === null || _e === void 0 ? void 0 : _e.defaultGateway) !== null && _f !== void 0 ? _f : "N/A"}\n┗ 🗺️ *Region:* ${(_j = (_h = (_g = customer.interface) === null || _g === void 0 ? void 0 : _g.region) === null || _h === void 0 ? void 0 : _h.name) !== null && _j !== void 0 ? _j : 'N/A'}\n${classificationNote}\n\n*Next, let's find tutorials for your specific device.*`;
         bot.sendMessage(chatId, ipInfoMessage, { parse_mode: "Markdown" });
-        const nextStepMessage = `📝 *Please type your modem/router model* (e.g., *TP-Link Archer C6*, *Huawei HG8245H*, *D-Link DIR-825*):\n\n💡 *Tip:* You can usually find the model number on a sticker on the bottom or back of your device.`;
+        const nextStepMessage = `📝 *Please type your modem/router model* (e.g., *TP-Link Archer C6*, *Huawei HG8245H*, *D-Link DIR-825*):\n\n💡 *Tip:* Model number is printed on the sticker (underside/back).`;
         bot.sendMessage(chatId, nextStepMessage, { parse_mode: "Markdown" });
         sessions[chatId].step = "awaiting_router_search";
         return;

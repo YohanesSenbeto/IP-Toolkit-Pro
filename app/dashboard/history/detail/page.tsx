@@ -17,16 +17,16 @@ function CalculationDetailContent() {
     const [poolLoading, setPoolLoading] = useState(false);
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    // Fetch entry from backend by id param in URL
+    // Fetch entry from backend by id or wanIp param in URL
     useEffect(() => {
-        const id = searchParams.get("id");
-        if (!id) {
+        const wanIp = searchParams.get("wanIp");
+        if (!wanIp) {
             setLoading(false);
             setEntry(null);
             return;
         }
         setLoading(true);
-        fetch(`/api/wan-ip/history/detail?id=${encodeURIComponent(id)}`)
+        fetch(`/api/wan-ip/history/detail?wanIp=${encodeURIComponent(wanIp)}`)
             .then(async (res) => {
                 if (res.ok) {
                     const data = await res.json();

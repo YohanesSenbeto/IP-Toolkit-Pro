@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ["class"], // class strategy for dark mode
+  darkMode: ["class"], // enables dark mode using 'class' strategy
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -11,8 +11,7 @@ const config: Config = {
     extend: {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic":
-          "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -20,35 +19,14 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       colors: {
-        // Simplified pure black/white light & dark mode colors
-        background: {
-          DEFAULT: "#ffffff",
-          dark: "#000000",
-        },
-        foreground: {
-          DEFAULT: "#000000",
-          dark: "#ffffff",
-        },
-        card: {
-          DEFAULT: "#ffffff",
-          dark: "#000000",
-        },
-        input: {
-          DEFAULT: "#ffffff",
-          dark: "#000000",
-        },
-        border: {
-          DEFAULT: "#d1d5db", // gray-300
-          dark: "#4b5563", // gray-700
-        },
-        ring: {
-          DEFAULT: "#000000",
-          dark: "#ffffff",
-        },
-        destructive: {
-          DEFAULT: "#ef4444", // red-500
-          dark: "#fca5a5",   // red-300
-        },
+        background: "rgb(var(--background-rgb))",
+        foreground: "rgb(var(--foreground-rgb))",
+        card: "rgb(var(--card-rgb))",
+        border: "rgb(var(--border-rgb))",
+        "muted-foreground": "rgb(var(--muted-foreground-rgb))",
+        primary: "rgb(var(--primary-rgb))",
+        secondary: "rgb(var(--secondary-rgb))",
+        destructive: "rgb(var(--destructive-rgb))",
       },
     },
   },

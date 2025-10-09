@@ -31,7 +31,8 @@
   --card-rgb: 255, 255, 255;
   --border-rgb: 209, 213, 219; /* gray-300 */
   --muted-foreground-rgb: 107, 114, 128; /* gray-500 */
-  --primary-rgb: 0, 0, 0;
+  --primary-rgb: 141, 198, 63; /* #8DC63F fallback for rgb */
+  --primary: oklch(0.761 0.1736 129.58); /* #8DC63F */
   --secondary-rgb: 255, 255, 255;
   --destructive-rgb: 239, 68, 68; /* red-500 */
   --logo-filter: none;
@@ -79,6 +80,25 @@
 
 /* Utility overrides for Tailwind classes */
 @layer utilities {
+  .dark button.bg-primary,
+  .dark .bg-primary button,
+  .dark .bg-primary {
+    color: #fff !important;
+  }
+  .dark .bg-primary,
+  .dark .bg-primary > *,
+  .dark .bg-primary button,
+  .dark .bg-primary span {
+    background-color: var(--primary) !important;
+    color: #fff !important;
+  }
+  .bg-primary {
+    background-color: var(--primary) !important;
+    color: #222 !important;
+  }
+  .text-primary {
+    color: var(--primary) !important;
+  }
   .border-border {
     border-color: rgb(var(--border-rgb));
   }

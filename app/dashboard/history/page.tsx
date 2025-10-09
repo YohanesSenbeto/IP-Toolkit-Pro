@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import {
@@ -13,6 +14,22 @@ import { Button } from "@/components/ui/button";
 import { Calculator, Calendar, Search, Trash2 } from "lucide-react";
 
 export default function HistoryPage() {
+
+    const [history, setHistory] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+        fetch("/api/wan-ip/history")
+            .then(async (res) => {
+                if (res.ok) {
+                    const data = await res.json();
+                    setHistory(Array.isArray(data.history) ? data.history : []);
+                } else {
+                    setHistory([]);
+                }
+            })
+            .catch(() => setHistory([]))
+            .finally(() => setLoading(false));
+    }, []);
     const { data: session, status } = useSession();
 
     if (status === "loading") {
@@ -44,7 +61,6 @@ export default function HistoryPage() {
                     <input
                         type="text"
                         placeholder="Search calculations..."
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                 </div>
                 <Button onClick={() => redirect("/tools/wan-ip-analyzer")}>
@@ -61,21 +77,59 @@ export default function HistoryPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-center py-12 text-gray-500">
-                        <Calculator className="h-16 w-16 mx-auto mb-4 text-gray-400" />
-                        <h3 className="text-lg font-medium mb-2">
-                            No calculations yet
-                        </h3>
-                        <p className="mb-6">
-                            Start using the WAN IP analyzer to see your history
-                            here
-                        </p>
-                        <Button
-                            onClick={() => redirect("/tools/wan-ip-analyzer")}
-                        >
-                            Start Analyzing
-                        </Button>
-                    </div>
+                    {loading ? (
+                        <div className="text-center py-12 text-gray-500">Loading...</div>
+                    ) : Array.isArray(history) && history.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                            <Calculator className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+                            <h3 className="text-lg font-medium mb-2">No calculations yet</h3>
+                            <p className="mb-6">Start using the WAN IP analyzer to see your history here</p>
+                            <Button onClick={() => redirect("/tools/wan-ip-analyzer")}>Start Analyzing</Button>
+                        </div>
+                    ) : (
+                        Array.isArray(history) && history.map((item) => (
+                            <div key={item.id} className="border rounded-lg p-4 mb-4">
+                                <div className="flex items-center justify-between mb-2">
+                                    <h4 className="font-medium">WAN IP: {item.wanIp || <span className='text-red-600'>Missing</span>}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <a
+                                            href={`/dashboard/history/detail?wanIp=${item.wanIp}`}
+                                            style={{ pointerEvents: item.wanIp ? 'auto' : 'none', opacity: item.wanIp ? 1 : 0.5 }}
+                                        >
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                disabled={!item.wanIp}
+                                            >
+                                                Details
+                                            </Button>
+                                        </a>
+                                        <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700">
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                    <div>
+                                        <span className="text-gray-600">WAN IP:</span>
+                                        <span className="ml-2 font-mono">{item.wanIp || <span className='text-red-600'>Missing</span>}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">CIDR:</span>
+                                        <span className="ml-2 font-mono">{item.cidr ? `/${item.cidr}` : "—"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Subnet Mask:</span>
+                                        <span className="ml-2 font-mono">{item.subnetMask || "—"}</span>
+                                    </div>
+                                    <div>
+                                        <span className="text-gray-600">Usable Hosts:</span>
+                                        <span className="ml-2 font-mono">{item.usableHosts || "—"}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))
+                    )}
 
                     {/* Example calculation item (commented out for now) */}
                     {/* <div className="border rounded-lg p-4 mb-4">

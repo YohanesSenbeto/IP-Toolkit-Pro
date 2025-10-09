@@ -293,14 +293,14 @@ const WanIpAnalyzerPage = () => {
     };
 
     const handleViewDetails = async () => {
-        if (!latestHistoryId) return;
+        if (!analysis?.ipAddress) return;
         setDetailLoading(true);
         setDetailError(null);
         const hadExisting = Boolean(detailEntry);
         try {
             const res = await fetch(
-                `/api/wan-ip/history/detail?id=${encodeURIComponent(
-                    latestHistoryId
+                `/api/wan-ip/history/detail?wanIp=${encodeURIComponent(
+                    analysis.ipAddress
                 )}`
             );
             if (!res.ok) throw new Error("Failed to load detail");
@@ -496,7 +496,7 @@ const WanIpAnalyzerPage = () => {
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="sm:rounded-none font-medium px-5 py-2 text-sm"
+                                    className="sm:rounded-none font-bold px-5 py-2 text-sm bg-primary"
                                 >
                                     {loading ? "Analyzing..." : "Analyze"}
                                 </Button>
@@ -552,7 +552,7 @@ const WanIpAnalyzerPage = () => {
                             {/* Detail Button + Inline Detail */}
                             <div className="flex flex-col gap-3">
                                 <div className="flex justify-end flex-wrap">
-                                    {latestHistoryId ? (
+                                    {analysis?.ipAddress ? (
                                         <>
                                             <div className="inline-flex items-stretch rounded border border-border/70 overflow-hidden shadow-sm dark:border-border/60">
                                                 <Button

@@ -273,10 +273,9 @@ export default function ModemTutorialPage() {
                             Search & Filter Tutorials
                         </CardTitle>
                         <Button
-                            variant="outline"
+                            className="bg-primary flex items-center gap-2"
                             size="sm"
                             onClick={() => setShowFilters(!showFilters)}
-                            className="flex items-center gap-2"
                         >
                             <Filter className="h-4 w-4" />
                             Filters
@@ -489,8 +488,7 @@ export default function ModemTutorialPage() {
                                         </Badge>
                                         <Button
                                             size="sm"
-                                            variant="outline"
-                                            className="text-xs"
+                                            className="bg-primary text-xs"
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 handleVideoPlay(video);
@@ -519,7 +517,7 @@ export default function ModemTutorialPage() {
                         relevant tutorials.
                     </p>
                     <Button
-                        variant="outline"
+                        className="bg-primary"
                         onClick={() => {
                             setSearchQuery("");
                             setSelectedModemModel("All");

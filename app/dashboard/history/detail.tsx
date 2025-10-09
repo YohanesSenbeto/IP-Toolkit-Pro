@@ -15,15 +15,15 @@ import { Calculator, ArrowLeft } from "lucide-react";
 export default function CalculationDetailPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const id = searchParams.get("id");
+    const wanIp = searchParams.get("wanIp");
     const [calculation, setCalculation] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!id) return;
+        if (!wanIp) return;
         const fetchCalculation = async () => {
             try {
-                const response = await fetch(`/api/calculations?id=${id}`);
+                const response = await fetch(`/api/calculations?wanIp=${wanIp}`);
                 if (response.ok) {
                     const data = await response.json();
                     setCalculation(data.calculation);
@@ -35,7 +35,7 @@ export default function CalculationDetailPage() {
             }
         };
         fetchCalculation();
-    }, [id]);
+    }, [wanIp]);
 
     if (loading) {
         return (
