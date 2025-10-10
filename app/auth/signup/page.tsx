@@ -55,7 +55,7 @@ export default function SignUpPage() {
     };
 
     return (
-        <div className="min-h-screen w-full flex flex-col bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))] transition-colors duration-300">
+        <div className="min-h-screen w-full flex flex-col bg-background text-foreground transition-colors duration-300">
             <main className="flex-1 flex items-center justify-center w-full">
                 <div className="w-full max-w-md space-y-4 p-4 mt-[-7vh]">
                     {/* Header */}
@@ -164,7 +164,7 @@ export default function SignUpPage() {
                             >
                                 {isLoading ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 bg-background text-foreground border-current mr-2"></div>
                                         Creating account...
                                     </>
                                 ) : (

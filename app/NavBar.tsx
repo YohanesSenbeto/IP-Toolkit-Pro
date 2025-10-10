@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTheme } from "@/lib/theme-provider";
 import Image from "next/image";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -12,6 +13,7 @@ import { Bars3Icon, XMarkIcon, BellIcon } from "@heroicons/react/24/outline";
 export default function NavBar() {
     const { data: session } = useSession();
     const pathname = usePathname();
+    const { resolvedTheme } = useTheme();
 
     const navLinks = [
         { href: "/tools/wan-ip-analyzer", label: "WAN IP Analyzer" },
@@ -27,7 +29,11 @@ export default function NavBar() {
     return (
         <Disclosure
             as="nav"
-            className="relative bg-background text-foreground shadow-sm"
+            className={`relative shadow-sm ${
+                resolvedTheme === "dark"
+                    ? "bg-black text-white"
+                    : "bg-background text-foreground"
+            }`}
         >
             {({ open }) => (
                 <>

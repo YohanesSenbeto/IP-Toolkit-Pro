@@ -45,7 +45,7 @@ const tools = [
 
 export default function ToolsPage() {
     return (
-        <div className="w-full max-w-screen-xl mx-auto px-4 py-10">
+        <div className="w-full max-w-screen-xl mx-auto px-4 py-10 bg-background text-foreground">
             {/* Page header */}
             <div className="mb-10 text-center">
                 <h1 className="text-4xl md:text-5xl font-bold mb-2">

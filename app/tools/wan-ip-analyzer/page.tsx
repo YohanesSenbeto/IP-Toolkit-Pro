@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useTheme } from "@/lib/theme-provider";
 import { useSession, signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,6 +36,7 @@ type CustomerLookupResult = {
 
 const WanIpAnalyzerPage = () => {
     const { data: session, status } = useSession();
+    const { resolvedTheme } = useTheme();
     const [searchType, setSearchType] = useState<
         "wanIp" | "accountNumber" | "accessNumber"
     >("wanIp");
@@ -158,6 +160,21 @@ const WanIpAnalyzerPage = () => {
             }
         }
 
+        //here also add for account number
+        if (searchType === "accountNumber") {
+            const accountNumber = assignmentForm.accountNumber.trim();
+            if (!accountNumber) {
+                setError({ message: "Please enter an account number." });
+                return;
+            }
+            if (accountNumber.length !== 9) {
+                setError({
+                    message: "Account number must be exactly 9 digits.",
+                });
+                return;
+            }
+        }
+
         setLoading(true);
         let payload: any = {
             wanIp: "",
@@ -242,11 +259,29 @@ const WanIpAnalyzerPage = () => {
 
     if (!session)
         return (
-            <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 text-foreground px-4 text-center">
-                <h1 className="text-lg sm:text-xl font-bold text-foreground">
+            <div
+                className={`min-h-screen w-full flex flex-col items-center justify-center gap-6 px-4 text-center ${
+                    resolvedTheme === "dark"
+                        ? "bg-black text-white"
+                        : "bg-background text-foreground"
+                }`}
+            >
+                <h1
+                    className={`text-lg sm:text-xl font-bold ${
+                        resolvedTheme === "dark"
+                            ? "text-white"
+                            : "text-foreground"
+                    }`}
+                >
                     WAN IP Analyzer
                 </h1>
-                <p className="text-muted-foreground max-w-md">
+                <p
+                    className={`max-w-md ${
+                        resolvedTheme === "dark"
+                            ? "text-gray-300"
+                            : "text-muted-foreground"
+                    }`}
+                >
                     You must be signed in to use this tool. Please sign in or
                     create an account to continue.
                 </p>
@@ -273,9 +308,9 @@ const WanIpAnalyzerPage = () => {
         );
 
     return (
-        <div className="min-h-screen w-full bg-background">
-            <div className="max-w-2xl mx-auto p-10 px-4">
-                <Card className="p-6 my-8 shadow-lg border-border">
+        <div className="min-h-screen w-full bg-background text-foreground ">
+            <div className="max-w-2xl mx-auto p-10 px-4 bg-background text-foreground">
+                <Card className="p-6 my-8 shadow-lg border-border bg-background text-foreground">
                     <h1 className="text-center text-lg font-bold mb-6 text-foreground">
                         WAN IP Analyzer
                     </h1>

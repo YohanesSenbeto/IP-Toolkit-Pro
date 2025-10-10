@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "@/lib/theme-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +51,8 @@ export default function ModemTutorialPage() {
     const [selectedDifficulty, setSelectedDifficulty] = useState<string>("All");
     const [showFilters, setShowFilters] = useState(false);
     const [searchQuery, setSearchQuery] = useState("");
+
+    const { resolvedTheme } = useTheme();
 
     // Fetch videos from YouTube API
     useEffect(() => {
@@ -232,8 +235,20 @@ export default function ModemTutorialPage() {
     }
 
     return (
-        <div className="min-h-screen w-full bg-background text-foreground">
-            <div className="w-full max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-10">
+        <div
+            className={`min-h-screen w-full ${
+                resolvedTheme === "dark"
+                    ? "bg-black text-white"
+                    : "bg-background text-foreground"
+            }`}
+        >
+            <div
+                className={`w-full max-w-screen-xl mx-auto px-2 sm:px-4 md:px-8 py-6 md:py-10 ${
+                    resolvedTheme === "dark"
+                        ? "bg-black text-white"
+                        : "bg-background text-foreground"
+                }`}
+            >
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-4xl font-bold mb-2 text-blue-800">
@@ -262,7 +277,13 @@ export default function ModemTutorialPage() {
                 </div>
 
                 {/* Search and Filters */}
-                <Card className="mb-8">
+                <Card
+                    className={`mb-8 ${
+                        resolvedTheme === "dark"
+                            ? "bg-neutral-900 text-white border-neutral-800"
+                            : "bg-background text-foreground border-border"
+                    }`}
+                >
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-2">
@@ -289,7 +310,13 @@ export default function ModemTutorialPage() {
                         {/* Search Bar */}
                         <div className="mb-4">
                             <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Search
+                                    className={`absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 ${
+                                        resolvedTheme === "dark"
+                                            ? "text-gray-400"
+                                            : "text-gray-400"
+                                    }`}
+                                />
                                 <input
                                     type="text"
                                     placeholder="Search tutorials by title, description, or tags..."
@@ -297,18 +324,34 @@ export default function ModemTutorialPage() {
                                     onChange={(e) =>
                                         setSearchQuery(e.target.value)
                                     }
-                                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                                    className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg ${
+                                        resolvedTheme === "dark"
+                                            ? "bg-neutral-900 text-white border-neutral-700 placeholder-gray-400"
+                                            : "bg-white text-black border-gray-300 placeholder-gray-500"
+                                    }`}
                                 />
                             </div>
                         </div>
 
                         {/* Filters */}
                         {showFilters && (
-                            <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div
+                                className={`p-4 rounded-lg border ${
+                                    resolvedTheme === "dark"
+                                        ? "bg-neutral-900 border-neutral-800"
+                                        : "bg-gray-50 border-gray-200"
+                                }`}
+                            >
                                 <div className="grid md:grid-cols-3 gap-4">
                                     {/* Modem Model Filter */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label
+                                            className={`block text-sm font-medium mb-2 ${
+                                                resolvedTheme === "dark"
+                                                    ? "text-gray-200"
+                                                    : "text-gray-700"
+                                            }`}
+                                        >
                                             Modem Brand
                                         </label>
                                         <select
@@ -318,7 +361,11 @@ export default function ModemTutorialPage() {
                                                     e.target.value
                                                 )
                                             }
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                                resolvedTheme === "dark"
+                                                    ? "bg-neutral-900 text-white border-neutral-700"
+                                                    : "bg-white text-black border-gray-300"
+                                            }`}
                                         >
                                             <option value="All">
                                                 All Brands
@@ -336,7 +383,13 @@ export default function ModemTutorialPage() {
 
                                     {/* Line Type Filter */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label
+                                            className={`block text-sm font-medium mb-2 ${
+                                                resolvedTheme === "dark"
+                                                    ? "text-gray-200"
+                                                    : "text-gray-700"
+                                            }`}
+                                        >
                                             Connection Type
                                         </label>
                                         <select
@@ -346,7 +399,11 @@ export default function ModemTutorialPage() {
                                                     e.target.value.toUpperCase()
                                                 )
                                             }
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                                resolvedTheme === "dark"
+                                                    ? "bg-neutral-900 text-white border-neutral-700"
+                                                    : "bg-white text-black border-gray-300"
+                                            }`}
                                         >
                                             <option value="All">
                                                 All Types
@@ -363,7 +420,13 @@ export default function ModemTutorialPage() {
 
                                     {/* Difficulty Filter */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label
+                                            className={`block text-sm font-medium mb-2 ${
+                                                resolvedTheme === "dark"
+                                                    ? "text-gray-200"
+                                                    : "text-gray-700"
+                                            }`}
+                                        >
                                             Difficulty Level
                                         </label>
                                         <select
@@ -373,7 +436,11 @@ export default function ModemTutorialPage() {
                                                     e.target.value.toUpperCase()
                                                 )
                                             }
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                            className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                                resolvedTheme === "dark"
+                                                    ? "bg-neutral-900 text-white border-neutral-700"
+                                                    : "bg-white text-black border-gray-300"
+                                            }`}
                                         >
                                             <option value="All">
                                                 All Levels

@@ -65,15 +65,15 @@ export default function SignInClient() {
 
     if (status === "loading" || status === "authenticated") {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))]">
+            <div className="min-h-screen flex items-center justify-center bg-background text-foreground))]">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[rgb(var(--foreground-rgb))]"></div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-[rgb(var(--background-rgb))] text-[rgb(var(--foreground-rgb))] transition-colors duration-300">
-            <main className="w-full max-w-md space-y-4 p-6">
+        <div className="min-h-screen flex flex-col items-center justify-center bg-background text-foreground">
+            <main className="w-full max-w-md space-y-4 p-6 bg-background text-foreground">
                 {/* Header */}
                 <div className="flex flex-col items-center mb-6">
                     <h2 className="mt-1 text-center text-lg font-extrabold">
@@ -86,7 +86,7 @@ export default function SignInClient() {
                 </div>
 
                 {/* Sign In Card */}
-                <Card className="w-full bg-[rgb(var(--card-rgb))] border border-[rgb(var(--border-rgb))] rounded-2xl shadow-xl">
+                <Card className="w-full bg-background border border-[rgb(var(--border-rgb))] rounded-2xl shadow-xl">
                     <CardContent className="pt-4">
                         {error && (
                             <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800 rounded-md">
@@ -112,7 +112,7 @@ export default function SignInClient() {
                                     {...register("email")}
                                     type="email"
                                     placeholder="you@example.com"
-                                    className="mt-1 block w-full rounded-md border border-[rgb(var(--border-rgb))] bg-[rgb(var(--card-rgb))] text-[rgb(var(--foreground-rgb))] placeholder-gray-500 focus:border-[rgb(var(--foreground-rgb))] focus:ring-0"
+                                    className="mt-1 block w-full rounded-md border border-[rgb(var(--border-rgb))] bg-background text-foreground placeholder-gray-500 focus:border-[rgb(var(--foreground-rgb))] focus:ring-0"
                                 />
                                 {errors.email && (
                                     <p className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -133,7 +133,7 @@ export default function SignInClient() {
                                     {...register("password")}
                                     type="password"
                                     placeholder="Your password"
-                                    className="mt-1 block w-full rounded-md border border-[rgb(var(--border-rgb))] bg-[rgb(var(--card-rgb))] text-[rgb(var(--foreground-rgb))] placeholder-gray-500 focus:border-[rgb(var(--foreground-rgb))] focus:ring-0"
+                                    className="mt-1 block w-full rounded-md border border-[rgb(var(--border-rgb))] bg-background text-foreground placeholder-gray-500 focus:border-[rgb(var(--foreground-rgb))] focus:ring-0"
                                 />
                                 {errors.password && (
                                     <p className="mt-1 text-xs text-red-600 dark:text-red-400">
@@ -147,12 +147,12 @@ export default function SignInClient() {
                                 <label className="flex items-center space-x-2">
                                     <input
                                         type="checkbox"
-                                        className="h-3 w-3 rounded border-[rgb(var(--border-rgb))] bg-[rgb(var(--card-rgb))]"
+                                        className="h-3 w-3 rounded bg-background text-foreground border border-[rgb(var(--border-rgb))] focus:ring-0"
                                     />
                                     <span>Remember me</span>
                                 </label>
                                 <Link
-                                    href="/auth/forgot-password"
+                                    href="/auth/forgot-password bg-background text-foreground"
                                     className="hover:underline"
                                 >
                                     Forgot password?
@@ -162,12 +162,13 @@ export default function SignInClient() {
                             {/* Sign In Button */}
                             <Button
                                 type="submit"
+                                variant="default"
                                 disabled={isLoading}
-                                className="w-full py-2 bg-[rgb(var(--foreground-rgb))] text-[rgb(var(--background-rgb))] hover:opacity-90 transition-all"
+                                className="w-full flex justify-center items-center gap-2 py-2 border border-[rgb(var(--border-rgb))] bg-background text-foreground hover:opacity-90 transition-all  "
                             >
                                 {isLoading ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2 bg-background text-foreground"></div>
                                         Signing in...
                                     </>
                                 ) : (
@@ -182,7 +183,7 @@ export default function SignInClient() {
                                 <div className="w-full border-t border-[rgb(var(--border-rgb))]" />
                             </div>
                             <div className="relative flex justify-center text-xs">
-                                <span className="px-2 bg-[rgb(var(--card-rgb))] text-[rgb(var(--muted-foreground-rgb))]">
+                                <span className="px-2 bg-background text-foreground">
                                     Or continue with
                                 </span>
                             </div>
@@ -194,7 +195,7 @@ export default function SignInClient() {
                                 onClick={handleGoogleSignIn}
                                 disabled={isLoading}
                                 variant="outline"
-                                className="w-full flex justify-center items-center gap-2 py-2 border border-[rgb(var(--border-rgb))] bg-[rgb(var(--card-rgb))] text-[rgb(var(--foreground-rgb))] hover:opacity-90 transition-all"
+                                className="w-full flex justify-center items-center gap-2 py-2 border border-[rgb(var(--border-rgb))] bg-background text-foreground hover:opacity-90 transition-all"
                             >
                                 {/* Google Logo */}
                                 <svg
@@ -225,11 +226,11 @@ export default function SignInClient() {
                         </div>
 
                         {/* Signup Link */}
-                        <p className="mt-6 text-center text-xs">
+                        <p className="mt-6 text-center text-xs bg-background text-foreground">
                             Don’t have an account?{" "}
                             <Link
                                 href="/auth/signup"
-                                className="font-medium hover:underline"
+                                className="font-medium hover:underline bg-background text-foreground"
                             >
                                 Sign up
                             </Link>
