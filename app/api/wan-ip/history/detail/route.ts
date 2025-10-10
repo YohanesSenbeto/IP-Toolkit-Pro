@@ -14,45 +14,82 @@ export async function GET(request: NextRequest) {
       });
       userId = user?.id || null;
     }
-    if (!userId) {
-      return NextResponse.json({ detail: null }, { status: 200 });
-    }
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const wanIp = searchParams.get('wanIp');
     let detail = null;
     if (wanIp) {
-      detail = await prisma.wanIpAnalyzerHistory.findFirst({
-        where: { wanIp, userId },
-        select: {
-          id: true,
-          wanIp: true,
-          subnetMask: true,
-          defaultGateway: true,
-          cidr: true,
-          usableHosts: true,
-          networkAddress: true,
-          broadcastAddress: true,
-          totalHosts: true,
-          createdAt: true,
-        },
-      });
+      if (userId) {
+        detail = await prisma.wanIpAnalyzerHistory.findFirst({
+          where: { wanIp, userId },
+          select: {
+            id: true,
+            wanIp: true,
+            subnetMask: true,
+            defaultGateway: true,
+            cidr: true,
+            usableHosts: true,
+            networkAddress: true,
+            broadcastAddress: true,
+            totalHosts: true,
+            createdAt: true,
+          },
+        });
+      }
+      // If not found for user, or no userId, fetch latest for WAN IP (guest/global)
+      if (!detail) {
+        detail = await prisma.wanIpAnalyzerHistory.findFirst({
+          where: { wanIp },
+          orderBy: { createdAt: 'desc' },
+          select: {
+            id: true,
+            wanIp: true,
+            subnetMask: true,
+            defaultGateway: true,
+            cidr: true,
+            usableHosts: true,
+            networkAddress: true,
+            broadcastAddress: true,
+            totalHosts: true,
+            createdAt: true,
+          },
+        });
+      }
     } else if (id) {
-      detail = await prisma.wanIpAnalyzerHistory.findFirst({
-        where: { id, userId },
-        select: {
-          id: true,
-          wanIp: true,
-          subnetMask: true,
-          defaultGateway: true,
-          cidr: true,
-          usableHosts: true,
-          networkAddress: true,
-          broadcastAddress: true,
-          totalHosts: true,
-          createdAt: true,
-        },
-      });
+      if (userId) {
+        detail = await prisma.wanIpAnalyzerHistory.findFirst({
+          where: { id, userId },
+          select: {
+            id: true,
+            wanIp: true,
+            subnetMask: true,
+            defaultGateway: true,
+            cidr: true,
+            usableHosts: true,
+            networkAddress: true,
+            broadcastAddress: true,
+            totalHosts: true,
+            createdAt: true,
+          },
+        });
+      }
+      if (!detail) {
+        detail = await prisma.wanIpAnalyzerHistory.findFirst({
+          where: { id },
+          select: {
+            id: true,
+            wanIp: true,
+            subnetMask: true,
+            defaultGateway: true,
+            cidr: true,
+            usableHosts: true,
+            networkAddress: true,
+            broadcastAddress: true,
+            totalHosts: true,
+            createdAt: true,
+          },
+        });
+      }
     } else {
       return NextResponse.json({ error: 'Missing id or wanIp parameter' }, { status: 400 });
     }

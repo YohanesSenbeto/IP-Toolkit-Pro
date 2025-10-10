@@ -18,24 +18,31 @@ function CalculationDetailContent() {
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     // Fetch entry from backend by id or wanIp param in URL
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     useEffect(() => {
         const wanIp = searchParams.get("wanIp");
         if (!wanIp) {
             setLoading(false);
             setEntry(null);
+            setErrorMsg(null);
             return;
         }
         setLoading(true);
         fetch(`/api/wan-ip/history/detail?wanIp=${encodeURIComponent(wanIp)}`)
             .then(async (res) => {
-                if (res.ok) {
-                    const data = await res.json();
+                const data = await res.json();
+                if (res.ok && data.entry) {
                     setEntry(data.entry);
+                    setErrorMsg(null);
                 } else {
                     setEntry(null);
+                    setErrorMsg(data.error || "Entry not found.");
                 }
             })
-            .catch(() => setEntry(null))
+            .catch(() => {
+                setEntry(null);
+                setErrorMsg("Failed to fetch data. Please try again.");
+            })
             .finally(() => setLoading(false));
     }, [searchParams]);
 
@@ -69,7 +76,7 @@ function CalculationDetailContent() {
     if (!entry) {
         return (
             <div className="p-8 text-center text-lg text-red-600">
-                Entry not found.
+                {errorMsg ? errorMsg : "Entry not found."}
             </div>
         );
     }
@@ -549,7 +556,11 @@ export default function CalculationDetailPage() {
     return (
         <div className="min-h-screen w-full bg-background text-foreground">
             <Suspense
-                fallback={<div className="p-8 text-center text-lg text-foreground">Loading...</div>}
+                fallback={
+                    <div className="p-8 text-center text-lg text-foreground">
+                        Loading...
+                    </div>
+                }
             >
                 <CalculationDetailContent />
             </Suspense>

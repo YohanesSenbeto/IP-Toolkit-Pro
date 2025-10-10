@@ -6,7 +6,7 @@ import prisma from '@/lib/prisma';
 import { calculateIpInfo, getRouterRecommendation, getTutorialUrls, isValidIp, findRegionForIp } from '@/lib/cidr-utils';
 import { logger } from '@/lib/logger';
 import { getRequestId } from '@/lib/request-id';
-import { getPrivilegedEmails, isPrivileged as isPrivilegedEmail } from '@/lib/env';
+import { isPrivileged as isPrivilegedEmail } from '@/lib/env';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { z } from 'zod';
 
@@ -81,7 +81,6 @@ export async function GET(request: NextRequest) {
       return m ? decodeURIComponent(m[1]) : '';
     };
     const verified = readCookie(`social_verified_${userKey}`) === '1';
-    const privilegedEmails = getPrivilegedEmails();
     const isPrivileged = isPrivilegedEmail(session?.user?.email || undefined);
     const usesKey = session ? `uses_analyzer_${userKey}` : 'trial_used';
     const usedVal = readCookie(usesKey);
@@ -173,23 +172,10 @@ export async function GET(request: NextRequest) {
     log.trace('First region sample', { region: first?.name, interfaces: Array.isArray(first?.interfaces) ? first.interfaces.length : 0 });
   }
 
-    // Format regions data for CIDR utils
-    const regionData = regions.map(region => ({
-      name: region.name,
-      code: region.code ?? '',
-      interfaces: region.interfaces.map(iface => ({
-        name: iface.name,
-        ipPoolStart: iface.ipPoolStart,
-        ipPoolEnd: iface.ipPoolEnd,
-        subnetMask: iface.subnetMask,
-        defaultGateway: iface.defaultGateway,
-      }))
-    }));
-
     // Check if IP is in any Broadband Internet IP pool range
-    let matchedInterface = null;
-    let matchedRegion = null;
-    
+    let matchedInterface: any = null;
+    let matchedRegion: any = null;
+
     for (const region of regions) {
       for (const iface of region.interfaces) {
         // Check if IP is within the interface's IP pool range
@@ -202,115 +188,109 @@ export async function GET(request: NextRequest) {
       if (matchedInterface) break;
     }
 
+    let ipInfo: any = null;
+    let cidr: number = 24;
+    let response: any = null;
+    let matchedRegionName: string | null = null;
+
     if (!matchedInterface || !matchedRegion) {
-      return NextResponse.json({
-        ipAddress: wanIp,
+      // IP not found in any pool, but still save and return minimal info
+      ipInfo = calculateIpInfo(wanIp, cidr);
+      response = {
+        ipAddress: ipInfo.ipAddress,
+        networkInfo: {
+          cidr: ipInfo.cidr,
+          subnetMask: ipInfo.subnetMask,
+          networkAddress: ipInfo.networkAddress,
+          broadcastAddress: ipInfo.broadcastAddress,
+          firstUsableIp: ipInfo.firstUsableIp,
+          lastUsableIp: ipInfo.lastUsableIp,
+          totalHosts: ipInfo.totalHosts,
+          usableHosts: ipInfo.usableHosts
+        },
+        region: null,
+        interface: null,
+        recommendations: null,
+        status: null,
         error: 'IP address not found in any Broadband Internet IP pool range',
-        availableRegions: regions.map(r => ({
-          name: r.name,
-          code: r.code ?? '',
-          interfaces: r.interfaces.map(i => ({
-            name: i.name,
-            ipPoolStart: i.ipPoolStart,
-            ipPoolEnd: i.ipPoolEnd
-          }))
-        }))
+      };
+      matchedRegionName = null;
+    } else {
+      cidr = getCidrFromSubnetMask(matchedInterface.subnetMask);
+      ipInfo = calculateIpInfo(wanIp, cidr);
+      const recommendedRouter = getRouterRecommendation(matchedRegion.name, matchedInterface.name);
+      const tutorialUrls = getTutorialUrls(matchedRegion.name, matchedInterface.name);
+      // Check if this IP is already assigned to a customer
+      const existingCustomer = await prisma.customerWanIp.findFirst({
+        where: { wanIp: wanIp, isActive: true },
+        include: { interface: { include: { region: true } } }
       });
-    }
-
-
-    // Calculate IP information using the matched interface's subnet mask
-    const cidr = getCidrFromSubnetMask(matchedInterface.subnetMask);
-    const ipInfo = calculateIpInfo(wanIp, cidr);
-
-    // Get router recommendation
-    const recommendedRouter = getRouterRecommendation(matchedRegion.name, matchedInterface.name);
-
-    // Get tutorial URLs
-    const tutorialUrls = getTutorialUrls(matchedRegion.name, matchedInterface.name);
-
-    // Check if this IP is already assigned to a customer
-    const existingCustomer = await prisma.customerWanIp.findFirst({
-      where: { 
-        wanIp: wanIp,
-        isActive: true 
-      },
-      include: {
+      let tutorialVideos: any[] = [];
+      try {
+        tutorialVideos = await prisma.tutorialVideos.findMany({
+          where: {
+            published: true,
+            OR: [
+              { title: { contains: matchedRegion.name, mode: 'insensitive' } },
+              { content: { contains: matchedInterface.name, mode: 'insensitive' } },
+              { category: { contains: 'WAN', mode: 'insensitive' } }
+            ]
+          },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            category: true,
+            videoUrl: true
+          },
+          take: 5
+        });
+      } catch (tvErr: any) {
+        log.warn('Tutorial video query failed', { error: (tvErr as any)?.message });
+      }
+      response = {
+        ipAddress: ipInfo.ipAddress,
+        networkInfo: {
+          cidr: ipInfo.cidr,
+          subnetMask: ipInfo.subnetMask,
+          networkAddress: ipInfo.networkAddress,
+          broadcastAddress: ipInfo.broadcastAddress,
+          firstUsableIp: ipInfo.firstUsableIp,
+          lastUsableIp: ipInfo.lastUsableIp,
+          totalHosts: ipInfo.totalHosts,
+          usableHosts: ipInfo.usableHosts
+        },
+        region: {
+          name: matchedRegion.name,
+          code: matchedRegion.code || null
+        },
         interface: {
-          include: {
-            region: true
-          }
+          name: matchedInterface.name,
+          ipPoolStart: matchedInterface.ipPoolStart,
+          ipPoolEnd: matchedInterface.ipPoolEnd,
+          subnetMask: matchedInterface.subnetMask,
+          defaultGateway: matchedInterface.defaultGateway
+        },
+        recommendations: {
+          routerModel: recommendedRouter,
+          tutorials: tutorialUrls,
+          tutorialVideos: tutorialVideos
+        },
+        status: existingCustomer ? {
+          assigned: true,
+          accountNumber: existingCustomer.accountNumber,
+          accessNumber: existingCustomer.accessNumber,
+          customerName: existingCustomer.customerName,
+          location: existingCustomer.location
+        } : {
+          assigned: false,
+          available: true
         }
-      }
-    });
-
-    // Get related tutorial videos for this region
-    let tutorialVideos: any[] = [];
-    try {
-      tutorialVideos = await prisma.tutorialVideos.findMany({
-        where: {
-          published: true,
-          OR: [
-            { title: { contains: matchedRegion.name, mode: 'insensitive' } },
-            { content: { contains: matchedInterface.name, mode: 'insensitive' } },
-            { category: { contains: 'WAN', mode: 'insensitive' } }
-          ]
-        },
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          category: true,
-          videoUrl: true
-        },
-        take: 5
-      });
-    } catch (tvErr) {
-      log.warn('Tutorial video query failed', { error: (tvErr as any)?.message });
+      };
+      matchedRegionName = matchedRegion.name;
     }
 
-    const response = {
-      ipAddress: ipInfo.ipAddress,
-      networkInfo: {
-        cidr: ipInfo.cidr,
-        subnetMask: ipInfo.subnetMask,
-        networkAddress: ipInfo.networkAddress,
-        broadcastAddress: ipInfo.broadcastAddress,
-        firstUsableIp: ipInfo.firstUsableIp,
-        lastUsableIp: ipInfo.lastUsableIp,
-        totalHosts: ipInfo.totalHosts,
-        usableHosts: ipInfo.usableHosts
-      },
-      region: {
-        name: matchedRegion.name,
-        code: matchedRegion.code || null
-      },
-      interface: {
-        name: matchedInterface.name,
-        ipPoolStart: matchedInterface.ipPoolStart,
-        ipPoolEnd: matchedInterface.ipPoolEnd,
-        subnetMask: matchedInterface.subnetMask,
-        defaultGateway: matchedInterface.defaultGateway
-      },
-      recommendations: {
-        routerModel: recommendedRouter,
-        tutorials: tutorialUrls,
-        tutorialVideos: tutorialVideos
-      },
-      status: existingCustomer ? {
-        assigned: true,
-        accountNumber: existingCustomer.accountNumber,
-        accessNumber: existingCustomer.accessNumber,
-        customerName: existingCustomer.customerName,
-        location: existingCustomer.location
-      } : {
-        assigned: false,
-        available: true
-      }
-    };
-
-
-    // Log WAN IP analysis to history (if not error and not unmetered)
+    // Always log WAN IP analysis to history
     let latestHistoryId: string | null = null;
     try {
       let userId: string | null = null;
@@ -321,56 +301,27 @@ export async function GET(request: NextRequest) {
         });
         userId = user?.id || null;
       }
-      if (userId) {
-        const lastEntry = await prisma.wanIpAnalyzerHistory.findFirst({
-          where: { userId },
-          orderBy: { createdAt: 'desc' },
-        });
-        if (!lastEntry || lastEntry.wanIp !== wanIp || lastEntry.cidr !== cidr) {
-          await prisma.wanIpAnalyzerHistory.create({
-            data: {
-              userId,
-              wanIp,
-              subnetMask: ipInfo.subnetMask,
-              defaultGateway: matchedInterface.defaultGateway,
-              cidr,
-              usableHosts: ipInfo.usableHosts,
-              networkAddress: ipInfo.networkAddress,
-              broadcastAddress: ipInfo.broadcastAddress,
-              totalHosts: ipInfo.totalHosts,
-            },
-          });
-        }
-        // Always fetch the latest entry after possible create
-        const latestEntry = await prisma.wanIpAnalyzerHistory.findFirst({
-          where: { userId },
-          orderBy: { createdAt: 'desc' },
-        });
-        latestHistoryId = latestEntry?.id || null;
-      } else {
-        // For guests, always save (or you can skip if you want)
-        await prisma.wanIpAnalyzerHistory.create({
-          data: {
-            userId: null,
-            wanIp,
-            subnetMask: ipInfo.subnetMask,
-            defaultGateway: matchedInterface.defaultGateway,
-            cidr,
-            usableHosts: ipInfo.usableHosts,
-            networkAddress: ipInfo.networkAddress,
-            broadcastAddress: ipInfo.broadcastAddress,
-            totalHosts: ipInfo.totalHosts,
-          },
-        });
-        // Always fetch the latest guest entry
-        const latestEntry = await prisma.wanIpAnalyzerHistory.findFirst({
-          where: { userId: null },
-          orderBy: { createdAt: 'desc' },
-        });
-        latestHistoryId = latestEntry?.id || null;
-      }
+      await prisma.wanIpAnalyzerHistory.create({
+        data: {
+          userId,
+          wanIp,
+          subnetMask: ipInfo.subnetMask,
+          defaultGateway: matchedInterface?.defaultGateway || null,
+          cidr,
+          usableHosts: ipInfo.usableHosts,
+          networkAddress: ipInfo.networkAddress,
+          broadcastAddress: ipInfo.broadcastAddress,
+          totalHosts: ipInfo.totalHosts,
+        },
+      });
+      // Always fetch the latest entry
+      const latestEntry = await prisma.wanIpAnalyzerHistory.findFirst({
+        where: { wanIp },
+        orderBy: { createdAt: 'desc' },
+      });
+      latestHistoryId = latestEntry?.id || null;
     } catch (historyError) {
-  logger.error('History logging failed', { error: (historyError as any)?.message });
+      logger.error('History logging failed', { error: (historyError as any)?.message });
     }
 
     const res = NextResponse.json({ ...response, historyId: latestHistoryId });
@@ -382,130 +333,6 @@ export async function GET(request: NextRequest) {
       res.headers.append('Set-Cookie', `uses_analyzer_${userKey}=${next}; Max-Age=31536000; Path=/; HttpOnly; SameSite=Lax`);
     }
     return res;
-
-  } catch (error) {
-  log.error('WAN IP analysis error', { error: (error as any)?.message, stack: (error as any)?.stack });
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-// POST endpoint to register a new WAN IP assignment
-export async function POST(request: NextRequest) {
-  const requestId = getRequestId(request.headers);
-  const log = logger.child(`wan-ip-assign:${requestId}`);
-  try {
-    const rawBody = await request.json();
-    const parsedBody = postSchema.safeParse(rawBody);
-    if (!parsedBody.success) {
-      return NextResponse.json({ error: 'Invalid body', details: parsedBody.error.flatten() }, { status: 400 });
-    }
-    const { accountNumber, accessNumber, wanIp, customerName, location } = parsedBody.data;
-
-    // Check if IP is already assigned
-    const existingAssignment = await prisma.customerWanIp.findFirst({
-      where: { 
-        wanIp: wanIp,
-        isActive: true 
-      }
-    });
-
-    if (existingAssignment) {
-      return NextResponse.json(
-        { 
-          error: 'IP address is already assigned',
-          assignedTo: {
-            accountNumber: existingAssignment.accountNumber,
-            customerName: existingAssignment.customerName
-          }
-        },
-        { status: 409 }
-      );
-    }
-
-    // Find the appropriate interface for this IP
-    const regions = await prisma.ethioTelecomRegion.findMany({
-      include: {
-        interfaces: {
-          where: { isActive: true }
-        }
-      }
-    });
-
-    const regionData = regions.map(region => ({
-      name: region.name,
-      code: region.code ?? '',
-      interfaces: region.interfaces.map(iface => ({
-        name: iface.name,
-        ipPoolStart: iface.ipPoolStart,
-        ipPoolEnd: iface.ipPoolEnd,
-        subnetMask: iface.subnetMask,
-        defaultGateway: iface.defaultGateway,
-      }))
-    }));
-
-    const regionInfo = findRegionForIp(wanIp, regionData);
-    
-    if (!regionInfo) {
-      return NextResponse.json(
-        { error: 'IP address not found in any configured region' },
-        { status: 404 }
-      );
-    }
-
-    // Find the specific interface record
-    const interfaceRecord = await prisma.ethioTelecomInterface.findFirst({
-      where: {
-        name: regionInfo.interfaceName,
-        region: {
-          name: regionInfo.region
-        }
-      }
-    });
-
-    if (!interfaceRecord) {
-      return NextResponse.json(
-        { error: 'Interface configuration not found' },
-        { status: 404 }
-      );
-    }
-
-    // Create new WAN IP assignment
-    const newAssignment = await prisma.customerWanIp.create({
-      data: {
-        accountNumber,
-        accessNumber,
-        wanIp,
-        interfaceId: interfaceRecord.id,
-        customerName,
-        location,
-        isActive: true
-      },
-      include: {
-        interface: {
-          include: {
-            region: true
-          }
-        }
-      }
-    });
-
-    return NextResponse.json({
-      success: true,
-      assignment: {
-        id: newAssignment.id,
-        accountNumber: newAssignment.accountNumber,
-        accessNumber: newAssignment.accessNumber,
-        wanIp: newAssignment.wanIp,
-        customerName: newAssignment.customerName,
-        location: newAssignment.location,
-        region: newAssignment.interface?.region?.name || 'Unknown',
-        interface: newAssignment.interface?.name || 'Unknown'
-      }
-    });
-
   } catch (error) {
     log.error('WAN IP assignment error', { error: (error as any)?.message, stack: (error as any)?.stack });
     return NextResponse.json(
